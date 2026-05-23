@@ -1,0 +1,26 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#8711
+    [34mall[39m: [
+      [34;4mApp\Models\Performance[39;24m {#8713
+        [34mid[39m: [35m1[39m,
+        [34mstudio_id[39m: [35m1[39m,
+        [34muser_id[39m: [35m2[39m,
+        [34mname[39m: [32m"[39m[32mModel A[39m[32m"[39m,
+        [34mactive[39m: [35m1[39m,
+        [34mhours_streamed[39m: [35m12[39m,
+        [34mranking_score[39m: [32m"[39m[32m85.50[39m[32m"[39m,
+        [34mcreated_at[39m: [32m"[39m[32m2026-05-22 23:28:26[39m[32m"[39m,
+        [34mupdated_at[39m: [32m"[39m[32m2026-05-22 23:28:26[39m[32m"[39m,
+      },
+      [34;4mApp\Models\Performance[39;24m {#8714
+        [34mid[39m: [35m2[39m,
+        [34mstudio_id[39m: [35m1[39m,
+        [34muser_id[39m: [35m3[39m,
+        [34mname[39m: [32m"[39m[32mModel B[39m[32m"[39m,
+        [34mactive[39m: [35m1[39m,
+        [34mhours_streamed[39m: [35m8[39m,
+        [34mranking_score[39m: [32m"[39m[32m72.30[39m[32m"[39m,
+        [34mcreated_at[39m: [32m"[39m[32m2026-05-22 23:28:26[39m[32m"[39m,
+        [34mupdated_at[39m: [32m"[39m[32m2026-05-22 23:28:26[39m[32m"[39m,
+      },
+    ],
+  }

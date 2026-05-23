@@ -1,0 +1,100 @@
+[90m= [39m[
+    [34m"[39m[34mview[39m[34m"[39m => [32m"[39m[32msuper_admin[39m[32m"[39m,
+    [34m"[39m[34mtotal_models[39m[34m"[39m => [35m2[39m,
+    [34m"[39m[34mranking[39m[34m"[39m => [34;4mIlluminate\Database\Eloquent\Collection[39;24m {#8658
+      [34mall[39m: [
+        [34;4mApp\Models\Performance[39;24m {#8653
+          [34mid[39m: [35m1[39m,
+          [34mstudio_id[39m: [35m1[39m,
+          [34muser_id[39m: [35m2[39m,
+          [34mname[39m: [32m"[39m[32mModel A[39m[32m"[39m,
+          [34mactive[39m: [35m1[39m,
+          [34mhours_streamed[39m: [35m12[39m,
+          [34mranking_score[39m: [32m"[39m[32m144.00[39m[32m"[39m,
+          [34mcreated_at[39m: [32m"[39m[32m2026-05-22 23:36:01[39m[32m"[39m,
+          [34mupdated_at[39m: [32m"[39m[32m2026-05-22 23:36:02[39m[32m"[39m,
+        },
+        [34;4mApp\Models\Performance[39;24m {#8655
+          [34mid[39m: [35m2[39m,
+          [34mstudio_id[39m: [35m1[39m,
+          [34muser_id[39m: [35m3[39m,
+          [34mname[39m: [32m"[39m[32mModel B[39m[32m"[39m,
+          [34mactive[39m: [35m1[39m,
+          [34mhours_streamed[39m: [35m8[39m,
+          [34mranking_score[39m: [32m"[39m[32m106.00[39m[32m"[39m,
+          [34mcreated_at[39m: [32m"[39m[32m2026-05-22 23:36:01[39m[32m"[39m,
+          [34mupdated_at[39m: [32m"[39m[32m2026-05-22 23:36:02[39m[32m"[39m,
+        },
+      ],
+    },
+    [34m"[39m[34mmodels[39m[34m"[39m => [34;4mIlluminate\Support\Collection[39;24m {#8205
+      [34mall[39m: [
+        [
+          [34m"[39m[34mname[39m[34m"[39m => [32m"[39m[32mModel A[39m[32m"[39m,
+          [34m"[39m[34mstatistics[39m[34m"[39m => [
+            [34m"[39m[34mtoday[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m41.0[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m24.6[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m16.4[39m,
+            ],
+            [34m"[39m[34mweekly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m41.0[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m24.6[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m16.4[39m,
+            ],
+            [34m"[39m[34mbiweekly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m41.0[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m24.6[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m16.4[39m,
+            ],
+            [34m"[39m[34mmonthly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m41.0[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m24.6[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m16.4[39m,
+            ],
+          ],
+        ],
+        [
+          [34m"[39m[34mname[39m[34m"[39m => [32m"[39m[32mModel B[39m[32m"[39m,
+          [34m"[39m[34mstatistics[39m[34m"[39m => [
+            [34m"[39m[34mtoday[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m22.5[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m13.5[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m9.0[39m,
+            ],
+            [34m"[39m[34mweekly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m22.5[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m13.5[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m9.0[39m,
+            ],
+            [34m"[39m[34mbiweekly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m22.5[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m13.5[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m9.0[39m,
+            ],
+            [34m"[39m[34mmonthly[39m[34m"[39m => [
+              [34m"[39m[34mgross_usd[39m[34m"[39m => [35m22.5[39m,
+              [34m"[39m[34mmodel_percentage[39m[34m"[39m => [35m60[39m,
+              [34m"[39m[34mstudio_percentage[39m[34m"[39m => [35m40[39m,
+              [34m"[39m[34mmodel_usd[39m[34m"[39m => [35m13.5[39m,
+              [34m"[39m[34mstudio_usd[39m[34m"[39m => [35m9.0[39m,
+            ],
+          ],
+        ],
+      ],
+    },
+  ]
