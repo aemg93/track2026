@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PerformanceController;
@@ -11,108 +10,68 @@ use App\Http\Controllers\Api\PenaltyController;
 
 /*
 |--------------------------------------------------------------------------
-| API AUTH
+| AUTH PUBLIC
+|--------------------------------------------------------------------------
+| TOKEN-BASED SANCTUM AUTH
 |--------------------------------------------------------------------------
 */
 
-Route::post('/login', [
-    AuthController::class,
-    'login'
-]);
+Route::post('/login', [AuthController::class, 'login']);
 
 /*
 |--------------------------------------------------------------------------
-| PROTECTED ROUTES
+| PROTECTED ROUTES (SANCTUM TOKEN GUARD)
+|--------------------------------------------------------------------------
+| Requiere:
+| Authorization: Bearer {token}
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')
-    ->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
 
-        /*
-        |----------------------------------------
-        | USER
-        |----------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | USER
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-        Route::get('/me', [
-            AuthController::class,
-            'me'
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
-        Route::post('/logout', [
-            AuthController::class,
-            'logout'
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | PERFORMANCES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/performances', [PerformanceController::class, 'index']);
+    Route::get('/performances/{id}', [PerformanceController::class, 'show']);
 
-        /*
-        |----------------------------------------
-        | DASHBOARD
-        |----------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | EARNINGS
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/earnings', [EarningController::class, 'index']);
 
-        Route::get('/dashboard', [
-            DashboardController::class,
-            'index'
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | BONUSES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/bonuses', [BonusController::class, 'index']);
+    Route::post('/bonuses', [BonusController::class, 'store']);
 
-        /*
-        |----------------------------------------
-        | PERFORMANCES
-        |----------------------------------------
-        */
-
-        Route::get('/performances', [
-            PerformanceController::class,
-            'index'
-        ]);
-
-        Route::get('/performances/{id}', [
-            PerformanceController::class,
-            'show'
-        ]);
-
-        /*
-        |----------------------------------------
-        | EARNINGS
-        |----------------------------------------
-        */
-
-        Route::get('/earnings', [
-            EarningController::class,
-            'index'
-        ]);
-
-        /*
-        |----------------------------------------
-        | BONUSES
-        |----------------------------------------
-        */
-
-        Route::get('/bonuses', [
-            BonusController::class,
-            'index'
-        ]);
-
-        Route::post('/bonuses', [
-            BonusController::class,
-            'store'
-        ]);
-
-        /*
-        |----------------------------------------
-        | PENALTIES
-        |----------------------------------------
-        */
-
-        Route::get('/penalties', [
-            PenaltyController::class,
-            'index'
-        ]);
-
-        Route::post('/penalties', [
-            PenaltyController::class,
-            'store'
-        ]);
-
-    });
+    /*
+    |--------------------------------------------------------------------------
+    | PENALTIES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/penalties', [PenaltyController::class, 'index']);
+    Route::post('/penalties', [PenaltyController::class, 'store']);
+});
