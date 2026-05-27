@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected function casts(): array
     {
@@ -23,10 +24,6 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
-    // -------------------------
-    // RELACIONES
-    // -------------------------
 
     public function performance()
     {
@@ -48,10 +45,6 @@ class User extends Authenticatable
         return $this->hasMany(Penalty::class);
     }
 
-    // -------------------------
-    // HELPERS DE ROLES
-    // -------------------------
-
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('Super Admin');
@@ -72,19 +65,11 @@ class User extends Authenticatable
         return $this->hasRole('Performance');
     }
 
-    // -------------------------
-    // SCOPE DE ESTUDIO
-    // -------------------------
-
     public function canAccessStudio(int $studioId): bool
     {
         return isset($this->studio_id)
             && $this->studio_id === $studioId;
     }
-
-    // -------------------------
-    // ACCESOS GENERALES (OPCIONAL PERO ÚTIL)
-    // -------------------------
 
     public function canAccessPerformances(): bool
     {
