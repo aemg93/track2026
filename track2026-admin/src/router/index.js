@@ -10,64 +10,69 @@ import Penalties from '../pages/Penalties.vue'
 
 import AdminLayout from '../layouts/AdminLayout.vue'
 
+/*
+|--------------------------------------------------------------------------
+| ROUTES
+|--------------------------------------------------------------------------
+*/
 
 const routes = [
-
 
     {
         path: '/',
         redirect: '/dashboard',
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | GUEST ROUTES
+    |--------------------------------------------------------------------------
+    */
 
     {
         path: '/login',
-
         component: Login,
-
         meta: {
             guest: true,
         },
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN LAYOUT
+    |--------------------------------------------------------------------------
+    */
+
     {
         path: '/',
-
         component: AdminLayout,
-
         meta: {
             requiresAuth: true,
         },
-
         children: [
 
             {
                 path: 'dashboard',
-
                 component: Dashboard,
             },
 
             {
                 path: 'performances',
-
                 component: Performances,
             },
 
             {
                 path: 'earnings',
-
                 component: Earnings,
             },
 
             {
                 path: 'bonuses',
-
                 component: Bonuses,
             },
 
             {
                 path: 'penalties',
-
                 component: Penalties,
             },
 
@@ -76,14 +81,22 @@ const routes = [
 
 ]
 
+/*
+|--------------------------------------------------------------------------
+| ROUTER
+|--------------------------------------------------------------------------
+*/
 
 const router = createRouter({
-
     history: createWebHistory(),
-
     routes,
 })
 
+/*
+|--------------------------------------------------------------------------
+| AUTH GUARD
+|--------------------------------------------------------------------------
+*/
 
 router.beforeEach((to) => {
 
@@ -99,6 +112,7 @@ router.beforeEach((to) => {
     if (isGuestRoute && token) {
         return '/dashboard'
     }
+
 })
 
 export default router

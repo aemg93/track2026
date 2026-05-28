@@ -7,29 +7,47 @@ export const useAuthStore = defineStore('auth', {
 
         token: localStorage.getItem('token'),
         user: null,
+
         loading: false,
         initialized: false,
-
     }),
+
+/* -------------------------------------------------
+| GETTERS
+------------------------------------------------- */
 
     getters: {
 
         isAuthenticated: (state) => !!state.token,
 
+        isAdmin: (state) =>
+            (state.user?.roles || []).includes('Super Admin'),
+
+        roles: (state) => state.user?.roles || [],
+
+        permissions: (state) => state.user?.permissions || [],
+
+        can: (state) => (permission) =>
+            (state.user?.permissions || []).includes(permission),
     },
+
+/* -------------------------------------------------
+| ACTIONS
+------------------------------------------------- */
+
     actions: {
 
         async login(email, password) {
 
             const response = await api.post('/login', {
-
                 email,
                 password,
-
             })
 
-            this.token = response.data.token
-            this.user = response.data.user
+            const data = response.data.data ?? response.data
+
+            this.token = data.token
+            this.user = data.user ?? data
 
             localStorage.setItem('token', this.token)
         },
@@ -37,7 +55,6 @@ export const useAuthStore = defineStore('auth', {
         async me() {
 
             if (!this.token) {
-
                 this.initialized = true
                 return
             }
@@ -48,7 +65,9 @@ export const useAuthStore = defineStore('auth', {
 
                 const response = await api.get('/me')
 
-                this.user = response.data.data
+                const data = response.data.data ?? response.data
+
+                this.user = data.user ?? data
 
             } catch (error) {
 
@@ -64,11 +83,8 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
 
             try {
-
                 await api.post('/logout')
-
             } catch (error) {
-
                 console.error(error)
             }
 
@@ -84,7 +100,5 @@ export const useAuthStore = defineStore('auth', {
 
             localStorage.removeItem('token')
         },
-
     },
-
 })
