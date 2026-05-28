@@ -31,7 +31,7 @@ class BonusesSeeder extends Seeder
             ],
             [
                 'amount' => 50,
-                'reason' => 'Top performance',
+                'reason' => 'Máximo rendimiento',
                 'user_id' => $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -46,7 +46,7 @@ class BonusesSeeder extends Seeder
             ],
             [
                 'amount' => 30,
-                'reason' => 'Weekly goal reached',
+                'reason' => 'Meta semanal alcanzada',
                 'user_id' => $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
