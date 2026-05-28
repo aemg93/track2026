@@ -9,17 +9,10 @@
         <div class="flex-1 flex flex-col">
 
             <!-- TOPBAR -->
-            <header class="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6">
-
-                <h2 class="text-white font-semibold">
-                    Admin Panel
-                </h2>
-
-                <div class="text-gray-400 text-sm">
-                    Sistema SaaS v1
-                </div>
-
-            </header>
+            <Topbar
+                title="Admin Panel"
+                subtitle="Sistema SaaS v1"
+            />
 
             <!-- CONTENT -->
             <main class="flex-1 p-6 overflow-y-auto">
@@ -37,5 +30,6 @@
 <script setup>
 
 import Sidebar from '../components/layout/Sidebar.vue'
+import Topbar from '../components/layout/Topbar.vue'
 
 </script>

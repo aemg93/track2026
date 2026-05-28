@@ -4,14 +4,12 @@
 
         <!-- HEADER -->
         <PageHeader
-            title="Penalizaciones"
-            description="Penalties and disciplinary actions"
+            title="Bonos"
+            description="Bonuses and rewards earned by models"
         >
 
-            <div class="bg-red-600 text-white px-5 py-3 rounded-2xl font-semibold shadow-lg">
-
-                {{ penalties.length }} registros
-
+            <div class="bg-green-600/15 text-green-400 px-5 py-3 rounded-2xl font-semibold border border-green-500/30">
+                {{ bonuses.length }} registros
             </div>
 
         </PageHeader>
@@ -19,22 +17,22 @@
         <!-- LOADING -->
         <LoadingCard
             v-if="loading"
-            text="Cargando penalizaciones..."
+            text="Cargando bonos..."
         />
 
         <!-- EMPTY -->
         <EmptyState
-            v-else-if="!penalties.length"
-            text="No hay penalizaciones registradas"
+            v-else-if="!bonuses.length"
+            text="No hay bonos registrados"
         />
 
         <!-- TABLE -->
         <DataTable
             v-else
-            title="Penalizaciones"
-            description="Listado de sanciones aplicadas"
+            title="Bonos"
+            description="Listado de recompensas generadas"
             :columns="columns"
-            :items="penalties"
+            :items="bonuses"
         >
 
             <!-- MODEL -->
@@ -46,7 +44,7 @@
                         {{ item.performance?.name }}
                     </p>
 
-                    <p class="text-sm text-gray-500">
+                    <p class="text-xs text-gray-500">
                         User #{{ item.user_id }}
                     </p>
 
@@ -54,35 +52,38 @@
 
             </template>
 
-            <!-- AMOUNT -->
+            <!-- AMOUNT (CENTERED + CLEAN MONEY STYLE) -->
             <template #amount="{ item }">
 
-                <span class="text-white font-medium">
+                <div class="flex flex-col items-start">
 
-                    - {{ item.amount }}
+                    <!-- MAIN AMOUNT -->
+                    <div class="flex items-center gap-1">
 
-                </span>
+                        <span class="text-green-400 font-semibold text-base">
+                            +
+                        </span>
 
-            </template>
+                        <span class="text-white font-semibold text-base">
+                            {{ Number(item.amount).toFixed(2) }}
+                        </span>
 
-            <!-- USD -->
-            <template #amount_usd="{ item }">
+                    </div>
 
-                <Badge variant="red">
+                    <!-- CURRENCY (SECONDARY CLEAN LINE) -->
+                    <span class="text-xs text-gray-500 tracking-wide">
+                        USD ${{ Number(item.amount_usd).toFixed(2) }}
+                    </span>
 
-                    $ {{ item.amount_usd }}
-
-                </Badge>
+                </div>
 
             </template>
 
             <!-- DATE -->
             <template #date="{ item }">
 
-                <span class="text-gray-400">
-
+                <span class="text-gray-400 text-sm">
                     {{ item.date }}
-
                 </span>
 
             </template>
@@ -96,52 +97,45 @@
 <script setup>
 
 import { ref, onMounted } from 'vue'
-
 import api from '../services/api'
 
 import PageHeader from '../components/ui/PageHeader.vue'
 import LoadingCard from '../components/ui/LoadingCard.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
-import Badge from '../components/ui/Badge.vue'
 import DataTable from '../components/ui/DataTable.vue'
 
-const penalties = ref([])
-
+const bonuses = ref([])
 const loading = ref(false)
+
+/*
+|--------------------------------------------------------------------------
+| TABLE STRUCTURE
+|--------------------------------------------------------------------------
+*/
 
 const columns = [
 
-    {
-        key: 'model',
-        label: 'Modelo',
-    },
-
-    {
-        key: 'amount',
-        label: 'Monto',
-    },
-
-    {
-        key: 'amount_usd',
-        label: 'USD',
-    },
-
-    {
-        key: 'date',
-        label: 'Fecha',
-    },
+    { key: 'model', label: 'Modelo' },
+    { key: 'amount', label: 'Monto' },
+    { key: 'date', label: 'Fecha' },
 
 ]
 
-const loadPenalties = async () => {
+/*
+|--------------------------------------------------------------------------
+| FETCH DATA
+|--------------------------------------------------------------------------
+*/
+
+const loadBonuses = async () => {
 
     try {
 
         loading.value = true
 
-        const response = await api.get('/penalties')
+        const response = await api.get('/bonuses')
 
-        penalties.value = response.data.data
+        bonuses.value = response.data.data
 
     } catch (error) {
 
@@ -154,8 +148,7 @@ const loadPenalties = async () => {
 }
 
 onMounted(() => {
-
-    loadPenalties()
+    loadBonuses()
 })
 
 </script>
