@@ -15,7 +15,7 @@ class BonusController extends Controller
 
         $query = Bonus::with('performance');
 
-        // 🔐 Scope por rol (IMPORTANTE en tu sistema)
+        // 🔐 Scope por rol (mantiene tu lógica actual)
         if ($user->hasRole('Admin')) {
             $query->whereHas('performance', function ($q) use ($user) {
                 $q->where('studio_id', $user->studio_id);
@@ -23,13 +23,32 @@ class BonusController extends Controller
         }
 
         return response()->json([
-            'data' => $query->latest()->get()
+            'data' => $query->latest()->get()->map(function ($bonus) {
+                return [
+                    'id' => $bonus->id,
+
+                    // 🧠 PASO 1 CONSOLIDACIÓN
+                    'type' => 'bonus',
+
+                    'performance' => [
+                        'id' => $bonus->performance?->id,
+                        'name' => $bonus->performance?->name,
+                    ],
+
+                    'user_id' => $bonus->user_id,
+
+                    // 💰 COP ONLY (simple y consistente)
+                    'amount' => (float) $bonus->amount,
+                    'currency' => 'COP',
+
+                    'date' => $bonus->date,
+                ];
+            })
         ]);
     }
 
     public function store(Request $request, BonusService $service)
     {
-       
         $data = $request->validate([
             'performance_id' => ['required', 'exists:performances,id'],
             'reason'         => ['required', 'string', 'max:255'],
@@ -47,7 +66,17 @@ class BonusController extends Controller
 
         return response()->json([
             'message' => 'Bonus created successfully',
-            'data' => $bonus
+
+            // 🧠 mantener consistencia también en create
+            'data' => [
+                'id' => $bonus->id,
+                'type' => 'bonus',
+                'performance' => $bonus->performance,
+                'user_id' => $bonus->user_id,
+                'amount' => (float) $bonus->amount,
+                'currency' => 'COP',
+                'date' => $bonus->date,
+            ]
         ], 201);
     }
 }

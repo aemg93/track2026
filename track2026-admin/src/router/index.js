@@ -3,10 +3,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../pages/Login.vue'
 
 import Dashboard from '../pages/Dashboard.vue'
-import Performances from '../pages/Performances.vue'
-import Earnings from '../pages/Earnings.vue'
-import Bonuses from '../pages/Bonuses.vue'
-import Penalties from '../pages/Penalties.vue'
+import Models from '../pages/Models.vue'
+import ModelShow from '../pages/ModelShow.vue'
+import Finances from '../pages/Finances.vue'
+import Analytics from '../pages/Analytics.vue'
+import Settings from '../pages/Settings.vue'
 
 import AdminLayout from '../layouts/AdminLayout.vue'
 
@@ -32,6 +33,7 @@ const routes = [
     {
         path: '/login',
         component: Login,
+
         meta: {
             guest: true,
         },
@@ -46,9 +48,11 @@ const routes = [
     {
         path: '/',
         component: AdminLayout,
+
         meta: {
             requiresAuth: true,
         },
+
         children: [
 
             {
@@ -57,23 +61,28 @@ const routes = [
             },
 
             {
-                path: 'performances',
-                component: Performances,
+                path: 'models',
+                component: Models,
             },
 
             {
-                path: 'earnings',
-                component: Earnings,
+                path: 'models/:id',
+                component: ModelShow,
             },
 
             {
-                path: 'bonuses',
-                component: Bonuses,
+                path: 'finances',
+                component: Finances,
             },
 
             {
-                path: 'penalties',
-                component: Penalties,
+                path: 'analytics',
+                component: Analytics,
+            },
+
+            {
+                path: 'settings',
+                component: Settings,
             },
 
         ],
@@ -88,7 +97,9 @@ const routes = [
 */
 
 const router = createRouter({
+
     history: createWebHistory(),
+
     routes,
 })
 
@@ -103,13 +114,16 @@ router.beforeEach((to) => {
     const token = localStorage.getItem('token')
 
     const isAuthRoute = to.meta.requiresAuth
+
     const isGuestRoute = to.meta.guest
 
     if (isAuthRoute && !token) {
+
         return '/login'
     }
 
     if (isGuestRoute && token) {
+
         return '/dashboard'
     }
 

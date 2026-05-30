@@ -6,32 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Performance;
 use Illuminate\Http\Request;
 
-class PerformanceController extends Controller
+class ModelController extends Controller
 {
     /**
-     * LISTADO SAAS (FILTER + SEARCH + SORT + PAGINATION)
+     * LISTADO CON FILTROS + PAGINACIÓN
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-
         $query = Performance::query();
-
-        /*
-        |--------------------------------------------------------------------------
-        | SCOPING POR ROL
-        |--------------------------------------------------------------------------
-        */
-
-        // Admin ve solo su studio
-        if ($user->hasRole('Admin')) {
-            $query->where('studio_id', $user->studio_id);
-        }
-
-        // Performance user ve solo su propio registro
-        if ($user->hasRole('Performance')) {
-            $query->where('user_id', $user->id);
-        }
 
         /*
         |--------------------------------------------------------------------------
@@ -44,16 +26,16 @@ class PerformanceController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | STATUS FILTER (active/inactive)
+        | STATUS FILTER
         |--------------------------------------------------------------------------
         */
-        if ($request->has('active') && $request->active !== '') {
-            $query->where('active', $request->active);
+        if ($request->status !== null && $request->status !== '') {
+            $query->where('active', $request->status === 'active');
         }
 
         /*
         |--------------------------------------------------------------------------
-        | SORTING
+        | SORT
         |--------------------------------------------------------------------------
         */
         $sortBy = $request->sortBy ?? 'ranking_score';
@@ -66,29 +48,27 @@ class PerformanceController extends Controller
         */
         $limit = $request->limit ?? 10;
 
-        $performances = $query
+        $models = $query
             ->orderBy($sortBy, $order)
             ->paginate($limit);
 
         return response()->json([
             'success' => true,
-            'data' => $performances->items(),
+            'data' => $models->items(),
             'meta' => [
-                'page' => $performances->currentPage(),
-                'pages' => $performances->lastPage(),
-                'total' => $performances->total()
+                'page' => $models->currentPage(),
+                'pages' => $models->lastPage(),
+                'total' => $models->total()
             ]
         ]);
     }
 
     /**
-     * SHOW INDIVIDUAL (MODEL DETAIL)
+     * DETALLE DE MODELO
      */
-    public function show(Request $request, $id)
+    public function show($id)
     {
-        $user = $request->user();
-
-        $performance = Performance::with([
+        $model = Performance::with([
             'earnings',
             'bonuses',
             'penalties',
@@ -97,23 +77,9 @@ class PerformanceController extends Controller
             'studio'
         ])->findOrFail($id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | SECURITY CHECKS
-        |--------------------------------------------------------------------------
-        */
-
-        if ($user->hasRole('Admin') && $performance->studio_id !== $user->studio_id) {
-            abort(403, 'Unauthorized');
-        }
-
-        if ($user->hasRole('Performance') && $performance->user_id !== $user->id) {
-            abort(403, 'Unauthorized');
-        }
-
         return response()->json([
             'success' => true,
-            'data' => $performance
+            'data' => $model
         ]);
     }
 }

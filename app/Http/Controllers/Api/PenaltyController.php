@@ -26,8 +26,27 @@ class PenaltyController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'data' => $query->latest()->get()
+            'data' => $query->latest()->get()->map(function ($penalty) {
+                return [
+                    'id' => $penalty->id,
+
+                    // 🧠 CONSOLIDACIÓN
+                    'type' => 'penalty',
+
+                    'performance' => [
+                        'id' => $penalty->performance?->id,
+                        'name' => $penalty->performance?->name,
+                    ],
+
+                    'user_id' => $penalty->user_id,
+
+                    // 💰 COP ONLY
+                    'amount' => (float) $penalty->amount,
+                    'currency' => 'COP',
+
+                    'date' => $penalty->date,
+                ];
+            })
         ]);
     }
 
@@ -49,9 +68,18 @@ class PenaltyController extends Controller
         $penalty = $service->create($data);
 
         return response()->json([
-            'success' => true,
             'message' => 'Penalty created successfully',
-            'data' => $penalty
+
+            // 🧠 CONSISTENCIA EN RESPONSE
+            'data' => [
+                'id' => $penalty->id,
+                'type' => 'penalty',
+                'performance' => $penalty->performance,
+                'user_id' => $penalty->user_id,
+                'amount' => (float) $penalty->amount,
+                'currency' => 'COP',
+                'date' => $penalty->date,
+            ]
         ], 201);
     }
 }

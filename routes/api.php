@@ -1,18 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\EarningController;
 use App\Http\Controllers\Api\BonusController;
 use App\Http\Controllers\Api\PenaltyController;
+use App\Http\Controllers\Api\DeductionController;
 
 /*
 |--------------------------------------------------------------------------
 | AUTH PUBLIC
-|--------------------------------------------------------------------------
-| TOKEN-BASED SANCTUM AUTH
 |--------------------------------------------------------------------------
 */
 
@@ -20,10 +20,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 /*
 |--------------------------------------------------------------------------
-| PROTECTED ROUTES (SANCTUM TOKEN GUARD)
-|--------------------------------------------------------------------------
-| Requiere:
-| Authorization: Bearer {token}
+| PROTECTED ROUTES (SANCTUM)
 |--------------------------------------------------------------------------
 */
 
@@ -46,7 +43,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | PERFORMANCES
+    | MODELS (ALIAS REAL)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/models', [PerformanceController::class, 'index']);
+    Route::get('/models/{id}', [PerformanceController::class, 'show']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | RAW PERFORMANCES (ADMIN)
     |--------------------------------------------------------------------------
     */
     Route::get('/performances', [PerformanceController::class, 'index']);
@@ -54,24 +59,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | EARNINGS
+    | FINANCIAL MODULES
     |--------------------------------------------------------------------------
     */
     Route::get('/earnings', [EarningController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | BONUSES
-    |--------------------------------------------------------------------------
-    */
     Route::get('/bonuses', [BonusController::class, 'index']);
     Route::post('/bonuses', [BonusController::class, 'store']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | PENALTIES
-    |--------------------------------------------------------------------------
-    */
     Route::get('/penalties', [PenaltyController::class, 'index']);
     Route::post('/penalties', [PenaltyController::class, 'store']);
+
+    Route::get('/deductions', [DeductionController::class, 'index']);
+    Route::post('/deductions', [DeductionController::class, 'store']);
 });
