@@ -1,9 +1,9 @@
 <template>
 
-    <div class="space-y-8">
+    <div class="space-y-6 h-[calc(100vh-120px)] flex flex-col">
 
         <!-- HEADER -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between shrink-0">
 
             <div>
 
@@ -25,28 +25,54 @@
 
         </div>
 
-        <!-- FILTERS -->
-        <ModelsFilters
-            :search="search"
-            :status="status"
-            :sort-by="sortBy"
-            @update="handleFilters"
-        />
+        <!-- FILTROS -->
+        <div class="shrink-0">
 
-        <!-- TABLE -->
-        <ModelsTable
-            :models="models"
-            @view="handleView"
-            @edit="handleEdit"
-            @delete="handleDelete"
-        />
+            <ModelsFilters
+                :search="search"
+                :status="status"
+                :sort-by="sortBy"
+                @update="handleFilters"
+            />
 
-        <!-- PAGINATION -->
-        <ModelsPagination
-            :meta="meta"
-            @next="nextPage"
-            @prev="prevPage"
-        />
+        </div>
+
+        <!-- ZONA SCROLL -->
+        <div
+            class="flex-1 overflow-y-auto pr-2"
+            ref="scrollContainer"
+        >
+
+            <ModelsTable
+                :models="models"
+                @view="handleView"
+                @edit="handleEdit"
+                @delete="handleDelete"
+            />
+
+            <!-- LOADING -->
+            <div
+                v-if="loading"
+                class="text-center py-6 text-gray-400"
+            >
+                Cargando modelos...
+            </div>
+
+            <!-- OBSERVER -->
+            <div
+                ref="observerTarget"
+                class="h-10"
+            ></div>
+
+            <!-- FIN -->
+            <div
+                v-if="meta.page >= meta.pages && models.length"
+                class="text-center py-6 text-gray-500 text-sm"
+            >
+                No hay más modelos para mostrar
+            </div>
+
+        </div>
 
     </div>
 
@@ -54,18 +80,11 @@
 
 <script setup>
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import api from '../services/api'
 
 import ModelsTable from '../components/models/ModelsTable.vue'
 import ModelsFilters from '../components/models/ModelsFilters.vue'
-import ModelsPagination from '../components/models/ModelsPagination.vue'
-
-/*
-|--------------------------------------------------------------------------
-| STATE
-|--------------------------------------------------------------------------
-*/
 
 const models = ref([])
 
@@ -75,7 +94,9 @@ const sortBy = ref('ranking_score')
 const order = ref('desc')
 
 const page = ref(1)
-const limit = ref(5)
+const limit = ref(10)
+
+const loading = ref(false)
 
 const meta = ref({
     page: 1,
@@ -83,19 +104,21 @@ const meta = ref({
     total: 0
 })
 
-/*
-|--------------------------------------------------------------------------
-| LOAD MODELS
-|--------------------------------------------------------------------------
-*/
+const observerTarget = ref(null)
+const scrollContainer = ref(null)
 
-const loadModels = async () => {
+let observer = null
+
+const loadModels = async (append = false) => {
+
+    if (loading.value) return
+
+    loading.value = true
 
     try {
 
-        console.log('SEARCH VALUE =>', search.value)
-
         const { data } = await api.get('/models', {
+
             params: {
                 page: page.value,
                 limit: limit.value,
@@ -103,112 +126,128 @@ const loadModels = async () => {
                 status: status.value,
                 sortBy: sortBy.value,
                 order: order.value,
-            },
+            }
+
         })
 
-        console.log('MODELS RESPONSE =>', data)
+        if (append) {
 
-        models.value = data.data || []
+            models.value.push(...(data.data || []))
 
-        meta.value = data.meta || {
-            page: 1,
-            pages: 1,
-            total: 0
+        } else {
+
+            models.value = data.data || []
+
         }
+
+        meta.value = data.meta
 
     } catch (error) {
 
-        console.error('Error loading models:', error)
+        console.error(error)
 
-        models.value = []
+    } finally {
+
+        loading.value = false
 
     }
 
 }
 
-/*
-|--------------------------------------------------------------------------
-| FILTERS
-|--------------------------------------------------------------------------
-*/
-
-const handleFilters = (filters) => {
-
-    console.log('FILTERS =>', filters)
+const handleFilters = async (filters) => {
 
     search.value = filters.search || ''
+
     status.value = filters.status || ''
+
     sortBy.value = filters.sortBy || 'ranking_score'
 
     page.value = 1
 
-    loadModels()
+    models.value = []
+
+    await loadModels(false)
 
 }
 
-/*
-|--------------------------------------------------------------------------
-| PAGINATION
-|--------------------------------------------------------------------------
-*/
+const loadMore = async () => {
 
-const nextPage = () => {
+    if (loading.value) return
 
-    if (page.value < meta.value.pages) {
+    if (page.value >= meta.value.pages) return
 
-        page.value++
+    page.value++
 
-        loadModels()
+    await loadModels(true)
+
+}
+
+const createObserver = () => {
+
+    observer = new IntersectionObserver(
+
+        async (entries) => {
+
+            const entry = entries[0]
+
+            if (entry.isIntersecting) {
+
+                await loadMore()
+
+            }
+
+        },
+
+        {
+            root: scrollContainer.value,
+            threshold: 0.1
+        }
+
+    )
+
+    if (observerTarget.value) {
+
+        observer.observe(observerTarget.value)
 
     }
 
 }
-
-const prevPage = () => {
-
-    if (page.value > 1) {
-
-        page.value--
-
-        loadModels()
-
-    }
-
-}
-
-/*
-|--------------------------------------------------------------------------
-| ACTIONS
-|--------------------------------------------------------------------------
-*/
 
 const handleView = (model) => {
 
-    console.log('VIEW =>', model)
+    console.log(model)
 
 }
 
 const handleEdit = (model) => {
 
-    console.log('EDIT =>', model)
+    console.log(model)
 
 }
 
 const handleDelete = (model) => {
 
-    console.log('DELETE =>', model)
+    console.log(model)
 
 }
 
-/*
-|--------------------------------------------------------------------------
-| INIT
-|--------------------------------------------------------------------------
-*/
+onMounted(async () => {
 
-onMounted(() => {
+    await loadModels()
 
-    loadModels()
+    await nextTick()
+
+    createObserver()
+
+})
+
+onUnmounted(() => {
+
+    if (observer) {
+
+        observer.disconnect()
+
+    }
 
 })
 
