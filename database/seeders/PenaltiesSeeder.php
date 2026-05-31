@@ -9,12 +9,12 @@ class PenaltiesSeeder extends Seeder
 {
     public function run(): void
     {
-        $modelA = DB::table('performances')
-            ->where('name', 'Model A')
+        $camila = DB::table('performances')
+            ->where('email', 'camila@example.com')
             ->value('id');
 
-        $modelB = DB::table('performances')
-            ->where('name', 'Model B')
+        $valentina = DB::table('performances')
+            ->where('email', 'valentina@example.com')
             ->value('id');
 
         $superAdmin = DB::table('users')
@@ -23,10 +23,9 @@ class PenaltiesSeeder extends Seeder
 
         $userId = $superAdmin->id;
 
-        // Multa para Model A
         DB::table('penalties')->updateOrInsert(
             [
-                'performance_id' => $modelA,
+                'performance_id' => $camila,
                 'date' => now()->toDateString(),
             ],
             [
@@ -38,10 +37,9 @@ class PenaltiesSeeder extends Seeder
             ]
         );
 
-        // Multa para Model B
         DB::table('penalties')->updateOrInsert(
             [
-                'performance_id' => $modelB,
+                'performance_id' => $valentina,
                 'date' => now()->toDateString(),
             ],
             [

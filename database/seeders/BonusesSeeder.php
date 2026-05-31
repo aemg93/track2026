@@ -9,12 +9,12 @@ class BonusesSeeder extends Seeder
 {
     public function run(): void
     {
-        $modelA = DB::table('performances')
-            ->where('name', 'Model A')
+        $camila = DB::table('performances')
+            ->where('email', 'camila@example.com')
             ->value('id');
 
-        $modelB = DB::table('performances')
-            ->where('name', 'Model B')
+        $valentina = DB::table('performances')
+            ->where('email', 'valentina@example.com')
             ->value('id');
 
         $superAdmin = DB::table('users')
@@ -23,10 +23,10 @@ class BonusesSeeder extends Seeder
 
         $userId = $superAdmin->id;
 
-        // Bono Model A
+        // Bono Camila
         DB::table('bonuses')->updateOrInsert(
             [
-                'performance_id' => $modelA,
+                'performance_id' => $camila,
                 'date' => now()->toDateString(),
             ],
             [
@@ -38,10 +38,10 @@ class BonusesSeeder extends Seeder
             ]
         );
 
-        // Bono Model B
+        // Bono Valentina
         DB::table('bonuses')->updateOrInsert(
             [
-                'performance_id' => $modelB,
+                'performance_id' => $valentina,
                 'date' => now()->toDateString(),
             ],
             [

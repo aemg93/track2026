@@ -1,75 +1,39 @@
 <?php
 
-namespace App\Services;
+namespace Database\Seeders;
 
+use Illuminate\Database\Seeder;
 use App\Models\Earning;
-use App\Models\Platform;
-use App\Models\Performance;
-use App\Services\RankingService;
-use App\Services\AuditService;
-use App\Services\StatisticsService;
-use Illuminate\Support\Facades\Cache;
 
-class EarningsService
+class EarningsSeeder extends Seeder
 {
-    public function create(array $data): Earning
+    public function run(): void
     {
-        $user = auth()->user();
-
-        $platform = Platform::findOrFail($data['platform_id']);
-        $performance = Performance::findOrFail($data['performance_id']);
-
-        if (! $user->can('create', Earning::class)) {
-            abort(403);
-        }
-
-        if ($user->hasRole('Performance') && $performance->user_id !== $user->id) {
-            abort(403);
-        }
-
-        if ($user->hasRole('Monitor') && $performance->studio_id !== $user->studio_id) {
-            abort(403);
-        }
-
-        $amountUsd = $this->convertToUsd($data['amount'], $platform);
-
-        $earning = Earning::create([
-            'performance_id' => $performance->id,
-            'platform_id'    => $platform->id,
-            'user_id'        => $performance->user_id,
-            'amount'         => $data['amount'],
-            'amount_usd'     => $amountUsd,
-            'date'           => $data['date'],
+        Earning::create([
+            'performance_id' => 1,
+            'platform_id' => 1,
+            'user_id' => 2,
+            'amount' => 120,
+            'amount_usd' => 120,
+            'date' => now()->toDateString(),
         ]);
 
-        app(RankingService::class)
-            ->recalculate($performance->id);
+        Earning::create([
+            'performance_id' => 1,
+            'platform_id' => 2,
+            'user_id' => 2,
+            'amount' => 80,
+            'amount_usd' => 80,
+            'date' => now()->toDateString(),
+        ]);
 
-        app(AuditService::class)
-            ->log($earning, 'created');
-
-        $this->clearStatsCache($performance->id);
-
-        return $earning;
-    }
-
-    private function convertToUsd(
-        float $amount,
-        Platform $platform
-    ): float {
-        if ($platform->type === 'usd') {
-            return $amount;
-        }
-
-        $realTokens = $amount * $platform->multiplier;
-
-        return $realTokens * $platform->conversion_rate;
-    }
-
-    private function clearStatsCache(int $performanceId): void
-    {
-        foreach (['today', 'weekly', 'biweekly', 'monthly'] as $range) {
-            Cache::forget("stats:v1:performance:{$performanceId}:{$range}");
-        }
+        Earning::create([
+            'performance_id' => 2,
+            'platform_id' => 3,
+            'user_id' => 3,
+            'amount' => 150,
+            'amount_usd' => 150,
+            'date' => now()->toDateString(),
+        ]);
     }
 }

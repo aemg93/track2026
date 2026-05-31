@@ -11,68 +11,45 @@ class PerformanceUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $models=[
+        $models = [
 
             [
-
-                'name'=>'Model A',
-
-                'email'=>'modela@example.com'
-
+                'first_name' => 'Camila',
+                'email' => 'camila@example.com',
             ],
 
             [
-
-                'name'=>'Model B',
-
-                'email'=>'modelb@example.com'
-
-            ]
+                'first_name' => 'Valentina',
+                'email' => 'valentina@example.com',
+            ],
 
         ];
 
-        foreach(
-            $models as $modelData
-        ){
+        foreach ($models as $modelData) {
 
-            $user=
-            User::updateOrCreate(
-
+            /**
+             * 1. Crear o actualizar usuario del sistema
+             */
+            $user = User::updateOrCreate(
                 [
-
-                    'email'=>
-                    $modelData['email']
-
+                    'email' => $modelData['email']
                 ],
-
                 [
-
-                    'name'=>
-                    $modelData['name'],
-
-                    'password'=>
-                    Hash::make(
-                        'password'
-                    )
-
+                    'name' => $modelData['first_name'],
+                    'password' => Hash::make('password')
                 ]
-
             );
 
-            $user->assignRole(
-                'Performance'
-            );
+            $user->assignRole('Performance');
 
-            Performance::where(
-                'name',
-                $modelData['name']
-            )->update([
-
-                'user_id'=>
-                $user->id
-
-            ]);
-
+            /**
+             * 2. Vincular Performance usando email (CORRECTO)
+             * Evita depender de first_name (no es único)
+             */
+            Performance::where('email', $modelData['email'])
+                ->update([
+                    'user_id' => $user->id
+                ]);
         }
     }
 }

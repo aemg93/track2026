@@ -5,53 +5,31 @@ import Login from '../pages/Login.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Models from '../pages/Models.vue'
 import ModelShow from '../pages/ModelShow.vue'
+import ModelEdit from '../pages/ModelEdit.vue'
+import ModelCreate from '../pages/ModelCreate.vue' // opcional (recomendado)
+
 import Finances from '../pages/Finances.vue'
 import Analytics from '../pages/Analytics.vue'
 import Settings from '../pages/Settings.vue'
 
 import AdminLayout from '../layouts/AdminLayout.vue'
 
-/*
-|--------------------------------------------------------------------------
-| ROUTES
-|--------------------------------------------------------------------------
-*/
-
 const routes = [
-
     {
         path: '/',
         redirect: '/dashboard',
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | GUEST ROUTES
-    |--------------------------------------------------------------------------
-    */
-
     {
         path: '/login',
         component: Login,
-
-        meta: {
-            guest: true,
-        },
+        meta: { guest: true },
     },
-
-    /*
-    |--------------------------------------------------------------------------
-    | ADMIN LAYOUT
-    |--------------------------------------------------------------------------
-    */
 
     {
         path: '/',
         component: AdminLayout,
-
-        meta: {
-            requiresAuth: true,
-        },
+        meta: { requiresAuth: true },
 
         children: [
 
@@ -60,15 +38,39 @@ const routes = [
                 component: Dashboard,
             },
 
+            // =========================
+            // MODELS MODULE
+            // =========================
+
             {
                 path: 'models',
+                name: 'models.index',
                 component: Models,
             },
 
             {
-                path: 'models/:id',
-                component: ModelShow,
+                path: 'models/create',
+                name: 'models.create',
+                component: ModelCreate,
             },
+
+            {
+                path: 'models/:id',
+                name: 'models.show',
+                component: ModelShow,
+                props: true,
+            },
+
+            {
+                path: 'models/:id/edit',
+                name: 'models.edit',
+                component: ModelEdit,
+                props: true,
+            },
+
+            // =========================
+            // OTHER MODULES
+            // =========================
 
             {
                 path: 'finances',
@@ -84,49 +86,25 @@ const routes = [
                 path: 'settings',
                 component: Settings,
             },
-
         ],
     },
-
 ]
 
-/*
-|--------------------------------------------------------------------------
-| ROUTER
-|--------------------------------------------------------------------------
-*/
-
 const router = createRouter({
-
     history: createWebHistory(),
-
     routes,
 })
 
-/*
-|--------------------------------------------------------------------------
-| AUTH GUARD
-|--------------------------------------------------------------------------
-*/
-
 router.beforeEach((to) => {
-
     const token = localStorage.getItem('token')
 
-    const isAuthRoute = to.meta.requiresAuth
-
-    const isGuestRoute = to.meta.guest
-
-    if (isAuthRoute && !token) {
-
+    if (to.meta.requiresAuth && !token) {
         return '/login'
     }
 
-    if (isGuestRoute && token) {
-
+    if (to.meta.guest && token) {
         return '/dashboard'
     }
-
 })
 
 export default router
