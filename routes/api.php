@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     | USER
     |--------------------------------------------------------------------------
     */
+
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -39,21 +40,27 @@ Route::middleware('auth:sanctum')->group(function () {
     | DASHBOARD
     |--------------------------------------------------------------------------
     */
+
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     /*
     |--------------------------------------------------------------------------
-    | MODELS (ALIAS REAL)
+    | MODELS (PERFORMANCE CRUD)
     |--------------------------------------------------------------------------
     */
+
     Route::get('/models', [PerformanceController::class, 'index']);
+    Route::post('/models', [PerformanceController::class, 'store']);
     Route::get('/models/{id}', [PerformanceController::class, 'show']);
+    Route::put('/models/{id}', [PerformanceController::class, 'update']);
+    Route::delete('/models/{id}', [PerformanceController::class, 'destroy']);
 
     /*
     |--------------------------------------------------------------------------
-    | RAW PERFORMANCES (ADMIN)
+    | RAW PERFORMANCES (ADMIN VIEW)
     |--------------------------------------------------------------------------
     */
+
     Route::get('/performances', [PerformanceController::class, 'index']);
     Route::get('/performances/{id}', [PerformanceController::class, 'show']);
 
@@ -62,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     | FINANCIAL MODULES
     |--------------------------------------------------------------------------
     */
+
     Route::get('/earnings', [EarningController::class, 'index']);
 
     Route::get('/bonuses', [BonusController::class, 'index']);
@@ -72,4 +80,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/deductions', [DeductionController::class, 'index']);
     Route::post('/deductions', [DeductionController::class, 'store']);
+
 });

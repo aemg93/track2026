@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class PerformanceController extends Controller
 {
     /**
-     * LISTADO SAAS (FILTER + SEARCH + SORT + PAGINATION)
+     * LISTADO SAAS
      */
     public function index(Request $request)
     {
@@ -17,53 +17,32 @@ class PerformanceController extends Controller
 
         $query = Performance::query();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SCOPING POR ROL
-        |--------------------------------------------------------------------------
-        */
-
-        // Admin ve solo su studio
+        // SCOPING
         if ($user->hasRole('Admin')) {
             $query->where('studio_id', $user->studio_id);
         }
 
-        // Performance user ve solo su propio registro
         if ($user->hasRole('Performance')) {
             $query->where('user_id', $user->id);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | SEARCH
-        |--------------------------------------------------------------------------
-        */
+        // SEARCH (FIX REAL)
         if ($request->search) {
-            $query->where('name', 'like', "%{$request->search}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('first_name', 'like', "%{$request->search}%")
+                  ->orWhere('last_name', 'like', "%{$request->search}%")
+                  ->orWhere('nickname', 'like', "%{$request->search}%");
+            });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS FILTER (active/inactive)
-        |--------------------------------------------------------------------------
-        */
-        if ($request->has('active') && $request->active !== '') {
+        // ACTIVE FILTER
+        if ($request->filled('active')) {
             $query->where('active', $request->active);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | SORTING
-        |--------------------------------------------------------------------------
-        */
+        // SORT
         $sortBy = $request->sortBy ?? 'ranking_score';
         $order = $request->order ?? 'desc';
-
-        /*
-        |--------------------------------------------------------------------------
-        | PAGINATION
-        |--------------------------------------------------------------------------
-        */
         $limit = $request->limit ?? 10;
 
         $performances = $query
@@ -82,7 +61,53 @@ class PerformanceController extends Controller
     }
 
     /**
-     * SHOW INDIVIDUAL (MODEL DETAIL)
+     * CREATE (100% ALINEADO A MIGRATION)
+     */
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'studio_id' => 'nullable|integer',
+            'user_id' => 'nullable|integer',
+
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+
+            'email' => 'required|email|unique:performances,email',
+            'phone' => 'nullable|string',
+
+            'country' => 'nullable|string',
+            'city' => 'nullable|string',
+            'address' => 'nullable|string',
+
+            'document_type' => 'nullable|string',
+            'document_number' => 'nullable|string',
+
+            'birth_date' => 'required|date',
+
+            'active' => 'boolean',
+            'hours_streamed' => 'nullable|numeric',
+            'ranking_score' => 'nullable|numeric',
+        ]);
+
+        // FIX NAME
+        $data['name'] = trim($data['first_name'] . ' ' . $data['last_name']);
+
+        // DEFAULTS SEGURAS
+        $data['studio_id'] = $data['studio_id'] ?? $user->studio_id;
+        $data['user_id'] = $data['user_id'] ?? $user->id;
+
+        $performance = Performance::create($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => $performance
+        ], 201);
+    }
+
+    /**
+     * SHOW
      */
     public function show(Request $request, $id)
     {
@@ -97,23 +122,62 @@ class PerformanceController extends Controller
             'studio'
         ])->findOrFail($id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | SECURITY CHECKS
-        |--------------------------------------------------------------------------
-        */
-
         if ($user->hasRole('Admin') && $performance->studio_id !== $user->studio_id) {
-            abort(403, 'Unauthorized');
+            abort(403);
         }
 
         if ($user->hasRole('Performance') && $performance->user_id !== $user->id) {
-            abort(403, 'Unauthorized');
+            abort(403);
         }
 
         return response()->json([
             'success' => true,
             'data' => $performance
+        ]);
+    }
+
+    /**
+     * UPDATE
+     */
+    public function update(Request $request, $id)
+    {
+        $performance = Performance::findOrFail($id);
+
+        $data = $request->validate([
+            'first_name' => 'sometimes|string',
+            'last_name' => 'sometimes|string',
+            'email' => 'sometimes|email',
+            'active' => 'sometimes|boolean',
+            'hours_streamed' => 'sometimes|numeric',
+            'ranking_score' => 'sometimes|numeric',
+        ]);
+
+        if (isset($data['first_name']) || isset($data['last_name'])) {
+            $first = $data['first_name'] ?? $performance->first_name;
+            $last = $data['last_name'] ?? $performance->last_name;
+
+            $data['name'] = trim($first . ' ' . $last);
+        }
+
+        $performance->update($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => $performance
+        ]);
+    }
+
+    /**
+     * DELETE
+     */
+    public function destroy($id)
+    {
+        $performance = Performance::findOrFail($id);
+        $performance->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Deleted'
         ]);
     }
 }
