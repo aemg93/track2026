@@ -30,7 +30,7 @@ class ModelController extends Controller
         }
 
         $sortBy = $request->get('sortBy', 'ranking_score');
-        $order  = $request->get('order', 'desc');
+        $order = $request->get('order', 'desc');
 
         $allowedSorts = [
             'ranking_score',
@@ -46,7 +46,14 @@ class ModelController extends Controller
         $limit = $request->get('limit', 10);
 
         $models = $query
-            ->with(['earnings', 'bonuses', 'penalties', 'split', 'user', 'studio'])
+            ->with([
+                'earnings',
+                'bonuses',
+                'penalties',
+                'split',
+                'user',
+                'studio'
+            ])
             ->orderBy($sortBy, $order)
             ->paginate($limit);
 
@@ -83,5 +90,41 @@ class ModelController extends Controller
             'success' => true,
             'data' => new PerformanceResource($model)
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'studio_id' => 'required|integer',
+            'user_id' => 'nullable|integer',
+
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'nickname' => 'nullable|string',
+
+            'email' => 'required|email',
+            'phone' => 'nullable|string',
+
+            'country' => 'nullable|string',
+            'city' => 'nullable|string',
+            'address' => 'nullable|string',
+
+            'document_type' => 'nullable|string',
+            'document_number' => 'nullable|string',
+
+            'birth_date' => 'required|date',
+            'profile_photo' => 'nullable|string',
+
+            'active' => 'boolean',
+            'hours_streamed' => 'nullable|integer',
+            'ranking_score' => 'nullable|numeric',
+        ]);
+
+        $model = Performance::create($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => new PerformanceResource($model)
+        ], 201);
     }
 }

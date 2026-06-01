@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Performance extends Model
 {
     protected $fillable = [
-
         'studio_id',
         'user_id',
 
@@ -17,9 +16,16 @@ class Performance extends Model
 
         'email',
         'phone',
+
         'country',
         'city',
         'address',
+
+        'document_type',
+        'document_number',
+
+        'birth_date',
+        'profile_photo',
 
         'active',
         'hours_streamed',
@@ -69,7 +75,7 @@ class Performance extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | ACCESSOR STRIPE STYLE (NOMBRE UNIFICADO)
+    | ACCESSORS
     |--------------------------------------------------------------------------
     */
 
