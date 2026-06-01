@@ -9,18 +9,28 @@ class Performance extends Model
     protected $fillable = [
 
         'studio_id',
-
         'user_id',
 
-        'name',
+        'first_name',
+        'last_name',
+        'nickname',
+
+        'email',
+        'phone',
+        'country',
+        'city',
+        'address',
 
         'active',
-
         'hours_streamed',
-
-        'ranking_score'
-
+        'ranking_score',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONS
+    |--------------------------------------------------------------------------
+    */
 
     public function studio()
     {
@@ -52,9 +62,23 @@ class Performance extends Model
         return $this->hasMany(Sale::class);
     }
 
-    // Configuración financiera del modelo
     public function split()
     {
         return $this->hasOne(PerformanceSplit::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSOR STRIPE STYLE (NOMBRE UNIFICADO)
+    |--------------------------------------------------------------------------
+    */
+
+    public function getNameAttribute()
+    {
+        if ($this->first_name && $this->last_name) {
+            return trim($this->first_name . ' ' . $this->last_name);
+        }
+
+        return $this->nickname ?? 'Sin nombre';
     }
 }

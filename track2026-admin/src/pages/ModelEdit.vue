@@ -5,9 +5,11 @@
         <h1 class="text-3xl font-bold text-white">
             Editar Modelo
         </h1>
-<h1 class="text-red-500 text-4xl">
-    ESTOY EN EDIT
-</h1>
+
+        <h1 class="text-red-500 text-4xl">
+            ESTOY EN EDIT
+        </h1>
+
         <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 space-y-4">
 
             <p class="text-gray-400">
@@ -15,9 +17,21 @@
             </p>
 
             <input
-                v-model="form.name"
+                v-model="form.first_name"
                 class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
-                placeholder="Nombre del modelo"
+                placeholder="Nombre"
+            />
+
+            <input
+                v-model="form.last_name"
+                class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
+                placeholder="Apellido"
+            />
+
+            <input
+                v-model="form.nickname"
+                class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
+                placeholder="Nickname"
             />
 
             <div class="flex gap-3">
@@ -65,7 +79,9 @@ const router = useRouter()
 const model = ref(null)
 
 const form = ref({
-    name: ''
+    first_name: '',
+    last_name: '',
+    nickname: ''
 })
 
 const loading = ref(false)
@@ -85,7 +101,10 @@ const loadModel = async () => {
         const { data } = await api.get(`/models/${route.params.id}`)
 
         model.value = data.data
-        form.value.name = model.value.name
+
+        form.value.first_name = model.value.first_name || ''
+        form.value.last_name = model.value.last_name || ''
+        form.value.nickname = model.value.nickname || ''
 
     } catch {
 
@@ -125,21 +144,9 @@ const updateModel = async () => {
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| NAVIGATION
-|--------------------------------------------------------------------------
-*/
-
 const goBack = () => {
     router.push('/models')
 }
-
-/*
-|--------------------------------------------------------------------------
-| INIT
-|--------------------------------------------------------------------------
-*/
 
 onMounted(loadModel)
 

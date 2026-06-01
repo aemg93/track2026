@@ -36,7 +36,7 @@
                     <!-- INFO -->
                     <div class="text-left hidden sm:block">
                         <div class="text-white text-sm leading-4">
-                            {{ user?.name || 'Usuario' }}
+                            {{ displayName }}
                         </div>
                         <div class="text-gray-400 text-xs">
                             {{ role }}
@@ -52,7 +52,7 @@
                 >
 
                     <div class="p-3 border-b border-gray-800">
-                        <p class="text-white text-sm">{{ user?.email }}</p>
+                        <p class="text-white text-sm">{{ user?.email || 'Sin email' }}</p>
                         <p class="text-gray-500 text-xs">{{ role }}</p>
                     </div>
 
@@ -93,8 +93,43 @@ const open = ref(false)
 const user = computed(() => auth.user)
 const role = computed(() => auth.roles?.[0] || 'user')
 
+/*
+|--------------------------------------------------------------------------
+| DISPLAY NAME (STRIPE STYLE SAFE CONTRACT)
+|--------------------------------------------------------------------------
+*/
+
+const displayName = computed(() => {
+
+    if (user.value?.first_name && user.value?.last_name) {
+        return `${user.value.first_name} ${user.value.last_name}`
+    }
+
+    if (user.value?.nickname) {
+        return user.value.nickname
+    }
+
+    return 'Usuario'
+})
+
+/*
+|--------------------------------------------------------------------------
+| INITIALS SAFE
+|--------------------------------------------------------------------------
+*/
+
 const initials = computed(() => {
-    return auth.user?.name?.charAt(0)?.toUpperCase() || 'U'
+
+    const fn = user.value?.first_name?.charAt(0)
+    const ln = user.value?.last_name?.charAt(0)
+
+    if (fn && ln) return (fn + ln).toUpperCase()
+
+    if (user.value?.nickname) {
+        return user.value.nickname.charAt(0).toUpperCase()
+    }
+
+    return 'U'
 })
 
 const toggle = () => {
@@ -105,4 +140,5 @@ const logout = async () => {
     await auth.logout()
     router.push('/login')
 }
+
 </script>

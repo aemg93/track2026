@@ -46,12 +46,17 @@
                         class="border-t border-gray-800 hover:bg-gray-800/40 transition"
                     >
 
+                        <!-- MODEL -->
                         <td class="table-cell">
 
                             <div>
 
                                 <p class="text-white font-semibold">
-                                    {{ item.name }}
+                                    {{
+                                        item.first_name && item.last_name
+                                            ? `${item.first_name} ${item.last_name}`
+                                            : item.nickname || 'Sin nombre'
+                                    }}
                                 </p>
 
                                 <p class="text-sm text-gray-500">
@@ -62,14 +67,16 @@
 
                         </td>
 
+                        <!-- HOURS -->
                         <td class="table-cell text-white">
-                            {{ item.hours_streamed }} hrs
+                            {{ item.hours_streamed || 0 }} hrs
                         </td>
 
+                        <!-- SCORE -->
                         <td class="table-cell">
 
                             <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-xl text-sm font-semibold">
-                                {{ item.ranking_score }}
+                                {{ item.ranking_score || 0 }}
                             </span>
 
                         </td>
@@ -102,13 +109,9 @@ defineProps({
 .table-head {
 
     padding: 18px 24px;
-
     text-align: left;
-
     font-size: 14px;
-
     font-weight: 600;
-
     color: #9ca3af;
 }
 

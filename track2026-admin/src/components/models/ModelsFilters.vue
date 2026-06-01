@@ -29,7 +29,11 @@
                     >
 
                         <div class="font-semibold">
-                            {{ item.name }}
+                            {{
+                                item.first_name && item.last_name
+                                    ? `${item.first_name} ${item.last_name}`
+                                    : item.nickname || 'Sin nombre'
+                            }}
                         </div>
 
                         <div class="text-xs text-gray-400">
@@ -78,7 +82,7 @@
                     Horas
                 </option>
 
-                <option value="name">
+                <option value="first_name">
                     Nombre
                 </option>
 
@@ -96,11 +100,9 @@ import { ref } from 'vue'
 import api from '../../services/api'
 
 const props = defineProps({
-
     search: String,
     status: String,
     sortBy: String,
-
 })
 
 const emit = defineEmits(['update'])
@@ -128,36 +130,24 @@ const handleSearch = () => {
         emitChange()
 
         if (localSearch.value.trim() === '') {
-
             suggestions.value = []
-
             return
-
         }
 
         try {
 
-            console.log('SEARCH =>', localSearch.value)
-
             const { data } = await api.get('/models', {
-
                 params: {
                     search: localSearch.value,
                     limit: 5,
                 },
-
             })
 
-            console.log('AUTOCOMPLETE =>', data)
-
             suggestions.value = data.data || []
-
-            console.log('SUGGESTIONS =>', suggestions.value)
 
         } catch (error) {
 
             console.error('Autocomplete error:', error)
-
             suggestions.value = []
 
         }
@@ -174,7 +164,11 @@ const handleSearch = () => {
 
 const selectModel = (model) => {
 
-    localSearch.value = model.name
+    localSearch.value = (
+        model.first_name && model.last_name
+            ? `${model.first_name} ${model.last_name}`
+            : model.nickname || ''
+    )
 
     suggestions.value = []
 

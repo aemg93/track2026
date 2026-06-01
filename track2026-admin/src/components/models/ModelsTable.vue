@@ -9,8 +9,8 @@
                 <tr>
 
                     <th class="text-left px-6 py-4 text-gray-400">Modelo</th>
-                    <th class="text-left px-6 py-4 text-gray-400">Horas</th>
-                    <th class="text-left px-6 py-4 text-gray-400">Ranking</th>
+                    <th class="text-left px-6 py-4 text-gray-400">Correo</th>
+                    <th class="text-left px-6 py-4 text-gray-400">Estado</th>
                     <th class="text-left px-6 py-4 text-gray-400">Acciones</th>
 
                 </tr>
@@ -25,26 +25,36 @@
                     class="border-b border-gray-800 hover:bg-gray-800/40 transition"
                 >
 
-                    <!-- MODEL -->
+                    <!-- MODELO -->
                     <td class="px-6 py-4">
 
                         <div class="flex items-center gap-4">
 
+                            <!-- INITIALS -->
                             <div
-                                class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold"
+                                class="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold"
                             >
-                                {{ model.name?.charAt(0) || '?' }}
+                                {{
+                                    (
+                                        (model.first_name?.charAt(0) || '') +
+                                        (model.last_name?.charAt(0) || '')
+                                    ).toUpperCase() || model.nickname?.charAt(0)?.toUpperCase() || '?'
+                                }}
                             </div>
 
                             <div>
 
                                 <h2 class="text-white font-semibold">
-                                    {{ model.name }}
+                                    {{
+                                        model.first_name && model.last_name
+                                            ? `${model.first_name} ${model.last_name}`
+                                            : model.nickname || 'Sin nombre'
+                                    }}
                                 </h2>
 
-                                <p class="text-gray-500 text-sm">
+                                <!-- <p class="text-gray-500 text-sm">
                                     #{{ model.id }}
-                                </p>
+                                </p> -->
 
                             </div>
 
@@ -52,14 +62,23 @@
 
                     </td>
 
-                    <!-- HOURS -->
-                    <td class="px-6 py-4 text-white">
-                        {{ model.hours_streamed || 0 }} hrs
+                    <!-- EMAIL -->
+                    <td class="px-6 py-4 text-gray-300">
+                        {{ model.email || 'Sin correo' }}
                     </td>
 
-                    <!-- RANK -->
-                    <td class="px-6 py-4 text-blue-400 font-semibold">
-                        {{ model.ranking_score || 0 }}
+                    <!-- STATUS -->
+                    <td class="px-6 py-4">
+
+                        <span
+                            class="px-3 py-1 rounded-full text-xs font-semibold"
+                            :class="model.active
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20'"
+                        >
+                            {{ model.active ? 'Activo' : 'Inactivo' }}
+                        </span>
+
                     </td>
 
                     <!-- ACTIONS -->

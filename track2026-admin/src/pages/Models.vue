@@ -2,6 +2,7 @@
 
     <div class="h-[calc(100vh-120px)] flex flex-col space-y-6">
 
+        <!-- HEADER -->
         <div class="flex items-center justify-between shrink-0">
 
             <div>
@@ -14,15 +15,16 @@
 
             </div>
 
-           <button
-    @click="router.push('/models/create')"
-    class="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-semibold"
->
-    Nueva Modelo
-</button>
+            <button
+                @click="router.push('/models/create')"
+                class="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-semibold"
+            >
+                Nueva Modelo
+            </button>
 
         </div>
 
+        <!-- FILTERS -->
         <div class="shrink-0">
             <ModelsFilters
                 :search="search"
@@ -32,6 +34,7 @@
             />
         </div>
 
+        <!-- TABLE -->
         <div
             ref="scrollContainer"
             class="flex-1 overflow-y-auto pr-2"
@@ -44,12 +47,15 @@
                 @delete="handleDelete"
             />
 
+            <!-- LOADING -->
             <div v-if="loading" class="text-center py-6 text-gray-400">
                 Cargando modelos...
             </div>
 
+            <!-- OBSERVER -->
             <div ref="observerTarget" class="h-10"></div>
 
+            <!-- END -->
             <div
                 v-if="meta.page >= meta.pages && models.length"
                 class="text-center py-6 text-gray-500 text-sm"
@@ -74,6 +80,12 @@ import ModelsFilters from '../components/models/ModelsFilters.vue'
 
 const router = useRouter()
 
+/*
+|--------------------------------------------------------------------------
+| STATE
+|--------------------------------------------------------------------------
+*/
+
 const models = ref([])
 const search = ref('')
 const status = ref('')
@@ -95,6 +107,12 @@ const scrollContainer = ref(null)
 const observerTarget = ref(null)
 
 let observer = null
+
+/*
+|--------------------------------------------------------------------------
+| LOAD MODELS
+|--------------------------------------------------------------------------
+*/
 
 const loadModels = async (append = false) => {
 
@@ -119,18 +137,29 @@ const loadModels = async (append = false) => {
             ? [...models.value, ...(data.data || [])]
             : (data.data || [])
 
-        meta.value = data.meta ?? {
+        meta.value = data.meta || {
             page: 1,
             pages: 1,
             total: 0
         }
 
-    } catch {
+    } catch (error) {
+
+        console.error(error)
+
         if (!append) models.value = []
+
     } finally {
+
         loading.value = false
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| FILTERS
+|--------------------------------------------------------------------------
+*/
 
 const handleFilters = async (filters) => {
 
@@ -144,6 +173,12 @@ const handleFilters = async (filters) => {
     await loadModels(false)
 }
 
+/*
+|--------------------------------------------------------------------------
+| PAGINATION
+|--------------------------------------------------------------------------
+*/
+
 const loadMore = async () => {
 
     if (loading.value) return
@@ -152,6 +187,12 @@ const loadMore = async () => {
     page.value++
     await loadModels(true)
 }
+
+/*
+|--------------------------------------------------------------------------
+| INFINITE SCROLL
+|--------------------------------------------------------------------------
+*/
 
 const createObserver = () => {
 
@@ -171,30 +212,53 @@ const createObserver = () => {
     }
 }
 
+/*
+|--------------------------------------------------------------------------
+| ACTIONS
+|--------------------------------------------------------------------------
+*/
+
 const handleView = (model) => {
     router.push(`/models/${model.id}`)
 }
 
 const handleEdit = (model) => {
-    router.push(`/models/${model.id}?edit=1`)
+    router.push(`/models/${model.id}/edit`)
 }
 
 const handleDelete = async (model) => {
 
-    if (!confirm(`¿Eliminar ${model.name}?`)) return
+    const name = model.first_name
+        ? `${model.first_name} ${model.last_name ?? ''}`.trim()
+        : model.nickname ?? 'este modelo'
+
+    if (!confirm(`¿Eliminar ${name}?`)) return
 
     try {
+
         await api.delete(`/models/${model.id}`)
+
         models.value = models.value.filter(m => m.id !== model.id)
-    } catch {
+
+    } catch (error) {
+
+        console.error(error)
         alert('Error eliminando modelo')
     }
 }
 
+/*
+|--------------------------------------------------------------------------
+| LIFECYCLE
+|--------------------------------------------------------------------------
+*/
+
 onMounted(async () => {
+
     await loadModels()
     await nextTick()
     createObserver()
+
 })
 
 onUnmounted(() => {

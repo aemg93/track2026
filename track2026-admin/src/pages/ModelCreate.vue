@@ -8,12 +8,36 @@
 
         <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 space-y-4">
 
+            <!-- FIRST NAME -->
             <input
-                v-model="form.name"
+                v-model="form.first_name"
                 class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
-                placeholder="Nombre de la modelo"
+                placeholder="Nombre"
             />
 
+            <!-- LAST NAME -->
+            <input
+                v-model="form.last_name"
+                class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
+                placeholder="Apellido"
+            />
+
+            <!-- NICKNAME -->
+            <input
+                v-model="form.nickname"
+                class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
+                placeholder="Nickname (opcional)"
+            />
+
+            <!-- EMAIL -->
+            <input
+                v-model="form.email"
+                type="email"
+                class="w-full p-3 rounded-xl bg-gray-950 text-white border border-gray-800"
+                placeholder="Correo electrónico"
+            />
+
+            <!-- STUDIO -->
             <input
                 v-model="form.studio_id"
                 type="number"
@@ -21,6 +45,7 @@
                 placeholder="Studio ID"
             />
 
+            <!-- ACTIVE -->
             <label class="flex items-center gap-3 text-white">
 
                 <input
@@ -32,6 +57,7 @@
 
             </label>
 
+            <!-- ACTIONS -->
             <div class="flex gap-3">
 
                 <button
@@ -51,10 +77,7 @@
 
             </div>
 
-            <p
-                v-if="error"
-                class="text-red-400"
-            >
+            <p v-if="error" class="text-red-400">
                 {{ error }}
             </p>
 
@@ -76,7 +99,10 @@ const loading = ref(false)
 const error = ref('')
 
 const form = ref({
-    name: '',
+    first_name: '',
+    last_name: '',
+    nickname: '',
+    email: '',
     studio_id: 1,
     active: true,
 })
@@ -94,14 +120,13 @@ const createModel = async () => {
 
     } catch (e) {
 
+        console.error(e)
         error.value = 'Error creando modelo'
 
     } finally {
 
         loading.value = false
-
     }
-
 }
 
 </script>
