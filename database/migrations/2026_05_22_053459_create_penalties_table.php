@@ -16,14 +16,15 @@ return new class extends Migration
                 ->constrained('performances')
                 ->cascadeOnDelete();
 
-            // usuario que registra la multa
+            // ✔ opcional (antes era obligatorio → ERROR)
             $table->foreignId('user_id')
+                ->nullable()
                 ->constrained('users')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
 
             $table->string('reason');
 
-            $table->decimal('amount',12,2);
+            $table->decimal('amount', 12, 2);
 
             $table->date('date');
 

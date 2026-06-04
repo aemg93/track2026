@@ -127,14 +127,11 @@ const error = ref('')
 
 const form = ref({
 
-    // 🔴 REQUIRED
     studio_id: null,
     first_name: '',
     last_name: '',
     email: '',
     birth_date: '',
-
-    // 🟡 OPTIONAL
     nickname: '',
     phone: '',
     country: '',
@@ -144,8 +141,6 @@ const form = ref({
     document_number: '',
     profile_photo: '',
     user_id: null,
-
-    // DEFAULTS
     active: true,
     hours_streamed: 0,
     ranking_score: 0

@@ -11,21 +11,23 @@ class PerformanceFinancialService
     {
         return Cache::remember(
             "performance:financials:{$performance->id}",
-            60,
+            now()->addMinutes(10),
             function () use ($performance) {
 
-                $earnings = $performance->earnings->sum(fn ($e) =>
-                    $e->amount_usd ?? $e->amount ?? 0
-                );
+                $earnings = $performance->earnings()
+                    ->sum(\DB::raw('COALESCE(amount_usd, amount)'));
 
-                $bonuses = $performance->bonuses->sum('amount');
+                $bonuses = $performance->bonuses()->sum('amount');
 
-                $penalties = $performance->penalties->sum('amount');
+                $penalties = $performance->penalties()->sum('amount');
+
+                $net = ($earnings + $bonuses) - $penalties;
 
                 return [
                     'earnings' => (float) $earnings,
                     'bonuses' => (float) $bonuses,
                     'penalties' => (float) $penalties,
+                    'net' => (float) $net,
                     'deductions' => 0,
                 ];
             }

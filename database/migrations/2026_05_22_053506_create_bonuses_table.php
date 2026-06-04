@@ -16,16 +16,17 @@ return new class extends Migration
                 ->constrained('performances')
                 ->cascadeOnDelete();
 
-            // Usuario que creó el bono
+            // ✔ opcional (NO obligatorio)
             $table->foreignId('user_id')
+                ->nullable()
                 ->constrained('users')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
 
-            $table->string('reason');
+            $table->string('reason')->nullable();
 
             $table->decimal('amount', 12, 2);
 
-            $table->date('date');
+            $table->date('date')->nullable();
 
             $table->timestamps();
         });

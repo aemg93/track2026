@@ -12,25 +12,21 @@ return new class extends Migration
 
             $table->id();
 
+            // 🔗 Modelo (a qué performer pertenece la ganancia)
             $table->foreignId('performance_id')
                 ->constrained('performances')
                 ->cascadeOnDelete();
 
+            // 🔗 Plataforma de origen del ingreso
             $table->foreignId('platform_id')
                 ->constrained('platforms')
                 ->cascadeOnDelete();
 
-            // usuario que registró el ingreso
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
-
-            $table->decimal('amount',12,2);
+            // 💰 Datos financieros
+            $table->decimal('amount', 12, 2);
+            $table->decimal('amount_usd', 12, 2)->nullable();
 
             $table->date('date');
-
-            $table->decimal('amount_usd',12,2)
-                ->nullable();
 
             $table->timestamps();
         });
