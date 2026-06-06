@@ -1,40 +1,86 @@
 <template>
-  <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
 
-    <h2 class="text-white text-lg font-semibold mb-4">
-      Documentación
-    </h2>
+  <div
+    class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+  >
 
-    <div class="space-y-3 text-sm">
+    <div class="mb-6">
 
-      <div>
-        <span class="text-gray-400">Tipo:</span>
-        <span class="text-white ml-2">
-          {{ model.document_type }}
+      <p
+        class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+      >
+        Identificación
+      </p>
+
+      <h2
+        class="text-xl font-bold text-white mt-2"
+      >
+        Documentación
+      </h2>
+
+    </div>
+
+    <div class="space-y-5">
+
+      <div
+        class="flex justify-between items-center"
+      >
+
+        <span class="text-gray-500">
+          Tipo de documento
         </span>
+
+        <span class="text-white font-medium">
+          {{ model.document_type || '-' }}
+        </span>
+
       </div>
 
-      <div>
-        <span class="text-gray-400">Número:</span>
-        <span class="text-white ml-2">
-          {{ model.document_number }}
+      <div
+        class="flex justify-between items-center"
+      >
+
+        <span class="text-gray-500">
+          Número
         </span>
+
+        <span class="text-white font-medium">
+          {{ model.document_number || '-' }}
+        </span>
+
       </div>
 
-      <div>
-        <span class="text-gray-400">Fecha Nacimiento:</span>
-        <span class="text-white ml-2">
-          {{ model.birth_date }}
-        </span>
+      <div
+        class="border-t border-gray-800 pt-4"
+      >
+
+        <p
+          class="text-gray-500 mb-2"
+        >
+          Fecha de nacimiento
+        </p>
+
+        <p
+          class="text-white"
+        >
+          {{ model.birth_date || '-' }}
+        </p>
+
       </div>
 
     </div>
 
   </div>
+
 </template>
 
 <script setup>
+
 defineProps({
-  model: Object
+  model: {
+    type: Object,
+    required: true
+  }
 })
+
 </script>

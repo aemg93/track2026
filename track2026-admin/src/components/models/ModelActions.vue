@@ -1,34 +1,73 @@
 <template>
 
-    <div class="flex items-center gap-2">
+  <div
+    class="flex items-center gap-2"
+  >
 
-        <button
-            class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-sm"
-            @click="$emit('view')"
-        >
-            Ver
-        </button>
+    <!-- VIEW -->
+    <button
+      @click="$emit('view')"
+      class="
+        px-4 py-2
+        rounded-xl
+        bg-gray-800
+        hover:bg-gray-700
+        border border-gray-700
+        text-gray-300
+        text-sm
+        font-medium
+        transition
+      "
+    >
+      Ver
+    </button>
 
-        <button
-            class="px-3 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm"
-            @click="$emit('edit')"
-        >
-            Editar
-        </button>
+    <!-- EDIT -->
+    <button
+      @click="$emit('edit')"
+      class="
+        px-4 py-2
+        rounded-xl
+        bg-blue-500/10
+        hover:bg-blue-500/20
+        border border-blue-500/20
+        text-blue-400
+        text-sm
+        font-medium
+        transition
+      "
+    >
+      Editar
+    </button>
 
-        <button
-            class="px-3 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm"
-            @click="$emit('delete')"
-        >
-            Borrar
-        </button>
+    <!-- DELETE -->
+    <button
+      @click="$emit('delete')"
+      class="
+        px-4 py-2
+        rounded-xl
+        bg-red-500/10
+        hover:bg-red-500/20
+        border border-red-500/20
+        text-red-400
+        text-sm
+        font-medium
+        transition
+      "
+    >
+      Eliminar
+    </button>
 
-    </div>
+  </div>
 
 </template>
 
 <script setup>
 
-defineEmits(['view', 'edit', 'delete'])
+defineEmits([
+  'view',
+  'edit',
+  'delete'
+])
 
 </script>

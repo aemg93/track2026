@@ -8,44 +8,53 @@ use Illuminate\Http\Request;
 
 class PerformanceController extends Controller
 {
-    /**
-     * LISTADO SAAS
-     */
+    
     public function index(Request $request)
     {
         $user = $request->user();
 
         $query = Performance::query();
 
-        // SCOPING
-        if ($user->hasRole('Admin')) {
-            $query->where('studio_id', $user->studio_id);
+        if ($user && method_exists($user, 'hasRole')) {
+
+            if ($user->hasRole('Admin')) {
+                $query->where('studio_id', $user->studio_id);
+            }
+
+            if ($user->hasRole('Performance')) {
+                $query->where('user_id', $user->id);
+            }
         }
 
-        if ($user->hasRole('Performance')) {
-            $query->where('user_id', $user->id);
-        }
+        if ($request->filled('search')) {
 
-        // SEARCH (FIX REAL)
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('first_name', 'like', "%{$request->search}%")
-                  ->orWhere('last_name', 'like', "%{$request->search}%")
-                  ->orWhere('nickname', 'like', "%{$request->search}%");
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('nickname', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // ACTIVE FILTER
         if ($request->filled('active')) {
             $query->where('active', $request->active);
         }
 
-        // SORT
-        $sortBy = $request->sortBy ?? 'ranking_score';
-        $order = $request->order ?? 'desc';
-        $limit = $request->limit ?? 10;
+        $sortBy = $request->get('sortBy', 'ranking_score');
+        $order = $request->get('order', 'desc');
+        $limit = $request->get('limit', 10);
 
         $performances = $query
+            ->with([
+                'earnings',
+                'bonuses',
+                'penalties',
+                'split',
+                'user',
+                'studio'
+            ])
             ->orderBy($sortBy, $order)
             ->paginate($limit);
 
@@ -55,14 +64,12 @@ class PerformanceController extends Controller
             'meta' => [
                 'page' => $performances->currentPage(),
                 'pages' => $performances->lastPage(),
-                'total' => $performances->total()
+                'total' => $performances->total(),
             ]
         ]);
     }
 
-    /**
-     * CREATE (100% ALINEADO A MIGRATION)
-     */
+    
     public function store(Request $request)
     {
         $user = $request->user();
@@ -71,44 +78,53 @@ class PerformanceController extends Controller
             'studio_id' => 'nullable|integer',
             'user_id' => 'nullable|integer',
 
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'nickname' => 'nullable|string|max:255',
 
             'email' => 'required|email|unique:performances,email',
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|max:255',
 
-            'country' => 'nullable|string',
-            'city' => 'nullable|string',
+            'country' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
 
-            'document_type' => 'nullable|string',
-            'document_number' => 'nullable|string',
+            'document_type' => 'nullable|string|max:255',
+            'document_number' => 'nullable|string|max:255',
 
             'birth_date' => 'required|date',
 
-            'active' => 'boolean',
-            'hours_streamed' => 'nullable|numeric',
+            'profile_photo' => 'nullable|string|max:2048',
+
+            'active' => 'nullable|boolean',
+            'hours_streamed' => 'nullable|integer',
             'ranking_score' => 'nullable|numeric',
         ]);
 
-        // FIX NAME
-        $data['name'] = trim($data['first_name'] . ' ' . $data['last_name']);
+        if ($user) {
+            $data['studio_id'] = $data['studio_id'] ?? $user->studio_id;
+            $data['user_id'] = $data['user_id'] ?? $user->id;
+        }
 
-        // DEFAULTS SEGURAS
-        $data['studio_id'] = $data['studio_id'] ?? $user->studio_id;
-        $data['user_id'] = $data['user_id'] ?? $user->id;
+        $data['active'] = $data['active'] ?? true;
+        $data['hours_streamed'] = $data['hours_streamed'] ?? 0;
+        $data['ranking_score'] = $data['ranking_score'] ?? 0;
 
         $performance = Performance::create($data);
 
         return response()->json([
             'success' => true,
-            'data' => $performance
+            'data' => $performance->load([
+                'earnings',
+                'bonuses',
+                'penalties',
+                'split',
+                'user',
+                'studio'
+            ])
         ], 201);
     }
 
-    /**
-     * SHOW
-     */
     public function show(Request $request, $id)
     {
         $user = $request->user();
@@ -122,12 +138,21 @@ class PerformanceController extends Controller
             'studio'
         ])->findOrFail($id);
 
-        if ($user->hasRole('Admin') && $performance->studio_id !== $user->studio_id) {
-            abort(403);
-        }
+        if ($user && method_exists($user, 'hasRole')) {
 
-        if ($user->hasRole('Performance') && $performance->user_id !== $user->id) {
-            abort(403);
+            if (
+                $user->hasRole('Admin') &&
+                $performance->studio_id != $user->studio_id
+            ) {
+                abort(403);
+            }
+
+            if (
+                $user->hasRole('Performance') &&
+                $performance->user_id != $user->id
+            ) {
+                abort(403);
+            }
         }
 
         return response()->json([
@@ -136,43 +161,65 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * UPDATE
-     */
     public function update(Request $request, $id)
     {
         $performance = Performance::findOrFail($id);
 
         $data = $request->validate([
-            'first_name' => 'sometimes|string',
-            'last_name' => 'sometimes|string',
-            'email' => 'sometimes|email',
-            'active' => 'sometimes|boolean',
-            'hours_streamed' => 'sometimes|numeric',
-            'ranking_score' => 'sometimes|numeric',
+            'studio_id' => 'nullable|integer',
+            'user_id' => 'nullable|integer',
+
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'nickname' => 'nullable|string|max:255',
+
+            'email' => 'nullable|email',
+
+            'phone' => 'nullable|string|max:255',
+
+            'country' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+
+            'document_type' => 'nullable|string|max:255',
+            'document_number' => 'nullable|string|max:255',
+
+            'birth_date' => 'nullable|date',
+
+            'profile_photo' => 'nullable|string|max:2048',
+
+            'active' => 'nullable|boolean',
+
+            'hours_streamed' => 'nullable|integer',
+            'ranking_score' => 'nullable|numeric',
         ]);
 
-        if (isset($data['first_name']) || isset($data['last_name'])) {
-            $first = $data['first_name'] ?? $performance->first_name;
-            $last = $data['last_name'] ?? $performance->last_name;
-
-            $data['name'] = trim($first . ' ' . $last);
+        if (
+            array_key_exists('profile_photo', $data) &&
+            trim((string) $data['profile_photo']) === ''
+        ) {
+            unset($data['profile_photo']);
         }
 
         $performance->update($data);
 
         return response()->json([
             'success' => true,
-            'data' => $performance
+            'data' => $performance->fresh()->load([
+                'earnings',
+                'bonuses',
+                'penalties',
+                'split',
+                'user',
+                'studio'
+            ])
         ]);
     }
 
-    /**
-     * DELETE
-     */
     public function destroy($id)
     {
         $performance = Performance::findOrFail($id);
+
         $performance->delete();
 
         return response()->json([

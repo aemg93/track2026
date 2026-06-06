@@ -1,40 +1,92 @@
 <template>
-  <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
 
-    <h2 class="text-white text-lg font-semibold mb-4">
-      Estudio
-    </h2>
+  <div
+    class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+  >
 
-    <div class="space-y-3 text-sm">
+    <div class="mb-6">
+
+      <p
+        class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+      >
+        Organización
+      </p>
+
+      <h2
+        class="text-xl font-bold text-white mt-2"
+      >
+        Estudio
+      </h2>
+
+    </div>
+
+    <div class="space-y-5">
 
       <div>
-        <span class="text-gray-400">Nombre:</span>
-        <span class="text-white ml-2">
-          {{ model.studio?.name }}
-        </span>
+
+        <p
+          class="text-gray-500 text-sm"
+        >
+          Nombre del estudio
+        </p>
+
+        <h3
+          class="text-white text-lg font-semibold mt-1"
+        >
+          {{ model.studio?.name || 'Sin estudio asignado' }}
+        </h3>
+
       </div>
 
-      <div>
-        <span class="text-gray-400">Ubicación:</span>
-        <span class="text-white ml-2">
-          {{ model.studio?.location }}
-        </span>
+      <div
+        class="border-t border-gray-800 pt-4"
+      >
+
+        <p
+          class="text-gray-500 text-sm"
+        >
+          Ubicación
+        </p>
+
+        <p
+          class="text-white mt-1"
+        >
+          {{ model.studio?.location || 'Ubicación no registrada' }}
+        </p>
+
       </div>
 
-      <div>
-        <span class="text-gray-400">ID:</span>
-        <span class="text-white ml-2">
-          {{ model.studio_id }}
+      <div
+        class="border-t border-gray-800 pt-4 flex justify-between items-center"
+      >
+
+        <span
+          class="text-gray-500"
+        >
+          ID del estudio
         </span>
+
+        <span
+          class="text-blue-400 font-semibold"
+        >
+          #{{ model.studio_id || '-' }}
+        </span>
+
       </div>
 
     </div>
 
   </div>
+
 </template>
 
 <script setup>
+
 defineProps({
-  model: Object
+  model: {
+    type: Object,
+    required: true
+  }
 })
+
 </script>

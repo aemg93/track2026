@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PerformanceResource;
 use App\Models\Performance;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ModelController extends Controller
 {
@@ -18,10 +19,9 @@ class ModelController extends Controller
 
         if ($request->filled('search')) {
 
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
-
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('nickname', 'like', "%{$search}%")
@@ -30,32 +30,15 @@ class ModelController extends Controller
         }
 
         if ($request->filled('status')) {
-
-            $query->where(
-                'active',
-                $request->status === 'active'
-            );
+            $query->where('active', $request->status === 'active');
         }
 
         $sortBy = $request->get('sortBy', 'ranking_score');
         $order = $request->get('order', 'desc');
 
-        $allowedSorts = [
-            'ranking_score',
-            'hours_streamed',
-            'created_at',
-            'first_name',
-            'last_name'
-        ];
+        $limit = (int) $request->get('limit', 10);
 
-        if (! in_array($sortBy, $allowedSorts)) {
-            $sortBy = 'ranking_score';
-        }
-
-        $limit = $request->get('limit', 10);
-
-        $models = $query
-            ->with([
+        $models = $query->with([
                 'earnings',
                 'bonuses',
                 'penalties',
@@ -68,9 +51,7 @@ class ModelController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => PerformanceResource::collection(
-                $models->items()
-            ),
+            'data' => PerformanceResource::collection($models->items()),
             'meta' => [
                 'page' => $models->currentPage(),
                 'pages' => $models->lastPage(),
@@ -100,12 +81,11 @@ class ModelController extends Controller
     }
 
     /**
-     * CREATE
+     * STORE
      */
     public function store(Request $request)
     {
         $data = $request->validate([
-
             'studio_id' => 'required|integer',
             'user_id' => 'nullable|integer',
 
@@ -125,10 +105,9 @@ class ModelController extends Controller
 
             'birth_date' => 'required|date',
 
-            'profile_photo' => 'nullable|string',
+            'profile_photo' => 'nullable|url|max:2048',
 
             'active' => 'boolean',
-
             'hours_streamed' => 'nullable|integer',
             'ranking_score' => 'nullable|numeric',
         ]);
@@ -141,66 +120,65 @@ class ModelController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new PerformanceResource(
-                $model->load([
-                    'earnings',
-                    'bonuses',
-                    'penalties',
-                    'split',
-                    'user',
-                    'studio'
-                ])
-            )
+            'data' => new PerformanceResource($model)
         ], 201);
     }
 
     /**
-     * UPDATE
+     * UPDATE (FIX REAL)
      */
     public function update(Request $request, $id)
     {
         $model = Performance::findOrFail($id);
 
         $data = $request->validate([
+            'studio_id' => 'nullable|integer',
+            'user_id' => 'nullable|integer',
 
-            'first_name' => 'sometimes|string|max:255',
-            'last_name' => 'sometimes|string|max:255',
-            'nickname' => 'sometimes|nullable|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'nickname' => 'nullable|string|max:255',
 
-            'email' => 'sometimes|email',
-            'phone' => 'sometimes|nullable|string|max:255',
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('performances', 'email')->ignore($model->id),
+            ],
 
-            'country' => 'sometimes|nullable|string|max:255',
-            'city' => 'sometimes|nullable|string|max:255',
-            'address' => 'sometimes|nullable|string',
+            'phone' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
 
-            'document_type' => 'sometimes|nullable|string|max:255',
-            'document_number' => 'sometimes|nullable|string|max:255',
+            'document_type' => 'nullable|string|max:255',
+            'document_number' => 'nullable|string|max:255',
 
-            'birth_date' => 'sometimes|date',
+            'birth_date' => 'nullable|date',
 
-            'profile_photo' => 'sometimes|nullable|string',
+            'profile_photo' => 'nullable|url|max:2048',
 
-            'active' => 'sometimes|boolean',
-
-            'hours_streamed' => 'sometimes|integer',
-            'ranking_score' => 'sometimes|numeric',
+            'active' => 'nullable|boolean',
+            'hours_streamed' => 'nullable|integer',
+            'ranking_score' => 'nullable|numeric',
         ]);
 
-        $model->update($data);
+        // 🔥 FIX: no borrar foto si viene vacía
+        if (array_key_exists('profile_photo', $data) && empty($data['profile_photo'])) {
+            unset($data['profile_photo']);
+        }
+
+        $model->fill($data)->save();
 
         return response()->json([
             'success' => true,
-            'data' => new PerformanceResource(
-                $model->fresh()->load([
-                    'earnings',
-                    'bonuses',
-                    'penalties',
-                    'split',
-                    'user',
-                    'studio'
-                ])
-            )
+            'data' => new PerformanceResource($model->fresh()->load([
+                'earnings',
+                'bonuses',
+                'penalties',
+                'split',
+                'user',
+                'studio'
+            ]))
         ]);
     }
 
@@ -210,7 +188,6 @@ class ModelController extends Controller
     public function destroy($id)
     {
         $model = Performance::findOrFail($id);
-
         $model->delete();
 
         return response()->json([

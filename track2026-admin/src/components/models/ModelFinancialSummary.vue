@@ -1,50 +1,109 @@
 <template>
-  <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
 
-    <h2 class="text-xl text-white mb-4">
-      Finanzas
-    </h2>
+  <div>
 
-    <div class="grid grid-cols-4 gap-4 text-center">
+    <div class="mb-6">
+      <h2
+        class="text-2xl font-bold text-white mt-2"
+      >
+        Resumen Financiero
+      </h2>
 
-      <div>
-        <p class="text-gray-400">Ganancias</p>
-        <p class="text-white font-bold">
+    </div>
+
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
+    >
+
+      <!-- GANANCIAS -->
+      <div
+        class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+      >
+
+        <p
+          class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+        >
+          Ganancias
+        </p>
+
+        <h2
+          class="text-4xl font-bold text-white mt-4"
+        >
           ${{ earnings }}
-        </p>
+        </h2>
+
       </div>
 
-      <div>
-        <p class="text-gray-400">Bonos</p>
-        <p class="text-green-400 font-bold">
+      <!-- BONOS -->
+      <div
+        class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+      >
+
+        <p
+          class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+        >
+          Bonos
+        </p>
+
+        <h2
+          class="text-4xl font-bold text-green-400 mt-4"
+        >
           ${{ bonuses }}
-        </p>
+        </h2>
+
       </div>
 
-      <div>
-        <p class="text-gray-400">Multas</p>
-        <p class="text-red-400 font-bold">
+      <!-- MULTAS -->
+      <div
+        class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+      >
+
+        <p
+          class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+        >
+          Multas
+        </p>
+
+        <h2
+          class="text-4xl font-bold text-red-400 mt-4"
+        >
           ${{ penalties }}
-        </p>
+        </h2>
+
       </div>
 
-      <div>
-        <p class="text-gray-400">Neto</p>
-        <p class="text-yellow-400 font-bold">
-          ${{ net }}
+      <!-- NETO -->
+      <div
+        class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
+      >
+
+        <p
+          class="text-gray-500 text-xs uppercase tracking-[0.2em]"
+        >
+          Neto
         </p>
+
+        <h2
+          class="text-4xl font-bold text-yellow-400 mt-4"
+        >
+          ${{ net }}
+        </h2>
+
       </div>
 
     </div>
 
   </div>
+
 </template>
 
 <script setup>
+
 defineProps({
   earnings: String,
   bonuses: String,
   penalties: String,
   net: String
 })
+
 </script>

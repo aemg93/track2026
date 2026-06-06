@@ -3,6 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Studio;
+use App\Models\User;
+use App\Models\Earning;
+use App\Models\Bonus;
+use App\Models\Penalty;
+use App\Models\Sale;
+use App\Models\PerformanceSplit;
+use App\Models\Platform;
 
 class Performance extends Model
 {
@@ -71,6 +79,32 @@ class Performance extends Model
     public function split()
     {
         return $this->hasOne(PerformanceSplit::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PLATFORMS (MANY TO MANY PRO)
+    |--------------------------------------------------------------------------
+    */
+
+    public function platforms()
+    {
+        return $this->belongsToMany(
+            Platform::class,
+            'performance_platform',
+            'performance_id',
+            'platform_id'
+        )
+        ->withPivot([
+            'hours_streamed',
+            'earnings_usd',
+            'tokens',
+            'multiplier',
+            'conversion_rate',
+            'ranking_score',
+            'recorded_at',
+        ])
+        ->withTimestamps();
     }
 
     /*
