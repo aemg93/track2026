@@ -45,25 +45,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | MODELS (PERFORMANCE CRUD)
+    | MODELS (ÚNICA FUENTE DE VERDAD)
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/models', [PerformanceController::class, 'index']);
-    Route::post('/models', [PerformanceController::class, 'store']);
-    Route::get('/models/{id}', [PerformanceController::class, 'show']);
-    Route::put('/models/{id}', [PerformanceController::class, 'update']);
-    Route::delete('/models/{id}', [PerformanceController::class, 'destroy']);
+    // Route::get('/models', [PerformanceController::class, 'index']);
+    // Route::post('/models', [PerformanceController::class, 'store']);
+    // Route::get('/models/{id}', [PerformanceController::class, 'show']);
+    // Route::put('/models/{id}', [PerformanceController::class, 'update']);
+    // Route::delete('/models/{id}', [PerformanceController::class, 'destroy']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | RAW PERFORMANCES (ADMIN VIEW)
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/performances', [PerformanceController::class, 'index']);
-    Route::get('/performances/{id}', [PerformanceController::class, 'show']);
-
+       Route::prefix('models')->group(function () {
+       Route::get('/', [PerformanceController::class, 'index']);
+       Route::post('/', [PerformanceController::class, 'store']);
+       Route::get('/{id}', [PerformanceController::class, 'show']);
+       Route::put('/{id}', [PerformanceController::class, 'update']);
+    Route::delete('/{id}', [PerformanceController::class, 'destroy']);
+});
     /*
     |--------------------------------------------------------------------------
     | FINANCIAL MODULES
