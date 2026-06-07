@@ -55,12 +55,27 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::put('/models/{id}', [PerformanceController::class, 'update']);
     // Route::delete('/models/{id}', [PerformanceController::class, 'destroy']);
 
-       Route::prefix('models')->group(function () {
-       Route::get('/', [PerformanceController::class, 'index']);
-       Route::post('/', [PerformanceController::class, 'store']);
-       Route::get('/{id}', [PerformanceController::class, 'show']);
-       Route::put('/{id}', [PerformanceController::class, 'update']);
+      Route::prefix('models')->group(function () {
+
+    Route::get('/', [PerformanceController::class, 'index']);
+    Route::post('/', [PerformanceController::class, 'store']);
+    Route::get('/{id}', [PerformanceController::class, 'show']);
+    Route::put('/{id}', [PerformanceController::class, 'update']);
     Route::delete('/{id}', [PerformanceController::class, 'destroy']);
+
+});
+
+Route::prefix('performances')->group(function () {
+
+    Route::get('/', [PerformanceController::class, 'index']);
+    Route::post('/', [PerformanceController::class, 'store']);
+    Route::get('/{id}', [PerformanceController::class, 'show']);
+    Route::put('/{id}', [PerformanceController::class, 'update']);
+    Route::delete('/{id}', [PerformanceController::class, 'destroy']);
+
+
+
+
 });
     /*
     |--------------------------------------------------------------------------

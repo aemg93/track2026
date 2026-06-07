@@ -2,13 +2,13 @@
 
   <div v-if="model" class="space-y-10">
 
-    <!-- 1. HEADER (IDENTIDAD + RANK + PROGRESO) -->
+    <!-- HEADER -->
     <ModelHeader :model="model" />
 
-    <!-- 2. KPIS -->
+    <!-- KPIS -->
     <ModelKpis :model="model" />
 
-    <!-- 3. FINANZAS (PRIORIDAD PRINCIPAL) -->
+    <!-- FINANZAS -->
     <section class="space-y-4">
 
       <div>
@@ -26,7 +26,7 @@
 
     </section>
 
-    <!-- 4. HISTORIAL FINANCIERO -->
+    <!-- HISTORIAL -->
     <section class="space-y-4">
 
       <div class="flex items-center justify-between">
@@ -47,7 +47,7 @@
 
     </section>
 
-    <!-- 5. PERFIL (COLAPSABLE / MENOS RUIDO VISUAL) -->
+    <!-- PERFIL -->
     <section class="space-y-4">
 
       <details
@@ -74,7 +74,6 @@
 
   </div>
 
-  <!-- LOADING -->
   <div
     v-else
     class="flex justify-center items-center h-96 text-gray-400"
@@ -90,15 +89,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
 
-/* =======================
-   COMPONENTS
-======================= */
-
 import ModelHeader from '../components/models/ModelHeader.vue'
 import ModelKpis from '../components/models/ModelKpis.vue'
-
 import ModelFinancialSummary from '../components/models/ModelFinancialSummary.vue'
-
 import ModelPersonalInfo from '../components/models/ModelPersonalInfo.vue'
 import ModelDocuments from '../components/models/ModelDocuments.vue'
 import ModelStudioInfo from '../components/models/ModelStudioInfo.vue'
@@ -107,28 +100,18 @@ import EarningsTable from '../components/models/history/EarningsTable.vue'
 import BonusesTable from '../components/models/history/BonusesTable.vue'
 import PenaltiesTable from '../components/models/history/PenaltiesTable.vue'
 
-/* =======================
-   STATE
-======================= */
-
 const route = useRoute()
-const model = ref(null)
 
-/* =======================
-   HELPERS
-======================= */
+const model = ref(null)
 
 const safe = (value) =>
   Array.isArray(value) ? value : []
 
-/* =======================
-   FINANCIAL CALCULATIONS
-======================= */
-
 const totalEarnings = computed(() =>
   safe(model.value?.earnings)
-    .reduce((acc, e) =>
-      acc + parseFloat(e.amount_usd || e.amount || 0),
+    .reduce(
+      (acc, e) =>
+        acc + parseFloat(e.amount_usd || e.amount || 0),
       0
     )
     .toFixed(2)
@@ -136,8 +119,9 @@ const totalEarnings = computed(() =>
 
 const totalBonuses = computed(() =>
   safe(model.value?.bonuses)
-    .reduce((acc, b) =>
-      acc + parseFloat(b.amount || 0),
+    .reduce(
+      (acc, b) =>
+        acc + parseFloat(b.amount || 0),
       0
     )
     .toFixed(2)
@@ -145,8 +129,9 @@ const totalBonuses = computed(() =>
 
 const totalPenalties = computed(() =>
   safe(model.value?.penalties)
-    .reduce((acc, p) =>
-      acc + parseFloat(p.amount || 0),
+    .reduce(
+      (acc, p) =>
+        acc + parseFloat(p.amount || 0),
       0
     )
     .toFixed(2)
@@ -160,15 +145,12 @@ const netTotal = computed(() =>
   ).toFixed(2)
 )
 
-/* =======================
-   LOAD MODEL
-======================= */
-
 const load = async () => {
+
   try {
 
     const { data } = await api.get(
-      `/models/${route.params.id}`
+      `/performances/${route.params.id}`
     )
 
     model.value = data.data
@@ -178,7 +160,9 @@ const load = async () => {
     console.error(error)
 
     model.value = null
+
   }
+
 }
 
 onMounted(load)

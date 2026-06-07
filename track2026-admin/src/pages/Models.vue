@@ -1,76 +1,70 @@
 <template>
+  <div class="h-[calc(100vh-120px)] flex flex-col space-y-6">
 
-    <div class="h-[calc(100vh-120px)] flex flex-col space-y-6">
+    <div class="flex items-center justify-between shrink-0">
 
-        <!-- HEADER -->
-        <div class="flex items-center justify-between shrink-0">
+      <div>
+        <h1 class="text-4xl font-bold text-white">Modelos</h1>
+        <p class="text-gray-400 mt-2">
+          Gestión de modelos del estudio
+        </p>
+      </div>
 
-            <div>
-
-                <h1 class="text-4xl font-bold text-white">Modelos</h1>
-
-                <p class="text-gray-400 mt-2">
-                    Gestión de modelos del estudio
-                </p>
-
-            </div>
-
-            <button
-                @click="router.push('/models/create')"
-                class="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-semibold"
-            >
-                Nueva Modelo
-            </button>
-
-        </div>
-
-        <!-- FILTERS -->
-        <div class="shrink-0">
-            <ModelsFilters
-                :search="search"
-                :status="status"
-                :sort-by="sortBy"
-                @update="handleFilters"
-            />
-        </div>
-
-        <!-- TABLE -->
-        <div
-            ref="scrollContainer"
-            class="flex-1 overflow-y-auto pr-2"
-        >
-
-            <ModelsTable
-                :models="models"
-                @view="handleView"
-                @edit="handleEdit"
-                @delete="handleDelete"
-            />
-
-            <!-- LOADING -->
-            <div v-if="loading" class="text-center py-6 text-gray-400">
-                Cargando modelos...
-            </div>
-
-            <!-- OBSERVER -->
-            <div ref="observerTarget" class="h-10"></div>
-
-            <!-- END -->
-            <div
-                v-if="meta.page >= meta.pages && models.length"
-                class="text-center py-6 text-gray-500 text-sm"
-            >
-                No hay más modelos para mostrar
-            </div>
-
-        </div>
+      <button
+        @click="router.push('/models/create')"
+        class="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-semibold"
+      >
+        Nueva Modelo
+      </button>
 
     </div>
 
+    <div class="shrink-0">
+      <ModelsFilters
+        :search="search"
+        :status="status"
+        :sort-by="sortBy"
+        @update="handleFilters"
+      />
+    </div>
+
+    <div
+      ref="scrollContainer"
+      class="flex-1 overflow-y-auto pr-2"
+    >
+
+      <ModelsTable
+        :models="models"
+        @view="handleView"
+        @edit="handleEdit"
+        @delete="handleDelete"
+      />
+
+      <div
+        v-if="loading"
+        class="text-center py-6 text-gray-400"
+      >
+        Cargando modelos...
+      </div>
+
+      <div
+        ref="observerTarget"
+        class="h-10"
+      ></div>
+
+      <div
+        v-if="meta.page >= meta.pages && models.length"
+        class="text-center py-6 text-gray-500 text-sm"
+      >
+        No hay más modelos para mostrar
+      </div>
+
+    </div>
+
+  </div>
 </template>
 
 <script setup>
-
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
@@ -80,13 +74,8 @@ import ModelsFilters from '../components/models/ModelsFilters.vue'
 
 const router = useRouter()
 
-/*
-|--------------------------------------------------------------------------
-| STATE
-|--------------------------------------------------------------------------
-*/
-
 const models = ref([])
+
 const search = ref('')
 const status = ref('')
 const sortBy = ref('ranking_score')
@@ -98,9 +87,9 @@ const limit = ref(10)
 const loading = ref(false)
 
 const meta = ref({
-    page: 1,
-    pages: 1,
-    total: 0
+  page: 1,
+  pages: 1,
+  total: 0
 })
 
 const scrollContainer = ref(null)
@@ -108,161 +97,122 @@ const observerTarget = ref(null)
 
 let observer = null
 
-/*
-|--------------------------------------------------------------------------
-| LOAD MODELS
-|--------------------------------------------------------------------------
-*/
-
 const loadModels = async (append = false) => {
+  if (loading.value) return
 
-    if (loading.value) return
+  loading.value = true
 
-    loading.value = true
-
-    try {
-
-        const { data } = await api.get('/models', {
-            params: {
-                page: page.value,
-                limit: limit.value,
-                search: search.value,
-                status: status.value,
-                sortBy: sortBy.value,
-                order: order.value,
-            }
-        })
-
-        models.value = append
-            ? [...models.value, ...(data.data || [])]
-            : (data.data || [])
-
-        meta.value = data.meta || {
-            page: 1,
-            pages: 1,
-            total: 0
-        }
-
-    } catch (error) {
-
-        console.error(error)
-
-        if (!append) models.value = []
-
-    } finally {
-
-        loading.value = false
-    }
-}
-
-/*
-|--------------------------------------------------------------------------
-| FILTERS
-|--------------------------------------------------------------------------
-*/
-
-const handleFilters = async (filters) => {
-
-    search.value = filters.search || ''
-    status.value = filters.status || ''
-    sortBy.value = filters.sortBy || 'ranking_score'
-
-    page.value = 1
-    models.value = []
-
-    await loadModels(false)
-}
-
-/*
-|--------------------------------------------------------------------------
-| PAGINATION
-|--------------------------------------------------------------------------
-*/
-
-const loadMore = async () => {
-
-    if (loading.value) return
-    if (page.value >= meta.value.pages) return
-
-    page.value++
-    await loadModels(true)
-}
-
-/*
-|--------------------------------------------------------------------------
-| INFINITE SCROLL
-|--------------------------------------------------------------------------
-*/
-
-const createObserver = () => {
-
-    observer = new IntersectionObserver(async ([entry]) => {
-
-        if (entry.isIntersecting) {
-            await loadMore()
-        }
-
-    }, {
-        root: scrollContainer.value,
-        threshold: 0.1
+  try {
+    const { data } = await api.get('/performances', {
+      params: {
+        page: page.value,
+        limit: limit.value,
+        search: search.value,
+        active: status.value,
+        sortBy: sortBy.value,
+        order: order.value
+      }
     })
 
-    if (observerTarget.value) {
-        observer.observe(observerTarget.value)
+    models.value = append
+      ? [...models.value, ...(data.data || [])]
+      : (data.data || [])
+
+    meta.value = data.meta || {
+      page: 1,
+      pages: 1,
+      total: 0
     }
+
+  } catch (error) {
+    console.error(error)
+
+    if (!append) {
+      models.value = []
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
-/*
-|--------------------------------------------------------------------------
-| ACTIONS
-|--------------------------------------------------------------------------
-*/
+const handleFilters = async (filters) => {
+  search.value = filters.search || ''
+  status.value = filters.status || ''
+  sortBy.value = filters.sortBy || 'ranking_score'
+
+  page.value = 1
+  models.value = []
+
+  await loadModels(false)
+}
+
+const loadMore = async () => {
+  if (loading.value) return
+
+  if (page.value >= meta.value.pages) return
+
+  page.value++
+
+  await loadModels(true)
+}
+
+const createObserver = () => {
+  observer = new IntersectionObserver(
+    async ([entry]) => {
+      if (entry.isIntersecting) {
+        await loadMore()
+      }
+    },
+    {
+      root: scrollContainer.value,
+      threshold: 0.1
+    }
+  )
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value)
+  }
+}
 
 const handleView = (model) => {
-    router.push(`/models/${model.id}`)
+  router.push(`/models/${model.id}`)
 }
 
 const handleEdit = (model) => {
-    router.push(`/models/${model.id}/edit`)
+  router.push(`/models/${model.id}/edit`)
 }
 
 const handleDelete = async (model) => {
+  const name = model.first_name
+    ? `${model.first_name} ${model.last_name ?? ''}`.trim()
+    : model.nickname ?? 'este modelo'
 
-    const name = model.first_name
-        ? `${model.first_name} ${model.last_name ?? ''}`.trim()
-        : model.nickname ?? 'este modelo'
+  if (!confirm(`¿Eliminar ${name}?`)) {
+    return
+  }
 
-    if (!confirm(`¿Eliminar ${name}?`)) return
+  try {
+    await api.delete(`/performances/${model.id}`)
 
-    try {
+    models.value = models.value.filter(
+      m => m.id !== model.id
+    )
 
-        await api.delete(`/models/${model.id}`)
-
-        models.value = models.value.filter(m => m.id !== model.id)
-
-    } catch (error) {
-
-        console.error(error)
-        alert('Error eliminando modelo')
-    }
+  } catch (error) {
+    console.error(error)
+    alert('Error eliminando modelo')
+  }
 }
 
-/*
-|--------------------------------------------------------------------------
-| LIFECYCLE
-|--------------------------------------------------------------------------
-*/
-
 onMounted(async () => {
+  await loadModels()
 
-    await loadModels()
-    await nextTick()
-    createObserver()
+  await nextTick()
 
+  createObserver()
 })
 
 onUnmounted(() => {
-    observer?.disconnect()
+  observer?.disconnect()
 })
-
 </script>

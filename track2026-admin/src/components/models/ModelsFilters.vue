@@ -1,10 +1,10 @@
+```vue
 <template>
 
     <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
 
         <div class="flex flex-col md:flex-row gap-4 relative">
 
-            <!-- SEARCH -->
             <div class="relative flex-1">
 
                 <input
@@ -15,9 +15,8 @@
                     class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500"
                 />
 
-                <!-- AUTOCOMPLETE -->
                 <div
-                    v-if="suggestions.length > 0"
+                    v-if="suggestions.length"
                     class="absolute left-0 right-0 z-50 mt-2 bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-lg"
                 >
 
@@ -46,7 +45,6 @@
 
             </div>
 
-            <!-- STATUS -->
             <select
                 v-model="localStatus"
                 @change="emitChange"
@@ -67,7 +65,6 @@
 
             </select>
 
-            <!-- SORT -->
             <select
                 v-model="localSort"
                 @change="emitChange"
@@ -115,12 +112,6 @@ const suggestions = ref([])
 
 let timeout = null
 
-/*
-|--------------------------------------------------------------------------
-| SEARCH
-|--------------------------------------------------------------------------
-*/
-
 const handleSearch = () => {
 
     clearTimeout(timeout)
@@ -129,25 +120,27 @@ const handleSearch = () => {
 
         emitChange()
 
-        if (localSearch.value.trim() === '') {
+        if (!localSearch.value.trim()) {
+
             suggestions.value = []
             return
+
         }
 
         try {
 
-            const { data } = await api.get('/models', {
+            const { data } = await api.get('/performances', {
                 params: {
                     search: localSearch.value,
-                    limit: 5,
-                },
+                    limit: 5
+                }
             })
 
             suggestions.value = data.data || []
 
         } catch (error) {
 
-            console.error('Autocomplete error:', error)
+            console.error(error)
             suggestions.value = []
 
         }
@@ -156,19 +149,12 @@ const handleSearch = () => {
 
 }
 
-/*
-|--------------------------------------------------------------------------
-| SELECT MODEL
-|--------------------------------------------------------------------------
-*/
-
 const selectModel = (model) => {
 
-    localSearch.value = (
+    localSearch.value =
         model.first_name && model.last_name
             ? `${model.first_name} ${model.last_name}`
             : model.nickname || ''
-    )
 
     suggestions.value = []
 
@@ -176,20 +162,12 @@ const selectModel = (model) => {
 
 }
 
-/*
-|--------------------------------------------------------------------------
-| EMIT FILTERS
-|--------------------------------------------------------------------------
-*/
-
 const emitChange = () => {
 
     emit('update', {
-
         search: localSearch.value,
         status: localStatus.value,
-        sortBy: localSort.value,
-
+        sortBy: localSort.value
     })
 
 }

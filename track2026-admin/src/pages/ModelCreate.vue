@@ -1,3 +1,4 @@
+```vue
 <template>
 
     <div class="max-w-4xl mx-auto space-y-6">
@@ -18,69 +19,146 @@
             <!-- NOMBRE / APELLIDO -->
             <div class="grid grid-cols-2 gap-4">
 
-                <input v-model="form.first_name" class="input" placeholder="Nombre *" />
-                <input v-model="form.last_name" class="input" placeholder="Apellido *" />
+                <input
+                    v-model="form.first_name"
+                    class="input"
+                    placeholder="Nombre *"
+                />
+
+                <input
+                    v-model="form.last_name"
+                    class="input"
+                    placeholder="Apellido *"
+                />
 
             </div>
 
             <!-- NICKNAME -->
-            <input v-model="form.nickname" class="input" placeholder="Nickname" />
+            <input
+                v-model="form.nickname"
+                class="input"
+                placeholder="Nickname"
+            />
 
             <!-- EMAIL -->
-            <input v-model="form.email" type="email" class="input" placeholder="Email *" />
+            <input
+                v-model="form.email"
+                type="email"
+                class="input"
+                placeholder="Email *"
+            />
 
             <!-- TELEFONO -->
-            <input v-model="form.phone" class="input" placeholder="Teléfono" />
+            <input
+                v-model="form.phone"
+                class="input"
+                placeholder="Teléfono"
+            />
 
             <!-- PAÍS / CIUDAD -->
             <div class="grid grid-cols-2 gap-4">
 
-                <input v-model="form.country" class="input" placeholder="País" />
-                <input v-model="form.city" class="input" placeholder="Ciudad" />
+                <input
+                    v-model="form.country"
+                    class="input"
+                    placeholder="País"
+                />
+
+                <input
+                    v-model="form.city"
+                    class="input"
+                    placeholder="Ciudad"
+                />
 
             </div>
 
             <!-- DIRECCIÓN -->
-            <input v-model="form.address" class="input" placeholder="Dirección" />
+            <input
+                v-model="form.address"
+                class="input"
+                placeholder="Dirección"
+            />
 
             <!-- DOCUMENTO -->
             <div class="grid grid-cols-2 gap-4">
 
-                <select v-model="form.document_type" class="input">
+                <select
+                    v-model="form.document_type"
+                    class="input"
+                >
                     <option value="">Tipo de documento</option>
                     <option value="cc">Cédula de Ciudadanía</option>
                     <option value="ce">Cédula de Extranjería</option>
                     <option value="passport">Pasaporte</option>
                 </select>
 
-                <input v-model="form.document_number" class="input" placeholder="Número documento" />
+                <input
+                    v-model="form.document_number"
+                    class="input"
+                    placeholder="Número documento"
+                />
 
             </div>
 
             <!-- FECHA NACIMIENTO -->
-            <input v-model="form.birth_date" type="date" class="input" />
+            <input
+                v-model="form.birth_date"
+                type="date"
+                class="input"
+            />
 
-            <!-- PROFILE PHOTO -->
-            <input v-model="form.profile_photo" class="input" placeholder="URL foto perfil" />
+            <!-- FOTO PERFIL -->
+            <input
+                v-model="form.profile_photo"
+                class="input"
+                placeholder="URL foto perfil"
+            />
 
-            <!-- STUDIO ID (REQUIRED) -->
-            <input v-model="form.studio_id" type="number" class="input" placeholder="Studio ID *" />
+            <!-- STUDIO -->
+            <input
+                v-model="form.studio_id"
+                type="number"
+                class="input"
+                placeholder="Studio ID"
+            />
 
-            <!-- USER ID -->
-            <input v-model="form.user_id" type="number" class="input" placeholder="User ID (opcional)" />
+            <!-- USER -->
+            <input
+                v-model="form.user_id"
+                type="number"
+                class="input"
+                placeholder="User ID (opcional)"
+            />
 
             <!-- HOURS / RANKING -->
             <div class="grid grid-cols-2 gap-4">
 
-                <input v-model="form.hours_streamed" type="number" class="input" placeholder="Horas stream" />
-                <input v-model="form.ranking_score" type="number" class="input" placeholder="Ranking score" />
+                <input
+                    v-model="form.hours_streamed"
+                    type="number"
+                    class="input"
+                    placeholder="Horas stream"
+                />
+
+                <input
+                    v-model="form.ranking_score"
+                    type="number"
+                    class="input"
+                    placeholder="Ranking score"
+                />
 
             </div>
 
             <!-- ACTIVE -->
             <label class="flex items-center gap-3 text-white">
-                <input type="checkbox" v-model="form.active" />
+
+                <input
+                    type="checkbox"
+                    v-model="form.active"
+                />
+
                 Activa
+
             </label>
 
             <!-- ACTIONS -->
@@ -104,7 +182,10 @@
             </div>
 
             <!-- ERROR -->
-            <p v-if="error" class="text-red-400 text-sm">
+            <p
+                v-if="error"
+                class="text-red-400 text-sm"
+            >
                 {{ error }}
             </p>
 
@@ -128,20 +209,28 @@ const error = ref('')
 const form = ref({
 
     studio_id: null,
+    user_id: null,
+
     first_name: '',
     last_name: '',
-    email: '',
-    birth_date: '',
     nickname: '',
+
+    email: '',
     phone: '',
+
     country: '',
     city: '',
     address: '',
+
     document_type: '',
     document_number: '',
+
+    birth_date: '',
+
     profile_photo: '',
-    user_id: null,
+
     active: true,
+
     hours_streamed: 0,
     ranking_score: 0
 
@@ -155,28 +244,53 @@ const createModel = async () => {
     try {
 
         const payload = {
+
             ...form.value,
-            active: form.value.active ? 1 : 0
+
+            studio_id: form.value.studio_id || null,
+            user_id: form.value.user_id || null,
+
+            active: form.value.active ? 1 : 0,
+
+            hours_streamed: Number(
+                form.value.hours_streamed || 0
+            ),
+
+            ranking_score: Number(
+                form.value.ranking_score || 0
+            )
+
         }
 
-        const { data } = await api.post('/models', payload)
+        const { data } = await api.post(
+            '/performances',
+            payload
+        )
 
-        router.push(`/models/${data.data.id}`)
+        router.push(
+            `/models/${data.data.id}`
+        )
 
     } catch (e) {
+
+        console.error(e)
 
         error.value =
             e?.response?.data?.message ||
             'Error creando modelo'
 
     } finally {
+
         loading.value = false
+
     }
+
 }
 
 </script>
 
 <style scoped>
+
 .input {
     width: 100%;
     padding: 12px;
@@ -190,4 +304,5 @@ const createModel = async () => {
 .input:focus {
     border-color: #3b82f6;
 }
+
 </style>
