@@ -37,11 +37,7 @@ const routes = [
                 path: 'dashboard',
                 component: Dashboard,
             },
-
-            // =========================
-            // MODELS MODULE
-            // =========================
-
+            
             {
                 path: 'models',
                 name: 'models.index',
@@ -67,10 +63,6 @@ const routes = [
                 component: ModelEdit,
                 props: true,
             },
-
-            // =========================
-            // OTHER MODULES
-            // =========================
 
             {
                 path: 'finances',
