@@ -11,7 +11,7 @@
       </div>
 
       <button
-        @click="router.push('/models/create')"
+        @click="router.push('/performances/create')"
         class="px-6 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-semibold"
       >
         Nueva Modelo
@@ -175,11 +175,11 @@ const createObserver = () => {
 }
 
 const handleView = (model) => {
-  router.push(`/models/${model.id}`)
+  router.push(`/performances/${model.id}`)
 }
 
 const handleEdit = (model) => {
-  router.push(`/models/${model.id}/edit`)
+  router.push(`/performances/${model.id}/edit`)
 }
 
 const handleDelete = async (model) => {

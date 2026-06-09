@@ -297,7 +297,7 @@ const onImgError = (e) => {
 }
 
 const goBack = () => {
-  router.push('/models')
+  router.push('/performances')
 }
 
 onMounted(loadModel)

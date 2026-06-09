@@ -6,7 +6,7 @@ import Dashboard from '../pages/Dashboard.vue'
 import Models from '../pages/Models.vue'
 import ModelShow from '../pages/ModelShow.vue'
 import ModelEdit from '../pages/ModelEdit.vue'
-import ModelCreate from '../pages/ModelCreate.vue' // opcional (recomendado)
+import ModelCreate from '../pages/ModelCreate.vue'
 
 import Finances from '../pages/Finances.vue'
 import Analytics from '../pages/Analytics.vue'
@@ -32,34 +32,33 @@ const routes = [
         meta: { requiresAuth: true },
 
         children: [
-
             {
                 path: 'dashboard',
                 component: Dashboard,
             },
-            
+
             {
-                path: 'models',
-                name: 'models.index',
+                path: 'performances',
+                name: 'performances.index',
                 component: Models,
             },
 
             {
-                path: 'models/create',
-                name: 'models.create',
+                path: 'performances/create',
+                name: 'performances.create',
                 component: ModelCreate,
             },
 
             {
-                path: 'models/:id',
-                name: 'models.show',
+                path: 'performances/:id',
+                name: 'performances.show',
                 component: ModelShow,
                 props: true,
             },
 
             {
-                path: 'models/:id/edit',
-                name: 'models.edit',
+                path: 'performances/:id/edit',
+                name: 'performances.edit',
                 component: ModelEdit,
                 props: true,
             },

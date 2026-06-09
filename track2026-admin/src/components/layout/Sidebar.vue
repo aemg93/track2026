@@ -67,7 +67,7 @@ const route = useRoute()
 const menu = [
 
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    { name: 'Modelos', path: '/models', icon: '👩' },
+    { name: 'Modelos', path: '/performances', icon: '👩' },
     { name: 'Finanzas', path: '/finances', icon: '💰' },
     { name: 'Analytics', path: '/analytics', icon: '📈' },
     { name: 'Configuración', path: '/settings', icon: '⚙️' },

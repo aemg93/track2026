@@ -172,10 +172,10 @@
                     {{ loading ? 'Creando...' : 'Crear Modelo' }}
                 </button>
 
-                <button
-                    @click="router.push('/models')"
-                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl"
-                >
+               <button
+                      @click="router.push('/performances')"
+                      class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl"
+                    >
                     Cancelar
                 </button>
 
@@ -268,7 +268,7 @@ const createModel = async () => {
         )
 
         router.push(
-            `/models/${data.data.id}`
+            `/performances/${data.data.id}`
         )
 
     } catch (e) {
