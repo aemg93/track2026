@@ -171,15 +171,6 @@ const load = async () => {
       `/performances/${route.params.id}`
     )
 
-    console.log('PERFORMANCE API', data)
-
-    performance.value = data.data
-
-    console.log(
-      'PERFORMANCE RAW',
-      performance.value
-    )
-
   } catch (error) {
 
     console.error(error)
