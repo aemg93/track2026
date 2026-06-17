@@ -50,17 +50,15 @@ class StatisticsService
      */
     private function cached(Performance $performance, string $range, callable $callback)
     {
-        $key = $this->cacheKey($performance->id, $range);
-
         return Cache::remember(
-            $key,
+            $this->cacheKey($performance->id, $range),
             now()->addMinutes(10),
             $callback
         );
     }
 
     /**
-     * CENTRAL CACHE KEY
+     * CACHE KEY
      */
     private function cacheKey(int $performanceId, string $range): string
     {
@@ -68,7 +66,7 @@ class StatisticsService
     }
 
     /**
-     * CORE CALCULATION
+     * CORE CALCULATION (FIXED)
      */
     private function sumRange(
         Performance $performance,
@@ -79,9 +77,21 @@ class StatisticsService
         $startDate = $start->toDateString();
         $endDate   = $end->toDateString();
 
-        $earnings = $performance->earnings()
-            ->whereBetween('date', [$startDate, $endDate])
-            ->sum('amount_usd');
+        /*
+        |--------------------------------------------------------------------------
+        | INGRESOS REALES (NUEVA FUENTE)
+        |--------------------------------------------------------------------------
+        */
+
+        $earnings = $performance->platforms()
+            ->wherePivotBetween('recorded_at', [$start, $end])
+            ->sum('performance_platform.earnings_usd');
+
+        /*
+        |--------------------------------------------------------------------------
+        | AJUSTES FINANCIEROS
+        |--------------------------------------------------------------------------
+        */
 
         $bonuses = $performance->bonuses()
             ->whereBetween('date', [$startDate, $endDate])
@@ -91,7 +101,19 @@ class StatisticsService
             ->whereBetween('date', [$startDate, $endDate])
             ->sum('amount');
 
+        /*
+        |--------------------------------------------------------------------------
+        | GROSS
+        |--------------------------------------------------------------------------
+        */
+
         $gross = $earnings + $bonuses - $penalties;
+
+        /*
+        |--------------------------------------------------------------------------
+        | SPLIT
+        |--------------------------------------------------------------------------
+        */
 
         $split = app(SplitService::class)
             ->calculate($performance, $gross);

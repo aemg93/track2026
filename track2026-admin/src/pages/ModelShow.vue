@@ -1,12 +1,12 @@
 <template>
 
-  <div v-if="model" class="space-y-10">
+  <div v-if="performance" class="space-y-10">
 
     <!-- HEADER -->
-    <ModelHeader :model="model" />
+    <ModelHeader :model="performance" />
 
     <!-- KPIS -->
-    <ModelKpis :model="model" />
+    <ModelKpis :model="performance" />
 
     <!-- FINANZAS -->
     <section class="space-y-4">
@@ -39,9 +39,11 @@
 
       <div class="space-y-6">
 
-        <EarningsTable :earnings="model.earnings || []" />
-        <BonusesTable :bonuses="model.bonuses || []" />
-        <PenaltiesTable :penalties="model.penalties || []" />
+        <EarningsTable :earnings="performance.earnings || []" />
+
+        <BonusesTable :bonuses="performance.bonuses || []" />
+
+        <PenaltiesTable :penalties="performance.penalties || []" />
 
       </div>
 
@@ -62,9 +64,11 @@
 
         <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <ModelPersonalInfo :model="model" />
-          <ModelDocuments :model="model" />
-          <ModelStudioInfo :model="model" />
+          <ModelPersonalInfo :model="performance" />
+
+          <ModelDocuments :model="performance" />
+
+          <ModelStudioInfo :model="performance" />
 
         </div>
 
@@ -78,7 +82,7 @@
     v-else
     class="flex justify-center items-center h-96 text-gray-400"
   >
-    Cargando modelo...
+    Cargando performance...
   </div>
 
 </template>
@@ -102,23 +106,37 @@ import PenaltiesTable from '../components/models/history/PenaltiesTable.vue'
 
 const route = useRoute()
 
-const model = ref(null)
+const performance = ref(null)
 
 const safe = (value) =>
   Array.isArray(value) ? value : []
 
+/*
+|--------------------------------------------------------------------------
+| GANANCIAS
+|--------------------------------------------------------------------------
+|
+| Earning actualmente devuelve:
+| gross_usd
+| net_usd
+| model_share_usd
+|
+| amount_usd NO EXISTE.
+|
+*/
+
 const totalEarnings = computed(() =>
-  safe(model.value?.earnings)
+  safe(performance.value?.earnings)
     .reduce(
       (acc, e) =>
-        acc + parseFloat(e.amount_usd || e.amount || 0),
+        acc + parseFloat(e.gross_usd || 0),
       0
     )
     .toFixed(2)
 )
 
 const totalBonuses = computed(() =>
-  safe(model.value?.bonuses)
+  safe(performance.value?.bonuses)
     .reduce(
       (acc, b) =>
         acc + parseFloat(b.amount || 0),
@@ -128,7 +146,7 @@ const totalBonuses = computed(() =>
 )
 
 const totalPenalties = computed(() =>
-  safe(model.value?.penalties)
+  safe(performance.value?.penalties)
     .reduce(
       (acc, p) =>
         acc + parseFloat(p.amount || 0),
@@ -153,13 +171,20 @@ const load = async () => {
       `/performances/${route.params.id}`
     )
 
-    model.value = data.data
+    console.log('PERFORMANCE API', data)
+
+    performance.value = data.data
+
+    console.log(
+      'PERFORMANCE RAW',
+      performance.value
+    )
 
   } catch (error) {
 
     console.error(error)
 
-    model.value = null
+    performance.value = null
 
   }
 

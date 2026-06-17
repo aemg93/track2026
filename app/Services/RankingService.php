@@ -6,20 +6,47 @@ use App\Models\Performance;
 
 class RankingService
 {
-    public function recalculate(int $performanceId): void
-    {
-        $performance = Performance::findOrFail($performanceId);
+    public function recalculate(
+        int $performanceId
+    ): void {
 
-        $earnings = $performance->earnings()
-            ->sum('amount_usd');
+        $performance = Performance::findOrFail(
+            $performanceId
+        );
 
-        $bonuses = $performance->bonuses()
+        /*
+        |--------------------------------------------------------------------------
+        | AGREGADOS DESDE PERFORMANCE_PLATFORM
+        |--------------------------------------------------------------------------
+        */
+
+        $hours = (float) $performance
+            ->platforms()
+            ->sum('performance_platform.hours_streamed');
+
+        $earnings = (float) $performance
+            ->platforms()
+            ->sum('performance_platform.earnings_usd');
+
+        /*
+        |--------------------------------------------------------------------------
+        | AJUSTES FINANCIEROS
+        |--------------------------------------------------------------------------
+        */
+
+        $bonuses = (float) $performance
+            ->bonuses()
             ->sum('amount');
 
-        $penalties = $performance->penalties()
+        $penalties = (float) $performance
+            ->penalties()
             ->sum('amount');
 
-        $hours = $performance->hours_streamed;
+        /*
+        |--------------------------------------------------------------------------
+        | SCORE FINAL
+        |--------------------------------------------------------------------------
+        */
 
         $score = $this->calculateScore(
             $earnings,
@@ -28,8 +55,18 @@ class RankingService
             $hours
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | ACTUALIZACIÓN DEL AGREGADO
+        |--------------------------------------------------------------------------
+        */
+
         $performance->update([
-            'ranking_score' => $score
+
+            'hours_streamed' => round($hours),
+
+            'ranking_score' => $score,
+
         ]);
     }
 
@@ -37,12 +74,26 @@ class RankingService
         float $earnings,
         float $bonuses,
         float $penalties,
-        int $hours
+        float $hours
     ): float {
-        return
-            ($earnings * 0.6)
-            + ($hours * 2)
-            + $bonuses
-            - $penalties;
+
+        return round(
+
+            ($earnings * 0.60)
+
+            +
+
+            ($hours * 2)
+
+            +
+
+            $bonuses
+
+            -
+
+            $penalties,
+
+            2
+        );
     }
 }

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Earning;
 use App\Models\Bonus;
 use App\Models\Penalty;
+use App\Models\Deduction;
 use App\Models\Sale;
 use App\Models\PerformanceSplit;
 use App\Models\Platform;
@@ -71,6 +72,11 @@ class Performance extends Model
         return $this->hasMany(Penalty::class);
     }
 
+    public function deductions()
+    {
+        return $this->hasMany(Deduction::class);
+    }
+
     public function sales()
     {
         return $this->hasMany(Sale::class);
@@ -83,7 +89,7 @@ class Performance extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | PLATFORMS (MANY TO MANY PRO)
+    | PLATFORMS (CORREGIDO)
     |--------------------------------------------------------------------------
     */
 
@@ -101,7 +107,6 @@ class Performance extends Model
             'tokens',
             'multiplier',
             'conversion_rate',
-            'ranking_score',
             'recorded_at',
         ])
         ->withTimestamps();
@@ -115,10 +120,8 @@ class Performance extends Model
 
     public function getNameAttribute()
     {
-        if ($this->first_name && $this->last_name) {
-            return trim($this->first_name . ' ' . $this->last_name);
-        }
-
-        return $this->nickname ?? 'Sin nombre';
+        return trim(
+            ($this->first_name ?? '') . ' ' . ($this->last_name ?? '')
+        ) ?: ($this->nickname ?? 'Sin nombre');
     }
 }

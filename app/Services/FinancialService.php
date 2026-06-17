@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Earning;
+use App\Models\Performance;
 use App\Models\Bonus;
 use App\Models\Penalty;
 use App\Models\Deduction;
@@ -17,21 +17,23 @@ class FinancialService
         |--------------------------------------------------------------------------
         */
 
-        $earnings = Earning::query();
+        $performances = Performance::query();
+
         $bonuses = Bonus::query();
         $penalties = Penalty::query();
         $deductions = Deduction::query();
 
         /*
         |--------------------------------------------------------------------------
-        | SCOPES (SEGURIDAD + MULTI-TENANT)
+        | MULTI TENANT
         |--------------------------------------------------------------------------
         */
 
         if ($user->hasRole('Admin')) {
 
-            $earnings->whereHas('performance', fn ($q) =>
-                $q->where('studio_id', $user->studio_id)
+            $performances->where(
+                'studio_id',
+                $user->studio_id
             );
 
             $bonuses->whereHas('performance', fn ($q) =>
@@ -49,26 +51,59 @@ class FinancialService
 
         if ($user->hasRole('Performance')) {
 
-            $earnings->where('user_id', $user->id);
-            $bonuses->where('user_id', $user->id);
-            $penalties->where('user_id', $user->id);
-            $deductions->where('user_id', $user->id);
+            $performances->where(
+                'user_id',
+                $user->id
+            );
+
+            $bonuses->where(
+                'user_id',
+                $user->id
+            );
+
+            $penalties->where(
+                'user_id',
+                $user->id
+            );
+
+            $deductions->where(
+                'user_id',
+                $user->id
+            );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | TOTALS
+        | INGRESOS REALES (SIN N+1)
         |--------------------------------------------------------------------------
         */
 
-        $totalEarnings = (float) $earnings->sum('amount');
-        $totalBonuses = (float) $bonuses->sum('amount');
-        $totalPenalties = (float) $penalties->sum('amount');
-        $totalDeductions = (float) $deductions->sum('amount');
+        $totalEarnings = (float) $performances
+            ->withSum(
+                'platforms as total_usd',
+                'performance_platform.earnings_usd'
+            )
+            ->get()
+            ->sum('total_usd');
 
         /*
         |--------------------------------------------------------------------------
-        | INSTALLMENTS (CORREGIDO - RESPETA SCOPES)
+        | AJUSTES
+        |--------------------------------------------------------------------------
+        */
+
+        $totalBonuses = (float) $bonuses
+            ->sum('amount');
+
+        $totalPenalties = (float) $penalties
+            ->sum('amount');
+
+        $totalDeductions = (float) $deductions
+            ->sum('amount');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CUOTAS
         |--------------------------------------------------------------------------
         */
 
@@ -82,11 +117,12 @@ class FinancialService
 
         /*
         |--------------------------------------------------------------------------
-        | NET BALANCE (FORMULA CLARA)
+        | BALANCE NETO
         |--------------------------------------------------------------------------
         */
 
-        $netBalance = ($totalEarnings + $totalBonuses)
+        $netBalance =
+            ($totalEarnings + $totalBonuses)
             - ($totalPenalties + $totalDeductions);
 
         /*
@@ -96,19 +132,26 @@ class FinancialService
         */
 
         return [
+
             'totals' => [
+
                 'earnings' => $totalEarnings,
+
                 'bonuses' => $totalBonuses,
+
                 'penalties' => $totalPenalties,
+
                 'deductions' => $totalDeductions,
             ],
 
             'installments' => [
+
                 'active' => $activeInstallments,
-                'pending_amount' => $pendingInstallments,
+
+                'pending_amount' => (float) $pendingInstallments,
             ],
 
-            'net_balance' => $netBalance,
+            'net_balance' => (float) $netBalance,
         ];
     }
 }

@@ -32,35 +32,26 @@ return new class extends Migration {
             |--------------------------------------------------------------------------
             */
 
-            // Horas trabajadas en la plataforma
-            $table->decimal('hours_streamed', 8, 2)->default(0);
+            $table->decimal('hours_streamed', 8, 2)
+                ->default(0);
 
-            // Ganancias en USD ya calculadas
-            $table->decimal('earnings_usd', 12, 2)->default(0);
+            $table->decimal('tokens', 14, 2)
+                ->default(0);
 
-            // Tokens (si la plataforma trabaja por tokens)
-            $table->decimal('tokens', 14, 2)->default(0);
-
-            /*
-            |--------------------------------------------------------------------------
-            | SNAPSHOT FINANCIERO (IMPORTANTE)
-            |--------------------------------------------------------------------------
-            */
-
-            // multiplicador aplicado en ese momento
-            $table->decimal('multiplier', 8, 2)->default(1);
-
-            // tasa de conversión token → USD en el momento del registro
-            $table->decimal('conversion_rate', 10, 4)->nullable();
+            $table->decimal('earnings_usd', 12, 2)
+                ->default(0);
 
             /*
             |--------------------------------------------------------------------------
-            | PERFORMANCE
+            | SNAPSHOT FINANCIERO
             |--------------------------------------------------------------------------
             */
 
-            // score del modelo en esa plataforma
-            $table->decimal('ranking_score', 8, 2)->default(0);
+            $table->decimal('multiplier', 8, 2)
+                ->default(1);
+
+            $table->decimal('conversion_rate', 10, 4)
+                ->nullable();
 
             /*
             |--------------------------------------------------------------------------
@@ -68,22 +59,48 @@ return new class extends Migration {
             |--------------------------------------------------------------------------
             */
 
-            // permite snapshots diarios / semanales
-            $table->timestamp('recorded_at')->nullable();
+            $table->timestamp('recorded_at')
+                ->useCurrent()
+                ->index();
+
+            /*
+            |--------------------------------------------------------------------------
+            | AUDITORÍA
+            |--------------------------------------------------------------------------
+            */
 
             $table->timestamps();
 
             /*
             |--------------------------------------------------------------------------
-            | RESTRICCIÓN (OPTIMIZADA Y SEGURA)
+            | SNAPSHOT ÚNICO
             |--------------------------------------------------------------------------
             */
 
-            // evita duplicados lógicos sin generar nombres largos en MySQL
             $table->unique(
-                ['performance_id', 'platform_id', 'recorded_at'],
+                [
+                    'performance_id',
+                    'platform_id',
+                    'recorded_at'
+                ],
                 'pp_unique'
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | ÍNDICES ANALÍTICOS
+            |--------------------------------------------------------------------------
+            */
+
+            $table->index([
+                'performance_id',
+                'platform_id'
+            ]);
+
+            $table->index([
+                'platform_id',
+                'recorded_at'
+            ]);
         });
     }
 

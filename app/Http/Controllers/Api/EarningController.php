@@ -12,23 +12,35 @@ class EarningController extends Controller
     {
         $user = $request->user();
 
-        $query = Earning::with('performance');
+        $query = Earning::query()
+            ->with('performance');
 
-        if ($user->hasRole('Performance')) {
-            $query->where('user_id', $user->id);
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN
+        |--------------------------------------------------------------------------
+        */
 
         if ($user->hasRole('Admin')) {
+
             $query->whereHas('performance', function ($q) use ($user) {
                 $q->where('studio_id', $user->studio_id);
             });
         }
 
-        $earnings = $query->latest()->get();
+        /*
+        |--------------------------------------------------------------------------
+        | ORDER
+        |--------------------------------------------------------------------------
+        */
+
+        $earnings = $query
+            ->orderByDesc('period_end')
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $earnings
+            'data' => $earnings,
         ]);
     }
 }

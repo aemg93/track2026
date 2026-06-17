@@ -5,60 +5,56 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Performance;
 use Illuminate\Http\Request;
+use App\Services\PerformanceAnalyticsService;
 
 class PerformanceController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS CENTRALIZED
-    |--------------------------------------------------------------------------
-    */
-
     private function relations()
     {
         return [
             'earnings',
             'bonuses',
             'penalties',
+            'deductions',
             'split',
             'user',
-            'studio'
+            'studio',
+            'platforms',
         ];
     }
 
     /*
     |--------------------------------------------------------------------------
-    | INDEX
+    | LIST
     |--------------------------------------------------------------------------
     */
-
     public function index(Request $request)
     {
         $query = Performance::query();
 
-        // SEARCH
         if ($request->filled('search')) {
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('nickname', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('nickname', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // FILTER ACTIVE
         if ($request->filled('active')) {
-            $query->where('active', filter_var($request->active, FILTER_VALIDATE_BOOLEAN));
+            $query->where(
+                'active',
+                filter_var($request->active, FILTER_VALIDATE_BOOLEAN)
+            );
         }
 
-        // SORT SAFETY
-        $allowedSorts = ['ranking_score', 'created_at', 'hours_streamed'];
-        $sortBy = $request->get('sortBy', 'ranking_score');
+        $allowedSorts = ['created_at', 'hours_streamed'];
+        $sortBy = $request->get('sortBy', 'created_at');
 
         if (!in_array($sortBy, $allowedSorts)) {
-            $sortBy = 'ranking_score';
+            $sortBy = 'created_at';
         }
 
         $order = $request->get('order', 'desc');
@@ -85,39 +81,29 @@ class PerformanceController extends Controller
     | STORE
     |--------------------------------------------------------------------------
     */
-
     public function store(Request $request)
     {
         $data = $request->validate([
             'studio_id' => 'nullable|integer',
             'user_id' => 'nullable|integer',
-
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'nickname' => 'nullable|string|max:255',
-
             'email' => 'required|email|unique:performances,email',
             'phone' => 'nullable|string|max:255',
-
             'country' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-
             'document_type' => 'nullable|string|max:255',
             'document_number' => 'nullable|string|max:255',
-
             'birth_date' => 'required|date',
-
             'profile_photo' => 'nullable|string',
-
             'active' => 'nullable|boolean',
             'hours_streamed' => 'nullable|integer',
-            'ranking_score' => 'nullable|numeric',
         ]);
 
         $data['active'] = $data['active'] ?? true;
         $data['hours_streamed'] = $data['hours_streamed'] ?? 0;
-        $data['ranking_score'] = $data['ranking_score'] ?? 0;
 
         $performance = Performance::create($data);
 
@@ -132,7 +118,6 @@ class PerformanceController extends Controller
     | SHOW
     |--------------------------------------------------------------------------
     */
-
     public function show($id)
     {
         $performance = Performance::with($this->relations())
@@ -149,7 +134,6 @@ class PerformanceController extends Controller
     | UPDATE
     |--------------------------------------------------------------------------
     */
-
     public function update(Request $request, $id)
     {
         $performance = Performance::findOrFail($id);
@@ -158,25 +142,17 @@ class PerformanceController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'nickname' => 'nullable|string|max:255',
-
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:255',
-
             'country' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-
             'document_type' => 'nullable|string|max:255',
             'document_number' => 'nullable|string|max:255',
-
             'birth_date' => 'nullable|date',
-
             'profile_photo' => 'nullable|string',
-
             'active' => 'nullable|boolean',
-
             'hours_streamed' => 'nullable|integer',
-            'ranking_score' => 'nullable|numeric',
         ]);
 
         $performance->update($data);
@@ -189,10 +165,9 @@ class PerformanceController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | DESTROY
+    | DELETE
     |--------------------------------------------------------------------------
     */
-
     public function destroy($id)
     {
         $performance = Performance::findOrFail($id);
@@ -201,6 +176,62 @@ class PerformanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Deleted'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ANALYTICS
+    |--------------------------------------------------------------------------
+    */
+    public function analytics($id)
+    {
+        $performance = Performance::with('platforms')->findOrFail($id);
+
+        $from = request('from');
+        $to = request('to');
+
+        $service = app(PerformanceAnalyticsService::class);
+
+        $data = $service->summary($performance, $from, $to);
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LEADERBOARD (FIXED)
+    |--------------------------------------------------------------------------
+    */
+    public function leaderboard(Request $request)
+    {
+        $limit = (int) $request->get('limit', 20);
+
+        $performances = Performance::query()
+            ->select([
+                'id',
+                'first_name',
+                'last_name',
+                'nickname',
+                'profile_photo',
+                'hours_streamed',
+                'active',
+            ])
+            ->where('active', true)
+            ->orderByDesc('hours_streamed')
+            ->limit($limit)
+            ->get()
+            ->map(function ($p) {
+                $p->ranking_score = 0; // placeholder seguro
+                return $p;
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $performances
         ]);
     }
 }

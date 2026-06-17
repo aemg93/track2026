@@ -19,14 +19,16 @@ class PerformanceResource extends JsonResource
         // ==============================
         // CALCULOS FINANCIEROS
         // ==============================
-        $totalEarnings = $earnings->sum(
-            fn ($e) => $e->amount_usd ?? $e->amount ?? 0
-        );
-
+        $totalEarnings = $earnings->sum('amount');
         $totalBonuses = $bonuses->sum('amount');
         $totalPenalties = $penalties->sum('amount');
 
         $net = ($totalEarnings + $totalBonuses) - $totalPenalties;
+
+        // ==============================
+        // RANKING SCORE SAFE ACCESS
+        // ==============================
+        $rankingScore = $this->ranking_score ?? 0;
 
         return [
 
@@ -35,9 +37,7 @@ class PerformanceResource extends JsonResource
             | IDENTIDAD DEL MODELO
             |--------------------------------------------------------------------------
             */
-
             'id' => $this->id,
-
             'studio_id' => $this->studio_id,
             'user_id' => $this->user_id,
 
@@ -50,7 +50,6 @@ class PerformanceResource extends JsonResource
             | CONTACTO
             |--------------------------------------------------------------------------
             */
-
             'email' => $this->email,
             'phone' => $this->phone,
 
@@ -63,7 +62,6 @@ class PerformanceResource extends JsonResource
             | DOCUMENTACIÓN
             |--------------------------------------------------------------------------
             */
-
             'document_type' => $this->document_type,
             'document_number' => $this->document_number,
 
@@ -75,23 +73,20 @@ class PerformanceResource extends JsonResource
             | MÉTRICAS
             |--------------------------------------------------------------------------
             */
-
             'active' => (bool) $this->active,
             'status' => $this->active ? 'active' : 'inactive',
 
             'hours_streamed' => (int) $this->hours_streamed,
-            'ranking_score' => (float) $this->ranking_score,
+            'ranking_score' => (float) $rankingScore,
 
             /*
             |--------------------------------------------------------------------------
-            | RELACIONES (RAW FRONT)
+            | RELACIONES (FRONT-END SAFE)
             |--------------------------------------------------------------------------
             */
-
             'earnings' => $earnings->map(fn ($e) => [
                 'id' => $e->id,
                 'amount' => (float) $e->amount,
-                'amount_usd' => (float) ($e->amount_usd ?? $e->amount),
                 'date' => $e->date,
             ])->values(),
 
@@ -114,7 +109,6 @@ class PerformanceResource extends JsonResource
             | FINANZAS (CORE DEL SISTEMA)
             |--------------------------------------------------------------------------
             */
-
             'financials' => [
                 'earnings' => (float) $totalEarnings,
                 'bonuses' => (float) $totalBonuses,
@@ -124,10 +118,9 @@ class PerformanceResource extends JsonResource
 
             /*
             |--------------------------------------------------------------------------
-            | RELACIONES
+            | RELACIONES (EAGER LOAD SAFE)
             |--------------------------------------------------------------------------
             */
-
             'studio' => $this->whenLoaded('studio'),
             'user' => $this->whenLoaded('user'),
             'split' => $this->whenLoaded('split'),

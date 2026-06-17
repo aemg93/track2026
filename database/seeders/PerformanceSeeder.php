@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Platform;
+use App\Services\RankingService;
+use Carbon\Carbon;
 
 class PerformanceSeeder extends Seeder
 {
@@ -13,7 +16,10 @@ class PerformanceSeeder extends Seeder
             ->where('name', 'Test Studio')
             ->value('id');
 
-        DB::table('performances')->insert([
+        $platforms = Platform::all();
+
+        $performances = [
+
             [
                 'studio_id' => $studioId,
                 'user_id' => null,
@@ -30,11 +36,12 @@ class PerformanceSeeder extends Seeder
                 'birth_date' => '1998-05-12',
                 'profile_photo' => null,
                 'active' => true,
-                'hours_streamed' => 120,
-                'ranking_score' => 85.50,
+                'hours_streamed' => 0,
+                'ranking_score' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+
             [
                 'studio_id' => $studioId,
                 'user_id' => null,
@@ -51,11 +58,61 @@ class PerformanceSeeder extends Seeder
                 'birth_date' => '1997-11-25',
                 'profile_photo' => null,
                 'active' => true,
-                'hours_streamed' => 95,
-                'ranking_score' => 72.30,
+                'hours_streamed' => 0,
+                'ranking_score' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($performances as $perfData) {
+
+            $performanceId = DB::table('performances')
+                ->insertGetId($perfData);
+
+            foreach ($platforms as $platform) {
+
+                $hours = rand(1, 6);
+
+                $tokens = $hours * rand(50, 200);
+
+                $usd = $platform->type === 'usd'
+                    ? $tokens
+                    : $tokens * ($platform->conversion_rate ?? 0.05);
+
+                DB::table('performance_platform')->insert([
+
+                    'performance_id' => $performanceId,
+
+                    'platform_id' => $platform->id,
+
+                    'hours_streamed' => $hours,
+
+                    'tokens' => $tokens,
+
+                    'earnings_usd' => round($usd, 2),
+
+                    'multiplier' => $platform->multiplier,
+
+                    'conversion_rate' => $platform->conversion_rate ?? 0.05,
+
+                    'recorded_at' => Carbon::now()
+                        ->subDays(rand(0, 10)),
+
+                    'created_at' => now(),
+
+                    'updated_at' => now(),
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | ACTUALIZAR AGREGADOS
+            |--------------------------------------------------------------------------
+            */
+
+            app(RankingService::class)
+                ->recalculate($performanceId);
+        }
     }
 }

@@ -243,8 +243,15 @@ const columns = [
 const normalizedEarnings = computed(() =>
   (props.earnings || []).map((earning, index) => ({
     id: earning.id ?? `earning-${index}`,
-    date: earning.date,
-    amount: earning.amount_usd ?? earning.amount ?? 0
+
+    // Earning NO tiene date
+    date: earning.period_start,
+
+    // Campo correcto según tu modelo
+    amount: parseFloat(earning.gross_usd || 0),
+
+    status: earning.status,
+    net: parseFloat(earning.net_usd || 0)
   }))
 )
 

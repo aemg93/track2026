@@ -14,21 +14,49 @@ class PerformanceFinancialService
             now()->addMinutes(10),
             function () use ($performance) {
 
-                $earnings = $performance->earnings()
-                    ->sum(\DB::raw('COALESCE(amount_usd, amount)'));
+                /*
+                |--------------------------------------------------------------------------
+                | INGRESOS REALES (PERFORMANCE_PLATFORM)
+                |--------------------------------------------------------------------------
+                */
 
-                $bonuses = $performance->bonuses()->sum('amount');
+                $earnings = (float) $performance
+                    ->platforms()
+                    ->sum('performance_platform.earnings_usd');
 
-                $penalties = $performance->penalties()->sum('amount');
+                /*
+                |--------------------------------------------------------------------------
+                | AJUSTES FINANCIEROS
+                |--------------------------------------------------------------------------
+                */
 
-                $net = ($earnings + $bonuses) - $penalties;
+                $bonuses = (float) $performance
+                    ->bonuses()
+                    ->sum('amount');
+
+                $penalties = (float) $performance
+                    ->penalties()
+                    ->sum('amount');
+
+                $deductions = (float) $performance
+                    ->deductions()
+                    ->sum('amount');
+
+                /*
+                |--------------------------------------------------------------------------
+                | BALANCE NETO
+                |--------------------------------------------------------------------------
+                */
+
+                $net = ($earnings + $bonuses)
+                    - ($penalties + $deductions);
 
                 return [
-                    'earnings' => (float) $earnings,
-                    'bonuses' => (float) $bonuses,
-                    'penalties' => (float) $penalties,
+                    'earnings' => $earnings,
+                    'bonuses' => $bonuses,
+                    'penalties' => $penalties,
+                    'deductions' => $deductions,
                     'net' => (float) $net,
-                    'deductions' => 0,
                 ];
             }
         );
@@ -37,14 +65,17 @@ class PerformanceFinancialService
     public function raw(Performance $performance): array
     {
         return [
-            'earnings' => $performance->earnings,
+            'platforms' => $performance->platforms,
             'bonuses' => $performance->bonuses,
             'penalties' => $performance->penalties,
+            'deductions' => $performance->deductions,
         ];
     }
 
     public function clear(Performance $performance): void
     {
-        Cache::forget("performance:financials:{$performance->id}");
+        Cache::forget(
+            "performance:financials:{$performance->id}"
+        );
     }
 }

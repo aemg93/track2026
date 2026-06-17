@@ -14,8 +14,6 @@
     <div
       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
     >
-
-      <!-- GANANCIAS -->
       <div
         class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
       >
@@ -34,7 +32,6 @@
 
       </div>
 
-      <!-- BONOS -->
       <div
         class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
       >
@@ -53,7 +50,6 @@
 
       </div>
 
-      <!-- MULTAS -->
       <div
         class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
       >
@@ -72,7 +68,6 @@
 
       </div>
 
-      <!-- NETO -->
       <div
         class="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl p-6"
       >

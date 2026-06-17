@@ -10,84 +10,58 @@ class PlatformSeeder extends Seeder
     public function run(): void
     {
         Platform::updateOrCreate(
-
-            ['name'=>'Cam4'],
-
+            ['slug' => 'cam4'],
             [
-
-                'type'=>'token',
-
-                'multiplier'=>2,
-
-                'conversion_rate'=>0.05
-
+                'name' => 'Cam4',
+                'type' => 'token',
+                'multiplier' => 2,
+                'conversion_rate' => 0.05,
+                'is_active' => true,
             ]
-
         );
 
         Platform::updateOrCreate(
-
-            ['name'=>'Stripchat'],
-
+            ['slug' => 'stripchat'],
             [
-
-                'type'=>'token',
-
-                'multiplier'=>1,
-
-                'conversion_rate'=>0.05
-
+                'name' => 'Stripchat',
+                'type' => 'token',
+                'multiplier' => 1,
+                'conversion_rate' => 0.05,
+                'is_active' => true,
             ]
-
         );
 
         Platform::updateOrCreate(
-
-            ['name'=>'Chaturbate'],
-
+            ['slug' => 'chaturbate'],
             [
-
-                'type'=>'token',
-
-                'multiplier'=>1,
-
-                'conversion_rate'=>0.05
-
+                'name' => 'Chaturbate',
+                'type' => 'token',
+                'multiplier' => 1,
+                'conversion_rate' => 0.05,
+                'is_active' => true,
             ]
-
         );
 
         Platform::updateOrCreate(
-
-            ['name'=>'Cams'],
-
+            ['slug' => 'cams'],
             [
-
-                'type'=>'usd',
-
-                'multiplier'=>1,
-
-                'conversion_rate'=>null
-
+                'name' => 'Cams',
+                'type' => 'usd',
+                'multiplier' => 1,
+                'conversion_rate' => 1,
+                'is_active' => true,
             ]
-
         );
 
         Platform::updateOrCreate(
-
-            ['name'=>'LoyalFans'],
-
+            ['slug' => 'loyalfans'],
             [
-
-                'type'=>'usd',
-
-                'multiplier'=>1,
-
-                'conversion_rate'=>null
-
+                'name' => 'LoyalFans',
+                'type' => 'usd',
+                'multiplier' => 1,
+                'conversion_rate' => 1,
+                'is_active' => true,
             ]
-
         );
-
     }
 }
