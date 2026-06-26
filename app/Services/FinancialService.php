@@ -2,156 +2,162 @@
 
 namespace App\Services;
 
-use App\Models\Performance;
-use App\Models\Bonus;
-use App\Models\Penalty;
-use App\Models\Deduction;
+use App\Models\Earning;
+use App\Models\User;
 
 class FinancialService
 {
-    public function getSummary($user): array
+    public function getSummary(User $user): array
     {
-        /*
-        |--------------------------------------------------------------------------
-        | BASE QUERIES
-        |--------------------------------------------------------------------------
-        */
 
-        $performances = Performance::query();
+        $earnings = Earning::query();
 
-        $bonuses = Bonus::query();
-        $penalties = Penalty::query();
-        $deductions = Deduction::query();
+
 
         /*
         |--------------------------------------------------------------------------
-        | MULTI TENANT
+        | SUPER ADMIN
         |--------------------------------------------------------------------------
         */
 
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('Super Admin')) {
 
-            $performances->where(
-                'studio_id',
-                $user->studio_id
-            );
+            // acceso global
 
-            $bonuses->whereHas('performance', fn ($q) =>
-                $q->where('studio_id', $user->studio_id)
-            );
-
-            $penalties->whereHas('performance', fn ($q) =>
-                $q->where('studio_id', $user->studio_id)
-            );
-
-            $deductions->whereHas('performance', fn ($q) =>
-                $q->where('studio_id', $user->studio_id)
-            );
         }
 
-        if ($user->hasRole('Performance')) {
 
-            $performances->where(
-                'user_id',
-                $user->id
+
+        /*
+        |--------------------------------------------------------------------------
+        | PERFORMANCE
+        |--------------------------------------------------------------------------
+        */
+
+        elseif ($user->hasRole('Performance')) {
+
+
+            $earnings->whereHas(
+                'performance',
+                function ($q) use ($user) {
+
+                    $q->where(
+                        'user_id',
+                        $user->id
+                    );
+
+                }
             );
 
-            $bonuses->where(
-                'user_id',
-                $user->id
-            );
-
-            $penalties->where(
-                'user_id',
-                $user->id
-            );
-
-            $deductions->where(
-                'user_id',
-                $user->id
-            );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | INGRESOS REALES (SIN N+1)
-        |--------------------------------------------------------------------------
-        */
 
-        $totalEarnings = (float) $performances
-            ->withSum(
-                'platforms as total_usd',
-                'performance_platform.earnings_usd'
-            )
-            ->get()
-            ->sum('total_usd');
 
         /*
         |--------------------------------------------------------------------------
-        | AJUSTES
+        | MONITOR
         |--------------------------------------------------------------------------
         */
 
-        $totalBonuses = (float) $bonuses
-            ->sum('amount');
+        elseif ($user->hasRole('Monitor')) {
 
-        $totalPenalties = (float) $penalties
-            ->sum('amount');
 
-        $totalDeductions = (float) $deductions
-            ->sum('amount');
+            /*
+            |--------------------------------------------------------------------------
+            | Pendiente:
+            | definir tabla de asignación
+            |
+            | ejemplo:
+            | monitor_performance
+            |--------------------------------------------------------------------------
+            */
+
+
+            $earnings->whereRaw('1 = 0');
+
+        }
+
+
 
         /*
         |--------------------------------------------------------------------------
-        | CUOTAS
+        | TOTALES FINANCIEROS
         |--------------------------------------------------------------------------
         */
 
-        $activeInstallments = (clone $deductions)
-            ->where('is_installment', true)
-            ->count();
 
-        $pendingInstallments = (clone $deductions)
-            ->where('is_installment', true)
-            ->sum('amount');
+        $totals = [
+
+            'gross' => (float)
+                (clone $earnings)
+                ->sum('gross_usd'),
+
+
+            'bonus' => (float)
+                (clone $earnings)
+                ->sum('bonus_usd'),
+
+
+            'penalty' => (float)
+                (clone $earnings)
+                ->sum('penalty_usd'),
+
+
+            'deduction' => (float)
+                (clone $earnings)
+                ->sum('deduction_usd'),
+
+
+            'net' => (float)
+                (clone $earnings)
+                ->sum('net_usd'),
+
+        ];
+
+
 
         /*
         |--------------------------------------------------------------------------
-        | BALANCE NETO
+        | ESTADOS DE PAGO
         |--------------------------------------------------------------------------
         */
 
-        $netBalance =
-            ($totalEarnings + $totalBonuses)
-            - ($totalPenalties + $totalDeductions);
 
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE
-        |--------------------------------------------------------------------------
-        */
+        $payments = [
+
+            'paid' => (float)
+                (clone $earnings)
+                ->where(
+                    'status',
+                    'paid'
+                )
+                ->sum('net_usd'),
+
+
+
+            'pending' => (float)
+                (clone $earnings)
+                ->whereIn(
+                    'status',
+                    [
+                        'draft',
+                        'pending',
+                        'approved'
+                    ]
+                )
+                ->sum('net_usd'),
+
+        ];
+
+
 
         return [
 
-            'totals' => [
+            'totals' => $totals,
 
-                'earnings' => $totalEarnings,
+            'payments' => $payments,
 
-                'bonuses' => $totalBonuses,
-
-                'penalties' => $totalPenalties,
-
-                'deductions' => $totalDeductions,
-            ],
-
-            'installments' => [
-
-                'active' => $activeInstallments,
-
-                'pending_amount' => (float) $pendingInstallments,
-            ],
-
-            'net_balance' => (float) $netBalance,
         ];
+
     }
 }

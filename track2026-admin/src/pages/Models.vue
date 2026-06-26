@@ -103,6 +103,7 @@ const loadModels = async (append = false) => {
   loading.value = true
 
   try {
+
     const { data } = await api.get('/performances', {
       params: {
         page: page.value,
@@ -114,24 +115,47 @@ const loadModels = async (append = false) => {
       }
     })
 
-    models.value = append
-      ? [...models.value, ...(data.data || [])]
-      : (data.data || [])
 
-    meta.value = data.meta || {
-      page: 1,
-      pages: 1,
-      total: 0
+    const items = data.data.data || []
+
+
+    models.value = append
+      ? [
+          ...models.value,
+          ...items
+        ]
+      : items
+
+
+
+    meta.value = {
+
+      page:
+        data.data.current_page || 1,
+
+
+      pages:
+        data.data.last_page || 1,
+
+
+      total:
+        data.data.total || 0
+
     }
 
+
   } catch (error) {
+
     console.error(error)
 
     if (!append) {
       models.value = []
     }
+
   } finally {
+
     loading.value = false
+
   }
 }
 

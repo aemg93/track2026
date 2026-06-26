@@ -6,6 +6,7 @@ use App\Models\Performance;
 
 class RankingService
 {
+
     public function recalculate(
         int $performanceId
     ): void {
@@ -14,52 +15,30 @@ class RankingService
             $performanceId
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | AGREGADOS DESDE PERFORMANCE_PLATFORM
-        |--------------------------------------------------------------------------
-        */
 
         $hours = (float) $performance
             ->platforms()
-            ->sum('performance_platform.hours_streamed');
+            ->sum(
+                'performance_platform.hours_streamed'
+            );
 
-        $earnings = (float) $performance
-            ->platforms()
-            ->sum('performance_platform.earnings_usd');
 
-        /*
-        |--------------------------------------------------------------------------
-        | AJUSTES FINANCIEROS
-        |--------------------------------------------------------------------------
-        */
+        $gross = (float) $performance
+            ->earnings()
+            ->sum('gross_usd');
 
-        $bonuses = (float) $performance
-            ->bonuses()
-            ->sum('amount');
 
-        $penalties = (float) $performance
-            ->penalties()
-            ->sum('amount');
+        $net = (float) $performance
+            ->earnings()
+            ->sum('net_usd');
 
-        /*
-        |--------------------------------------------------------------------------
-        | SCORE FINAL
-        |--------------------------------------------------------------------------
-        */
 
         $score = $this->calculateScore(
-            $earnings,
-            $bonuses,
-            $penalties,
+            $gross,
+            $net,
             $hours
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | ACTUALIZACIÓN DEL AGREGADO
-        |--------------------------------------------------------------------------
-        */
 
         $performance->update([
 
@@ -68,32 +47,34 @@ class RankingService
             'ranking_score' => $score,
 
         ]);
+
     }
 
+
+
     private function calculateScore(
-        float $earnings,
-        float $bonuses,
-        float $penalties,
+        float $gross,
+        float $net,
         float $hours
     ): float {
 
+
         return round(
 
-            ($earnings * 0.60)
+            ($gross * 0.50)
 
             +
 
-            ($hours * 2)
+            ($net * 0.30)
 
             +
 
-            $bonuses
-
-            -
-
-            $penalties,
+            ($hours * 2),
 
             2
+
         );
+
     }
+
 }
