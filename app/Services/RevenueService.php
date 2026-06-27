@@ -2,51 +2,51 @@
 
 namespace App\Services;
 
-use App\Models\Platform;
 use App\Models\Performance;
+use App\Models\Platform;
 
 class RevenueService
 {
+    public function __construct(
+        private PlatformConversionService $conversionService,
+        private SplitService $splitService
+    ) {}
+
     public function calculate(
         Performance $performance,
         Platform $platform,
         float $amount
     ): array {
 
-        $conversion=
-            app(
-                PlatformConversionService::class
-            )->convert(
-                $platform,
-                $amount
-            );
+        $conversion = $this->conversionService->convert(
+            $platform,
+            $amount
+        );
 
-        $split=
-            app(
-                SplitService::class
-            )->calculate(
-                $performance,
-                $conversion['usd']
-            );
+        $split = $this->splitService->calculate(
+            $performance,
+            $conversion['usd']
+        );
 
         return [
 
-            'platform'=>$platform->name,
+            'platform' =>
+                $platform->name,
 
-            'gross_usd'=>
+            'gross_usd' =>
                 $conversion['usd'],
 
-            'model_percentage'=>
+            'model_percentage' =>
                 $split['model_percentage'],
 
-            'studio_percentage'=>
+            'studio_percentage' =>
                 $split['studio_percentage'],
 
-            'model_usd'=>
+            'model_usd' =>
                 $split['model_usd'],
 
-            'studio_usd'=>
-                $split['studio_usd']
+            'studio_usd' =>
+                $split['studio_usd'],
 
         ];
     }

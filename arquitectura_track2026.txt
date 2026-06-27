@@ -1,0 +1,116 @@
+================ APP ================
+app
+├── Events
+│   └── PerformanceRecalculationRequested.php
+├── Http
+│   ├── Controllers
+│   │   ├── Api
+│   │   │   ├── AuthController.php
+│   │   │   ├── BonusController.php
+│   │   │   ├── DashboardController.php
+│   │   │   ├── DeductionController.php
+│   │   │   ├── EarningController.php
+│   │   │   ├── PenaltyController.php
+│   │   │   └── PerformanceController.php
+│   │   └── Controller.php
+│   └── Resources
+│       └── PerformanceResource.php
+├── Listeners
+│   └── RecalculatePerformanceRanking.php
+├── Models
+│   ├── ActivityLog.php
+│   ├── AuditLog.php
+│   ├── Bonus.php
+│   ├── Deduction.php
+│   ├── Earning.php
+│   ├── Penalty.php
+│   ├── Performance.php
+│   ├── PerformanceSplit.php
+│   ├── Platform.php
+│   ├── Product.php
+│   ├── Ranking.php
+│   ├── Sale.php
+│   ├── Studio.php
+│   └── User.php
+├── Policies
+│   ├── BonusPolicy.php
+│   ├── EarningPolicy.php
+│   ├── PenaltyPolicy.php
+│   └── PerformancePolicy.php
+├── Providers
+│   ├── AppServiceProvider.php
+│   └── EventServiceProvider.php
+└── Services
+    ├── ActivityService.php
+    ├── AuditService.php
+    ├── BonusService.php
+    ├── CurrencyService.php
+    ├── DashboardService.php
+    ├── FinancialService.php
+    ├── PenaltyService.php
+    ├── PerformanceAnalyticsService.php
+    ├── PerformanceFinancialService.php
+    ├── PerformancePlatformService.php
+    ├── PerformanceTrackingService.php
+    ├── PlatformConversionService.php
+    ├── RankingService.php
+    ├── RevenueService.php
+    ├── SplitService.php
+    └── StatisticsService.php
+
+11 directories, 47 files
+
+================ DATABASE ================
+database
+├── database.sqlite
+├── factories
+│   └── UserFactory.php
+├── migrations
+│   ├── 0001_01_01_000001_create_cache_table.php
+│   ├── 0001_01_01_000002_create_jobs_table.php
+│   ├── 2026_05_22_000001_create_users_table.php
+│   ├── 2026_05_22_053427_create_studios_table.php
+│   ├── 2026_05_22_053436_create_performances_table.php
+│   ├── 2026_05_22_053443_create_platforms_table.php
+│   ├── 2026_05_22_053452_create_earnings_table.php
+│   ├── 2026_05_22_053459_create_penalties_table.php
+│   ├── 2026_05_22_053506_create_bonuses_table.php
+│   ├── 2026_05_22_053515_create_products_table.php
+│   ├── 2026_05_22_053523_create_sales_table.php
+│   ├── 2026_05_22_053530_create_rankings_table.php
+│   ├── 2026_05_22_073131_create_permission_tables.php
+│   ├── 2026_05_22_185734_create_performance_splits_table.php
+│   ├── 2026_05_22_233337_create_audit_logs_table.php
+│   ├── 2026_05_23_000618_create_activity_logs_table.php
+│   ├── 2026_05_26_234706_create_personal_access_tokens_table.php
+│   ├── 2026_05_28_112024_create_deductions_table.php
+│   └── 2026_06_05_095655_create_performance_platform_table.php
+└── seeders
+    ├── BonusesSeeder.php
+    ├── DatabaseSeeder.php
+    ├── EarningsSeeder.php
+    ├── PenaltiesSeeder.php
+    ├── PerformanceSeeder.php
+    ├── PerformanceSplitSeeder.php
+    ├── PerformanceUserSeeder.php
+    ├── PermissionSeeder.php
+    ├── PlatformSeeder.php
+    ├── RoleSeeder.php
+    ├── StudioSeeder.php
+    └── SuperAdminSeeder.php
+
+4 directories, 33 files
+
+================ ROUTES ================
+routes
+├── api.php
+├── console.php
+└── web.php
+
+1 directory, 3 files
+
+================ FRONTEND ================
+resources/js
+└── app.js
+
+1 directory, 1 file

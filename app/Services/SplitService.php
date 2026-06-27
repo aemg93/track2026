@@ -6,8 +6,11 @@ use App\Models\Performance;
 
 class SplitService
 {
-    public function calculate(Performance $performance, float $usdAmount): array
-    {
+    public function calculate(
+        Performance $performance,
+        float $usdAmount
+    ): array {
+
         $split = $performance->split;
 
         if (!$split) {
@@ -28,15 +31,20 @@ class SplitService
 
         return [
 
-            'gross_usd' => $usdAmount,
+            'gross_usd' =>
+                $usdAmount,
 
-            'model_percentage' => $modelPercent,
+            'model_percentage' =>
+                $modelPercent,
 
-            'studio_percentage' => $studioPercent,
+            'studio_percentage' =>
+                $studioPercent,
 
-            'model_usd' => round($modelAmount,2),
+            'model_usd' =>
+                round($modelAmount, 2),
 
-            'studio_usd' => round($studioAmount,2)
+            'studio_usd' =>
+                round($studioAmount, 2),
 
         ];
     }
