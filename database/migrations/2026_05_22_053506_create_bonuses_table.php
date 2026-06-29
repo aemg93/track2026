@@ -12,11 +12,6 @@ return new class extends Migration
 
             $table->id();
 
-            /*
-            |--------------------------------------------------------------------------
-            | RELACIONES
-            |--------------------------------------------------------------------------
-            */
 
             $table->foreignId('performance_id')
                 ->constrained('performances')
@@ -27,40 +22,17 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
-            /*
-            |--------------------------------------------------------------------------
-            | DATOS DEL BONO
-            |--------------------------------------------------------------------------
-            */
 
-            // Motivo del bono (texto libre o categorizado)
             $table->string('reason')->nullable();
 
-            // Monto del bono en USD
             $table->decimal('amount', 12, 2)->default(0);
 
-            /*
-            |--------------------------------------------------------------------------
-            | FECHA DE NEGOCIO
-            |--------------------------------------------------------------------------
-            */
-
-            // Fecha real del bono (IMPORTANTE para reportes)
+       
             $table->date('date')->nullable();
 
-            /*
-            |--------------------------------------------------------------------------
-            | AUDITORÍA LARAVEL
-            |--------------------------------------------------------------------------
-            */
+        
 
             $table->timestamps();
-
-            /*
-            |--------------------------------------------------------------------------
-            | ÍNDICES (OPTIMIZACIÓN)
-            |--------------------------------------------------------------------------
-            */
 
             $table->index(['performance_id', 'date']);
         });

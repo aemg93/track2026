@@ -12,7 +12,6 @@
     "
   >
 
-    <!-- TOP HEADER -->
 
     <div
       class="
@@ -131,7 +130,6 @@
 
       </template>
 
-      <!-- MOTIVO -->
 
       <template #reason="{ item }">
 
@@ -146,7 +144,6 @@
 
       </template>
 
-      <!-- MONTO -->
 
       <template #amount="{ item }">
 
@@ -182,7 +179,6 @@
 
     </DataTable>
 
-    <!-- EMPTY STATE -->
 
     <div
       v-if="!normalizedPenalties.length"

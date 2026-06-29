@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Earning;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EarningService
@@ -53,6 +54,8 @@ class EarningService
     public function syncEarning(
         Earning $earning
     ): Earning {
+
+        $earning->loadMissing('performance');
 
         $this->calculateBonus($earning);
 
@@ -104,16 +107,13 @@ class EarningService
     ): void {
 
         $earning->net_usd = round(
-
             (
                 (float) $earning->gross_usd
                 + (float) $earning->bonus_usd
                 - (float) $earning->penalty_usd
                 - (float) $earning->deduction_usd
             ),
-
             2
-
         );
     }
 
@@ -122,25 +122,15 @@ class EarningService
     ): void {
 
         $earning->model_share_usd = round(
-
             $earning->net_usd *
-            (
-                (float) $earning->model_percentage / 100
-            ),
-
+            ((float) $earning->model_percentage / 100),
             2
-
         );
 
         $earning->studio_share_usd = round(
-
             $earning->net_usd *
-            (
-                (float) $earning->studio_percentage / 100
-            ),
-
+            ((float) $earning->studio_percentage / 100),
             2
-
         );
     }
 
@@ -150,7 +140,6 @@ class EarningService
     ): float {
 
         return round(
-
             (float) $relation
                 ->whereBetween(
                     'date',
@@ -160,14 +149,14 @@ class EarningService
                     ]
                 )
                 ->sum('amount'),
-
             2
-
         );
     }
 
-    private function paginate($query): LengthAwarePaginator
-    {
+    private function paginate(
+        Builder $query
+    ): LengthAwarePaginator {
+
         return $query
             ->orderByDesc('period_end')
             ->paginate(25);

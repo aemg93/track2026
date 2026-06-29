@@ -16,7 +16,6 @@ return new class extends Migration
                 ->constrained('performances')
                 ->cascadeOnDelete();
 
-            // ✔ opcional (antes era obligatorio → ERROR)
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')

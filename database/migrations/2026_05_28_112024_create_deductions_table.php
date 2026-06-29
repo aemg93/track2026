@@ -15,13 +15,12 @@ return new class extends Migration
             $table->foreignId('performance_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-            $table->string('category'); // juguetes, bebidas, etc
+            $table->string('category'); 
             $table->string('reason');
 
             $table->decimal('amount', 12, 2);
             $table->date('date');
 
-            // 💳 financiación
             $table->boolean('is_installment')->default(false);
             $table->integer('installments')->nullable();
             $table->decimal('installment_value', 12, 2)->nullable();
