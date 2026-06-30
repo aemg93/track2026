@@ -10,24 +10,19 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Crear rol si no existe
         $role = Role::firstOrCreate([
             'name' => 'Super Admin',
             'guard_name' => 'web',
         ]);
 
-        // 2. Crear usuario
-        $user = User::firstOrCreate(
-            [
-                'email' => 'admin@example.com'
-            ],
+        $user = User::updateOrCreate(
+            ['email' => 'admin@example.com'],
             [
                 'name' => 'Super Admin',
                 'password' => bcrypt('password'),
             ]
         );
 
-        // 3. Asignar rol
         $user->assignRole($role);
     }
 }

@@ -4,7 +4,6 @@
 <Teleport to="body">
 
 <div
-    v-if="show"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
 >
 
@@ -159,11 +158,9 @@
 
 import { ref } from 'vue'
 
-import api from '../../../services/api'
+import api from '../../../../services/api'
 
 const props = defineProps({
-
-    show: Boolean,
 
     performanceId: Number
 

@@ -51,6 +51,36 @@ class EarningService
         return $this->paginate($query);
     }
 
+    public function create(array $data): Earning
+    {
+    $earning = Earning::create([
+
+        'performance_id' => $data['performance_id'],
+
+        'period_start' => $data['period_start'],
+        'period_end'   => $data['period_end'],
+
+        'gross_usd' => $data['gross_usd'],
+
+        'bonus_usd'     => 0,
+        'penalty_usd'   => 0,
+        'deduction_usd' => 0,
+
+        'net_usd' => 0,
+
+        'model_percentage'  => 60,
+        'studio_percentage' => 40,
+
+        'model_share_usd'  => 0,
+        'studio_share_usd' => 0,
+
+        'status' => 'draft',
+    ]);
+
+    return $this->syncEarning($earning);
+
+    }
+
     public function syncEarning(
         Earning $earning
     ): Earning {
