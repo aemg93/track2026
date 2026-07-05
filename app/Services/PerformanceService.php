@@ -175,41 +175,6 @@ class PerformanceService
 
     }
 
-    public function financialSummary(
-        Performance $performance
-    ): array {
-
-
-        return [
-
-            'earnings'=>(float)
-                $performance->earnings
-                ->sum('gross_usd'),
-
-
-            'bonuses'=>(float)
-                $performance->earnings
-                ->sum('bonus_usd'),
-
-
-            'penalties'=>(float)
-                $performance->earnings
-                ->sum('penalty_usd'),
-
-
-            'deductions'=>(float)
-                $performance->earnings
-                ->sum('deduction_usd'),
-
-
-            'net'=>(float)
-                $performance->earnings
-                ->sum('net_usd'),
-
-        ];
-
-    }
-
     public function leaderboard(
         int $limit = 20
     )

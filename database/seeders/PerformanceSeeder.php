@@ -105,12 +105,6 @@ class PerformanceSeeder extends Seeder
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | ACTUALIZAR AGREGADOS
-            |--------------------------------------------------------------------------
-            */
-
             app(RankingService::class)
                 ->recalculate($performanceId);
         }

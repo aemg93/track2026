@@ -89,7 +89,6 @@ class DeductionController extends Controller
 
     }
 
-
     public function store(Request $request)
     {
 
@@ -154,13 +153,6 @@ class DeductionController extends Controller
 
 
         $deduction = Deduction::create($data);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Financial synchronization
-        |--------------------------------------------------------------------------
-        */
 
         $this->financialSynchronizationService
             ->synchronizePerformance(

@@ -23,7 +23,6 @@ class BonusesSeeder extends Seeder
 
         $userId = $superAdmin->id;
 
-        // Bono Camila
         DB::table('bonuses')->updateOrInsert(
             [
                 'performance_id' => $camila,
@@ -38,7 +37,6 @@ class BonusesSeeder extends Seeder
             ]
         );
 
-        // Bono Valentina
         DB::table('bonuses')->updateOrInsert(
             [
                 'performance_id' => $valentina,

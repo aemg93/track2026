@@ -4,13 +4,14 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Performance;
-use App\Models\Earning;
 
 class DashboardService
 {
-    public function __construct(
-        private StatisticsService $statistics
-    ) {}
+   public function __construct(
+    private StatisticsService $statistics,
+    private FinancialSummaryService $financialSummary
+) {
+}
 
 
 
@@ -326,62 +327,91 @@ class DashboardService
         ];
     }
 
-    private function financeData(): array
+private function financeData(): array
 {
-    $earnings = Earning::query();
+    $performances = Performance::with([
+        'earnings',
+        'bonuses',
+        'penalties',
+        'deductions',
+        'split',
+    ])->get();
 
+    $earnings = 0;
+    $bonuses = 0;
+    $penalties = 0;
+    $deductions = 0;
+    $net = 0;
+    $modelShare = 0;
+    $studioShare = 0;
+    $pending = 0;
+
+    foreach ($performances as $performance) {
+
+        $summary = $this->financialSummary
+            ->summary($performance);
+
+        $earnings += $summary['gross_usd'];
+
+        $bonuses += $summary['bonus_usd'];
+
+        $penalties += $summary['penalty_usd'];
+
+        $deductions += $summary['deduction_usd'];
+
+        $net += $summary['net_usd'];
+
+        $modelShare += $summary['model_share_usd'];
+
+        $studioShare += $summary['studio_share_usd'];
+
+        $pending += $performance
+            ->earnings()
+            ->where('status', 'pending')
+            ->sum('gross_usd');
+    }
 
     return [
 
         'totals' => [
 
-            'earnings' =>
-                round(
-                    (float) $earnings->sum('gross_usd'),
-                    2
-                ),
+            'earnings' => round($earnings, 2),
 
+            'bonuses' => round($bonuses, 2),
 
-            'bonuses' =>
-                round(
-                    (float) $earnings->sum('bonus_usd'),
-                    2
-                ),
+            'penalties' => round($penalties, 2),
 
-
-            'penalties' =>
-                round(
-                    (float) $earnings->sum('penalty_usd'),
-                    2
-                ),
-
-
-            'deductions' =>
-                round(
-                    (float) $earnings->sum('deduction_usd'),
-                    2
-                ),
+            'deductions' => round($deductions, 2),
 
         ],
 
+        'net_balance' => round(
+            $net,
+            2
+        ),
 
-        'net_balance' =>
-            round(
-                (float) Earning::sum('net_usd'),
+        'distribution' => [
+
+            'models' => round(
+                $modelShare,
                 2
             ),
 
+            'studio' => round(
+                $studioShare,
+                2
+            ),
 
-        'installments'=>[
+        ],
 
-            'active'=>0,
+        'installments' => [
 
-            'pending_amount'=>
-                (float) Earning::where(
-                    'status',
-                    'pending'
-                )
-                ->sum('net_usd'),
+            'active' => 0,
+
+            'pending_amount' => round(
+                $pending,
+                2
+            ),
 
         ],
 

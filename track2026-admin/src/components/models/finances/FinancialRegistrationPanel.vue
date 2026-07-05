@@ -95,6 +95,7 @@
     <RegisterRevenueModal
       v-if="showRevenue"
       :performance-id="performanceId"
+      :platforms="platforms"
       @close="close"
       @saved="saved"
     />
@@ -126,7 +127,8 @@
 import {
     ref,
     computed,
-    onMounted
+    onMounted,
+    watch
 } from 'vue'
 
 
@@ -138,18 +140,28 @@ import RegisterBonusModal from './modals/RegisterBonusModal.vue'
 import RegisterPenaltyModal from './modals/RegisterPenaltyModal.vue'
 import RegisterDeductionModal from './modals/RegisterDeductionModal.vue'
 
+
 const emit = defineEmits([
     'saved'
 ])
 
+
 const performances = ref([])
 
+const platforms = ref([])
+
+
 const type = ref('')
+
 const performanceId = ref(null)
 
+
 const showRevenue = ref(false)
+
 const showBonus = ref(false)
+
 const showPenalty = ref(false)
+
 const showDeduction = ref(false)
 
 
@@ -172,88 +184,121 @@ const canContinue = computed(() => {
 
 })
 
+
+
 const loadPerformances = async () => {
 
     try {
 
-
-        const response = await api.get('/performances')
-
-
-        console.log(
-            'PERFORMANCES RESPONSE:',
-            response.data
+        const response = await api.get(
+            '/performances'
         )
 
 
         const payload = response.data
 
 
-
-        if (
-            Array.isArray(payload.data)
-        ) {
-
+        if (Array.isArray(payload.data)) {
 
             performances.value =
                 payload.data.filter(Boolean)
 
-
         }
 
-
         else if (
-
-            payload.data
-
-            &&
-
+            payload.data &&
             Array.isArray(payload.data.data)
-
         ) {
-
 
             performances.value =
                 payload.data.data.filter(Boolean)
 
-
         }
-
 
         else {
 
-
             performances.value = []
 
-
         }
-
-
-
-        console.log(
-            'PERFORMANCES CARGADAS:',
-            performances.value
-        )
 
 
     }
 
-
-    catch (error) {
-
+    catch(error) {
 
         console.error(
-            'ERROR CARGANDO PERFORMANCES:',
+            'Error cargando performances:',
             error
         )
 
-
         performances.value = []
-
 
     }
 
 }
+
+
+
+const loadPlatforms = async () => {
+
+    if (!performanceId.value) {
+
+        platforms.value = []
+
+        return
+
+    }
+
+    try {
+
+        const response = await api.get(
+            `/performances/${performanceId.value}/platforms`
+        )
+
+
+        console.log(
+            'PLATFORM RESPONSE:',
+            response.data
+        )
+
+
+        platforms.value =
+            response.data.data ?? response.data
+
+
+        console.log(
+            'PLATFORMS CARGADAS:',
+            platforms.value
+        )
+
+
+    }
+
+    catch(error) {
+
+        console.error(
+            'ERROR PLATFORMS:',
+            error.response?.data || error
+        )
+
+        platforms.value = []
+
+    }
+
+}
+
+
+
+watch(
+    performanceId,
+    () => {
+
+        loadPlatforms()
+
+    }
+)
+
+
 
 const openModal = () => {
 
@@ -261,8 +306,7 @@ const openModal = () => {
     close()
 
 
-
-    switch (type.value) {
+    switch(type.value) {
 
 
         case 'earning':
@@ -272,7 +316,6 @@ const openModal = () => {
             break
 
 
-
         case 'bonus':
 
             showBonus.value = true
@@ -280,13 +323,11 @@ const openModal = () => {
             break
 
 
-
         case 'penalty':
 
             showPenalty.value = true
 
             break
-
 
 
         case 'deduction':
@@ -298,20 +339,10 @@ const openModal = () => {
 
     }
 
-    console.log({
-
-        revenue: showRevenue.value,
-
-        bonus: showBonus.value,
-
-        penalty: showPenalty.value,
-
-        deduction: showDeduction.value
-
-    })
-
 
 }
+
+
 
 const close = () => {
 
@@ -327,21 +358,25 @@ const close = () => {
 
 }
 
+
+
 const saved = () => {
 
 
     close()
+
     emit('saved')
 
 
 }
 
-onMounted(() => {
 
+
+onMounted(() => {
 
     loadPerformances()
 
-
 })
+
 
 </script>

@@ -30,7 +30,6 @@ class PenaltyController extends Controller
                 return [
                     'id' => $penalty->id,
 
-                    // 🧠 CONSOLIDACIÓN
                     'type' => 'penalty',
 
                     'performance' => [
@@ -40,7 +39,6 @@ class PenaltyController extends Controller
 
                     'user_id' => $penalty->user_id,
 
-                    // 💰 COP ONLY
                     'amount' => (float) $penalty->amount,
                     'currency' => 'COP',
 
@@ -70,7 +68,6 @@ class PenaltyController extends Controller
         return response()->json([
             'message' => 'Penalty created successfully',
 
-            // 🧠 CONSISTENCIA EN RESPONSE
             'data' => [
                 'id' => $penalty->id,
                 'type' => 'penalty',

@@ -27,9 +27,6 @@ class PerformanceUserSeeder extends Seeder
 
         foreach ($models as $modelData) {
 
-            /**
-             * 1. Crear o actualizar usuario del sistema
-             */
             $user = User::updateOrCreate(
                 [
                     'email' => $modelData['email']
@@ -42,10 +39,6 @@ class PerformanceUserSeeder extends Seeder
 
             $user->assignRole('Performance');
 
-            /**
-             * 2. Vincular Performance usando email (CORRECTO)
-             * Evita depender de first_name (no es único)
-             */
             Performance::where('email', $modelData['email'])
                 ->update([
                     'user_id' => $user->id

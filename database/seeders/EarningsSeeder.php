@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Deduction;
-use App\Models\Earning;
 use App\Models\Performance;
+use App\Models\Platform;
 use App\Services\EarningService;
 use Illuminate\Database\Seeder;
 
@@ -12,13 +12,10 @@ class EarningsSeeder extends Seeder
 {
     public function run(): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Performance 1
-        |--------------------------------------------------------------------------
-        */
-
         $performance1 = Performance::findOrFail(1);
+
+        $platformToken = Platform::where('type', 'token')
+            ->firstOrFail();
 
         $this->createDeduction(
             $performance1,
@@ -43,7 +40,9 @@ class EarningsSeeder extends Seeder
 
         $this->createEarning(
             $performance1,
+            $platformToken,
             2500,
+            'tokens',
             'paid',
             now()
         );
@@ -56,6 +55,9 @@ class EarningsSeeder extends Seeder
 
         $performance2 = Performance::findOrFail(2);
 
+        $platformUsd = Platform::where('type', 'usd')
+            ->firstOrFail();
+
         $this->createDeduction(
             $performance2,
             'Equipos',
@@ -65,8 +67,10 @@ class EarningsSeeder extends Seeder
 
         $this->createEarning(
             $performance2,
+            $platformUsd,
             1800,
-            'pending'
+            'usd',
+            'draft'
         );
     }
 
@@ -76,45 +80,51 @@ class EarningsSeeder extends Seeder
         string $reason,
         float $amount
     ): void {
+
         Deduction::create([
+
             'performance_id' => $performance->id,
-            'user_id'        => 1,
-            'category'       => $category,
-            'reason'         => $reason,
-            'amount'         => $amount,
-            'date'           => '2026-06-18',
+
+            'user_id' => 1,
+
+            'category' => $category,
+
+            'reason' => $reason,
+
+            'amount' => $amount,
+
+            'date' => '2026-06-18',
+
         ]);
+
     }
 
     private function createEarning(
         Performance $performance,
-        float $grossUsd,
+        Platform $platform,
+        float $amount,
+        string $currency,
         string $status,
         $paidAt = null
     ): void {
-        $earning = Earning::create([
-            'performance_id'    => $performance->id,
 
-            'period_start'      => '2026-06-01',
-            'period_end'        => '2026-06-30',
+        app(EarningService::class)->create([
 
-            'gross_usd'         => $grossUsd,
+            'performance_id' => $performance->id,
 
-            'bonus_usd'         => 0,
-            'penalty_usd'       => 0,
-            'deduction_usd'     => 0,
-            'net_usd'           => 0,
+            'platform_id' => $platform->id,
 
-            'model_percentage'  => 60,
-            'studio_percentage' => 40,
+            'earned_at' => now(),
 
-            'model_share_usd'   => 0,
-            'studio_share_usd'  => 0,
+            'original_amount' => $amount,
 
-            'status'            => $status,
-            'paid_at'           => $paidAt,
+            'original_currency' => $currency,
+
+            'status' => $status,
+
+            'paid_at' => $paidAt,
+
         ]);
 
-        app(EarningService::class)->syncEarning($earning);
     }
 }

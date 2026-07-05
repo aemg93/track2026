@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    /**
-     * LOGIN (SANCTUM TOKEN - STATELESS API)
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -27,7 +24,6 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // 🔥 Crear token Sanctum
         $token = $user->createToken('track2026-token')->plainTextToken;
 
         return response()->json([
@@ -37,9 +33,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * ME (USER AUTH)
-     */
     public function me(Request $request)
     {
         return response()->json([
@@ -48,9 +41,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * LOGOUT (REVOKE TOKEN)
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -61,9 +51,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * CENTRALIZAR FORMATO USER (IMPORTANTE)
-     */
     private function formatUser($user)
     {
         return [

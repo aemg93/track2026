@@ -26,12 +26,6 @@ class Platform extends Model
         'is_active' => 'boolean',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIP
-    |--------------------------------------------------------------------------
-    */
-
     public function performances()
     {
         return $this->belongsToMany(

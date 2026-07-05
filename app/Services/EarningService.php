@@ -3,18 +3,25 @@
 namespace App\Services;
 
 use App\Models\Earning;
+use App\Models\Performance;
+use App\Models\Platform;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EarningService
 {
+    public function __construct(
+        private RevenueService $revenueService
+    ) {
+    }
+
     public function list(User $user): LengthAwarePaginator
     {
         $query = Earning::query()
             ->with([
                 'performance:id,studio_id,user_id,first_name,last_name,nickname',
+                'platform:id,name,slug',
             ]);
 
         if ($user->hasRole('Super Admin')) {
@@ -25,25 +32,31 @@ class EarningService
             $user->hasRole('Admin') ||
             $user->hasRole('Monitor')
         ) {
+
             $query->whereHas(
                 'performance',
                 function ($q) use ($user) {
+
                     $q->where(
                         'studio_id',
                         $user->studio_id
                     );
+
                 }
             );
         }
 
         if ($user->hasRole('Performance')) {
+
             $query->whereHas(
                 'performance',
                 function ($q) use ($user) {
+
                     $q->where(
                         'user_id',
                         $user->id
                     );
+
                 }
             );
         }
@@ -51,134 +64,170 @@ class EarningService
         return $this->paginate($query);
     }
 
+
     public function create(array $data): Earning
     {
-    $earning = Earning::create([
+        $performance = Performance::findOrFail(
+            $data['performance_id']
+        );
 
-        'performance_id' => $data['performance_id'],
+        $platform = Platform::findOrFail(
+            $data['platform_id']
+        );
 
-        'period_start' => $data['period_start'],
-        'period_end'   => $data['period_end'],
 
-        'gross_usd' => $data['gross_usd'],
+        $revenue = $this->revenueService->calculate(
+            $performance,
+            $platform,
+            (float) $data['original_amount']
+        );
 
-        'bonus_usd'     => 0,
-        'penalty_usd'   => 0,
-        'deduction_usd' => 0,
 
-        'net_usd' => 0,
+        $earning = Earning::create([
 
-        'model_percentage'  => 60,
-        'studio_percentage' => 40,
+            'performance_id' => $performance->id,
 
-        'model_share_usd'  => 0,
-        'studio_share_usd' => 0,
+            'platform_id' => $platform->id,
 
-        'status' => 'draft',
-    ]);
+            'earned_at' => $data['earned_at'],
 
-    return $this->syncEarning($earning);
+            'original_amount' =>
+                $revenue['original_amount'],
 
+            'original_currency' =>
+                $revenue['original_currency'],
+
+            'real_tokens' =>
+                $revenue['real_tokens'] ?? null,
+
+            'conversion_rate' =>
+                $revenue['conversion_rate'] ?? null,
+
+            'multiplier' =>
+                $revenue['multiplier'] ?? null,
+
+
+            'gross_usd' =>
+                $revenue['gross_usd'],
+
+            'bonus_usd' => 0,
+
+            'penalty_usd' => 0,
+
+            'deduction_usd' => 0,
+
+            'net_usd' =>
+                $revenue['net_usd'],
+
+
+            'model_percentage' =>
+                $revenue['model_percentage'],
+
+            'studio_percentage' =>
+                $revenue['studio_percentage'],
+
+
+            'model_share_usd' =>
+                $revenue['model_share_usd'],
+
+            'studio_share_usd' =>
+                $revenue['studio_share_usd'],
+
+
+            'status' => $data['status'] ?? 'draft',
+
+            'paid_at' => $data['paid_at'] ?? null,
+
+        ]);
+
+
+        return $this->syncEarning($earning);
     }
+
+
 
     public function syncEarning(
         Earning $earning
     ): Earning {
 
-        $earning->loadMissing('performance');
+        $earning->loadMissing(
+            'performance'
+        );
 
-        $this->calculateBonus($earning);
 
-        $this->calculatePenalty($earning);
+        $earning->bonus_usd =
+            $this->sumAdjustments(
+                $earning->performance
+                    ->bonuses(),
+                $earning
+            );
 
-        $this->calculateDeduction($earning);
 
-        $this->calculateNet($earning);
+        $earning->penalty_usd =
+            $this->sumAdjustments(
+                $earning->performance
+                    ->penalties(),
+                $earning
+            );
 
-        $this->calculateShares($earning);
+
+        $earning->deduction_usd =
+            $this->sumAdjustments(
+                $earning->performance
+                    ->deductions(),
+                $earning
+            );
+
+
+        $earning->net_usd = round(
+
+            $earning->gross_usd
+            + $earning->bonus_usd
+            - $earning->penalty_usd
+            - $earning->deduction_usd,
+
+            2
+        );
+
+
+        $earning->model_share_usd = round(
+
+            $earning->net_usd *
+            ($earning->model_percentage / 100),
+
+            2
+        );
+
+
+        $earning->studio_share_usd = round(
+
+            $earning->net_usd *
+            ($earning->studio_percentage / 100),
+
+            2
+        );
+
 
         $earning->save();
+
 
         return $earning;
     }
 
-    private function calculateBonus(
-        Earning $earning
-    ): void {
-
-        $earning->bonus_usd = $this->sumAmountForPeriod(
-            $earning->performance->bonuses(),
-            $earning
-        );
-    }
-
-    private function calculatePenalty(
-        Earning $earning
-    ): void {
-
-        $earning->penalty_usd = $this->sumAmountForPeriod(
-            $earning->performance->penalties(),
-            $earning
-        );
-    }
-
-    private function calculateDeduction(
-        Earning $earning
-    ): void {
-
-        $earning->deduction_usd = $this->sumAmountForPeriod(
-            $earning->performance->deductions(),
-            $earning
-        );
-    }
-
-    private function calculateNet(
-        Earning $earning
-    ): void {
-
-        $earning->net_usd = round(
-            (
-                (float) $earning->gross_usd
-                + (float) $earning->bonus_usd
-                - (float) $earning->penalty_usd
-                - (float) $earning->deduction_usd
-            ),
-            2
-        );
-    }
-
-    private function calculateShares(
-        Earning $earning
-    ): void {
-
-        $earning->model_share_usd = round(
-            $earning->net_usd *
-            ((float) $earning->model_percentage / 100),
-            2
-        );
-
-        $earning->studio_share_usd = round(
-            $earning->net_usd *
-            ((float) $earning->studio_percentage / 100),
-            2
-        );
-    }
-
-    private function sumAmountForPeriod(
-        HasMany $relation,
+    private function sumAdjustments(
+        $relation,
         Earning $earning
     ): float {
 
         return round(
+
             (float) $relation
-                ->whereBetween(
+                ->whereDate(
                     'date',
-                    [
-                        $earning->period_start,
-                        $earning->period_end,
-                    ]
+                    $earning->earned_at
                 )
                 ->sum('amount'),
+
             2
         );
     }
@@ -188,7 +237,7 @@ class EarningService
     ): LengthAwarePaginator {
 
         return $query
-            ->orderByDesc('period_end')
+            ->orderByDesc('earned_at')
             ->paginate(25);
     }
 }

@@ -11,34 +11,44 @@ class PlatformConversionService
         float $amount
     ): array {
 
-        if($platform->type==='usd')
-        {
+        if ($platform->type === 'usd') {
+
             return [
 
-                'original'=>$amount,
+                'original_amount'   => round($amount, 2),
+                'original_currency' => 'usd',
 
-                'usd'=>$amount
+                'real_tokens' => null,
+
+                'conversion_rate' => 1,
+                'multiplier'      => 1,
+
+                'gross_usd' => round($amount, 2),
 
             ];
         }
 
-        $realTokens=
+        $realTokens = round(
+            $amount * $platform->multiplier,
+            2
+        );
 
-            $amount *
-            $platform->multiplier;
-
-        $usd=
-
-            $realTokens *
-            $platform->conversion_rate;
+        $grossUsd = round(
+            $realTokens * $platform->conversion_rate,
+            2
+        );
 
         return [
 
-            'original_tokens'=>$amount,
+            'original_amount'   => round($amount, 2),
+            'original_currency' => 'tokens',
 
-            'real_tokens'=>$realTokens,
+            'real_tokens' => $realTokens,
 
-            'usd'=>$usd
+            'conversion_rate' => $platform->conversion_rate,
+            'multiplier'      => $platform->multiplier,
+
+            'gross_usd' => $grossUsd,
 
         ];
     }

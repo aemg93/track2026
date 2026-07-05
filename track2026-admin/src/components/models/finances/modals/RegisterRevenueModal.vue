@@ -1,98 +1,141 @@
-```vue
 <template>
 
 <Teleport to="body">
 
-<div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
 
-    <div
-        class="w-full max-w-xl bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden"
-    >
+    <div class="w-full max-w-xl bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden">
 
-        <!-- HEADER -->
+        <div class="px-8 py-6 border-b border-gray-800">
 
-        <div
-            class="px-8 py-6 border-b border-gray-800"
-        >
-
-            <p
-                class="text-xs uppercase tracking-[0.2em] text-gray-500"
-            >
+            <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
                 Finanzas
             </p>
 
-            <h2
-                class="text-3xl font-bold text-white mt-2"
-            >
+            <h2 class="text-3xl font-bold text-white mt-2">
                 Registrar Ganancia
             </h2>
 
-            <p
-                class="text-gray-400 mt-2"
-            >
-                Registrar una nueva ganancia para el período seleccionado.
+            <p class="text-gray-400 mt-2">
+                Registrar ingreso generado por plataforma.
             </p>
 
         </div>
 
-        <!-- BODY -->
 
         <form
             class="p-8 space-y-6"
             @submit.prevent="save"
         >
 
+
             <div>
 
                 <label class="text-gray-300 text-sm">
-                    Inicio del período
+                    Plataforma
                 </label>
+
+
+                <select
+                    v-model="form.platform_id"
+                    required
+                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
+                >
+
+                    <option value="">
+                        Seleccionar plataforma
+                    </option>
+
+
+                    <option
+                        v-for="platform in platforms"
+                        :key="platform.id"
+                        :value="platform.id"
+                    >
+
+                        {{ platform.name }}
+
+                    </option>
+
+
+                </select>
+
+            </div>
+
+
+
+            <div>
+
+                <label class="text-gray-300 text-sm">
+                    Fecha del ingreso
+                </label>
+
 
                 <input
 
-                    v-model="form.period_start"
+                    v-model="form.earned_at"
 
                     type="date"
 
-                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
-
                     required
+
+                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
 
                 >
 
             </div>
 
+
+
             <div>
 
                 <label class="text-gray-300 text-sm">
-                    Fin del período
+                    Tipo de ingreso
                 </label>
 
-                <input
 
-                    v-model="form.period_end"
+                <select
 
-                    type="date"
-
-                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
+                    v-model="form.original_currency"
 
                     required
 
+                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
+
                 >
 
+                    <option value="usd">
+                        USD
+                    </option>
+
+                    <option value="tokens">
+                        Tokens
+                    </option>
+
+
+                </select>
+
             </div>
+
+
+
 
             <div>
 
                 <label class="text-gray-300 text-sm">
-                    Ganancia (USD)
+
+                    {{
+                        form.original_currency === 'tokens'
+                            ? 'Cantidad de tokens'
+                            : 'Cantidad USD'
+                    }}
+
                 </label>
+
 
                 <input
 
-                    v-model="form.gross_usd"
+                    v-model="form.original_amount"
 
                     type="number"
 
@@ -100,19 +143,18 @@
 
                     step="0.01"
 
-                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
-
                     required
+
+                    class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
 
                 >
 
             </div>
 
-            <!-- BOTONES -->
 
-            <div
-                class="flex justify-end gap-4 pt-4"
-            >
+
+            <div class="flex justify-end gap-4 pt-4">
+
 
                 <button
 
@@ -123,8 +165,12 @@
                     class="px-6 py-3 rounded-xl border border-gray-700 text-gray-300 hover:bg-gray-800"
 
                 >
+
                     Cancelar
+
                 </button>
+
+
 
                 <button
 
@@ -138,11 +184,15 @@
 
                     {{ loading ? 'Guardando...' : 'Guardar' }}
 
+
                 </button>
+
 
             </div>
 
+
         </form>
+
 
     </div>
 
@@ -152,17 +202,32 @@
 
 </template>
 
+
 <script setup>
 
-import { ref } from 'vue'
+import {
+    ref,
+    computed,
+    watch
+} from 'vue'
 
 import api from '../../../../services/api'
 
+
 const props = defineProps({
 
-    performanceId: Number
+    performanceId: {
+        type: Number,
+        required: true
+    },
+
+    platforms: {
+        type: Array,
+        default: () => []
+    }
 
 })
+
 
 const emit = defineEmits([
 
@@ -172,17 +237,74 @@ const emit = defineEmits([
 
 ])
 
+
 const loading = ref(false)
+
+
 
 const form = ref({
 
-    period_start: '',
+    platform_id: '',
 
-    period_end: '',
+    earned_at: new Date()
+        .toISOString()
+        .substring(0, 10),
 
-    gross_usd: ''
+    original_amount: '',
+
+    original_currency: 'usd'
 
 })
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Plataforma seleccionada
+|--------------------------------------------------------------------------
+*/
+
+const selectedPlatform = computed(() => {
+
+    return props.platforms.find(
+        platform =>
+            platform.id == form.value.platform_id
+    )
+
+})
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Sincronizar moneda según plataforma
+|--------------------------------------------------------------------------
+*/
+
+watch(
+    selectedPlatform,
+    (platform) => {
+
+        if (!platform) {
+            return
+        }
+
+
+        form.value.original_currency =
+            platform.type === 'token'
+                ? 'tokens'
+                : 'usd'
+
+    }
+)
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Cerrar modal
+|--------------------------------------------------------------------------
+*/
 
 const close = () => {
 
@@ -190,71 +312,132 @@ const close = () => {
 
 }
 
+
+
+/*
+|--------------------------------------------------------------------------
+| Reset formulario
+|--------------------------------------------------------------------------
+*/
+
 const reset = () => {
+
 
     form.value = {
 
-        period_start: '',
+        platform_id: '',
 
-        period_end: '',
+        earned_at: new Date()
+            .toISOString()
+            .substring(0, 10),
 
-        gross_usd: ''
+        original_amount: '',
+
+        original_currency: 'usd'
 
     }
 
+
 }
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Guardar earning
+|--------------------------------------------------------------------------
+*/
 
 const save = async () => {
 
+
     loading.value = true
+
 
     try {
 
-        await api.post(
 
-            '/earnings',
+        const payload = {
 
-            {
 
-                performance_id: props.performanceId,
+            performance_id:
+                props.performanceId,
 
-                period_start: form.value.period_start,
 
-                period_end: form.value.period_end,
+            platform_id:
+                Number(form.value.platform_id),
 
-                gross_usd: form.value.gross_usd
 
-            }
+            earned_at:
+                form.value.earned_at,
 
+
+            original_amount:
+                Number(form.value.original_amount),
+
+
+            original_currency:
+                form.value.original_currency
+
+
+        }
+
+
+
+        console.log(
+            'CREATING EARNING:',
+            payload
         )
+
+
+
+        await api.post(
+            '/earnings',
+            payload
+        )
+
+
 
         emit('saved')
 
+
         reset()
+
 
         close()
 
-    }
-
-    catch (error) {
-
-        console.error(error)
 
     }
 
-    finally {
 
-        loading.value = false
+   catch(error) {
 
-    }
+    console.error(
+        'ERROR CREATING EARNING:',
+        error.response?.data
+    )
 
 }
 
+    finally {
+
+
+        loading.value = false
+
+
+    }
+
+
+}
+
+
 </script>
+
 
 <style scoped>
 
-input:focus{
+input:focus,
+select:focus{
 
     outline:none;
 
@@ -263,4 +446,3 @@ input:focus{
 }
 
 </style>
-

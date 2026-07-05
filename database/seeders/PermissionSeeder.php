@@ -11,28 +11,22 @@ class PermissionSeeder extends Seeder
     {
         $permissions = [
 
-            // Activity
             'activity.create',
             'activity.view',
 
-            // Earnings
             'earnings.view.own',
             'earnings.view.model',
             'earnings.view.studio',
 
-            // Finance
             'bonus.create',
             'penalty.create',
 
-            // Models
             'model.view.own',
             'model.view.all',
 
-            // Studio
             'studio.view.own',
             'studio.view.profit',
 
-            // Dashboard
             'dashboard.super',
         ];
 

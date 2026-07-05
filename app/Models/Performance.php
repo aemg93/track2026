@@ -41,11 +41,6 @@ class Performance extends Model
         'ranking_score',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
 
     public function studio()
     {
@@ -87,12 +82,6 @@ class Performance extends Model
         return $this->hasOne(PerformanceSplit::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PLATFORMS (CORREGIDO)
-    |--------------------------------------------------------------------------
-    */
-
     public function platforms()
     {
         return $this->belongsToMany(
@@ -111,12 +100,6 @@ class Performance extends Model
         ])
         ->withTimestamps();
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS
-    |--------------------------------------------------------------------------
-    */
 
     public function getNameAttribute()
     {

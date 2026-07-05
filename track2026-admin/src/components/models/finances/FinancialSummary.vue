@@ -6,7 +6,6 @@
       Resumen Financiero
     </h2>
 
-
     <div
       class="
         grid
@@ -17,65 +16,61 @@
       "
     >
 
-
       <FinancialCard
         title="Ganancias"
-        :value="financial.earnings"
+        :value="financial?.gross_usd"
       />
-
 
       <FinancialCard
         title="Bonos"
-        :value="financial.bonuses"
+        :value="financial?.bonus_usd"
         color="text-green-400"
       />
 
-
       <FinancialCard
         title="Multas"
-        :value="financial.penalties"
+        :value="financial?.penalty_usd"
         color="text-red-400"
       />
 
-
       <FinancialCard
         title="Descuentos"
-        :value="financial.deductions"
+        :value="financial?.deduction_usd"
         color="text-amber-400"
       />
 
-
       <FinancialCard
         title="Neto"
-        :value="financial.net"
+        :value="financial?.net_usd"
         color="text-yellow-400"
       />
 
-
     </div>
-
 
   </div>
 
 </template>
 
-
 <script setup>
 
 import FinancialCard from './FinancialCard.vue'
 
-
 defineProps({
 
-  financial:{
-    type:Object,
-    default:()=>({
+  financial: {
+    type: Object,
 
-      earnings:'0.00',
-      bonuses:'0.00',
-      penalties:'0.00',
-      deductions:'0.00',
-      net:'0.00'
+    default: () => ({
+
+      gross_usd: '0.00',
+
+      bonus_usd: '0.00',
+
+      penalty_usd: '0.00',
+
+      deduction_usd: '0.00',
+
+      net_usd: '0.00',
 
     })
   }

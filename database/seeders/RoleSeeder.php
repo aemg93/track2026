@@ -10,9 +10,6 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // =========================
-        // SUPER ADMIN
-        // =========================
         $superAdmin = Role::firstOrCreate([
             'name' => 'Super Admin',
             'guard_name' => 'web'
@@ -20,9 +17,6 @@ class RoleSeeder extends Seeder
 
         $superAdmin->givePermissionTo(Permission::all());
 
-        // =========================
-        // MONITOR (OPERADOR)
-        // =========================
         $monitor = Role::firstOrCreate([
             'name' => 'Monitor',
             'guard_name' => 'web'
@@ -42,9 +36,6 @@ class RoleSeeder extends Seeder
             'model.view.own'
         ]);
 
-        // =========================
-        // PERFORMANCE (MODELO)
-        // =========================
         $model = Role::firstOrCreate([
             'name' => 'Performance',
             'guard_name' => 'web'
@@ -56,7 +47,7 @@ class RoleSeeder extends Seeder
 
             'model.view.own',
 
-            'activity.create' // opcional si el modelo registra actividad
+            'activity.create' 
 
         ]);
     }

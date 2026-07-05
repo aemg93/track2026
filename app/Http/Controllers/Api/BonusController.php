@@ -15,7 +15,6 @@ class BonusController extends Controller
 
         $query = Bonus::with('performance');
 
-        // 🔐 Scope por rol (mantiene tu lógica actual)
         if ($user->hasRole('Admin')) {
             $query->whereHas('performance', function ($q) use ($user) {
                 $q->where('studio_id', $user->studio_id);
@@ -27,7 +26,6 @@ class BonusController extends Controller
                 return [
                     'id' => $bonus->id,
 
-                    // 🧠 PASO 1 CONSOLIDACIÓN
                     'type' => 'bonus',
 
                     'performance' => [
@@ -37,7 +35,6 @@ class BonusController extends Controller
 
                     'user_id' => $bonus->user_id,
 
-                    // 💰 COP ONLY (simple y consistente)
                     'amount' => (float) $bonus->amount,
                     'currency' => 'COP',
 
@@ -67,7 +64,6 @@ class BonusController extends Controller
         return response()->json([
             'message' => 'Bonus created successfully',
 
-            // 🧠 mantener consistencia también en create
             'data' => [
                 'id' => $bonus->id,
                 'type' => 'bonus',

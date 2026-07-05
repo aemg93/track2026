@@ -35,9 +35,6 @@ class PerformanceAnalyticsService
         ];
     }
 
-    /**
-     * 📊 BREAKDOWN POR PLATAFORMA (PRO)
-     */
     private function buildPlatformBreakdown(Collection $platforms): array
     {
         return $platforms->map(function ($platform) {
@@ -69,9 +66,6 @@ class PerformanceAnalyticsService
         })->sortByDesc('score')->values()->toArray();
     }
 
-    /**
-     * 📦 TOTALES GLOBALES
-     */
     private function calculateTotals(Collection $platforms): array
     {
         return [
@@ -81,9 +75,6 @@ class PerformanceAnalyticsService
         ];
     }
 
-    /**
-     * ⚡ EFICIENCIA GLOBAL
-     */
     private function calculateEfficiency(array $totals): array
     {
         $hours = $totals['hours'];
@@ -94,9 +85,6 @@ class PerformanceAnalyticsService
         ];
     }
 
-    /**
-     * 🏆 RANKING SCORE GLOBAL (CORE KPI)
-     */
     private function calculateRankingScore(array $totals): float
     {
         $hours = $totals['hours'];

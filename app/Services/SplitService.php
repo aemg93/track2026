@@ -8,43 +8,36 @@ class SplitService
 {
     public function calculate(
         Performance $performance,
-        float $usdAmount
+        float $grossUsd
     ): array {
 
         $split = $performance->split;
 
-        if (!$split) {
+        $modelPercentage = $split?->model_percentage ?? 60;
 
-            $modelPercent = 60;
-            $studioPercent = 40;
+        $studioPercentage = $split?->studio_percentage ?? 40;
 
-        } else {
+        $modelShare = round(
+            $grossUsd * ($modelPercentage / 100),
+            2
+        );
 
-            $modelPercent = $split->model_percentage;
-            $studioPercent = $split->studio_percentage;
-
-        }
-
-        $modelAmount = ($usdAmount * $modelPercent) / 100;
-
-        $studioAmount = ($usdAmount * $studioPercent) / 100;
+        $studioShare = round(
+            $grossUsd * ($studioPercentage / 100),
+            2
+        );
 
         return [
 
-            'gross_usd' =>
-                $usdAmount,
+            'gross_usd' => round($grossUsd, 2),
 
-            'model_percentage' =>
-                $modelPercent,
+            'model_percentage' => $modelPercentage,
 
-            'studio_percentage' =>
-                $studioPercent,
+            'studio_percentage' => $studioPercentage,
 
-            'model_usd' =>
-                round($modelAmount, 2),
+            'model_share_usd' => $modelShare,
 
-            'studio_usd' =>
-                round($studioAmount, 2),
+            'studio_share_usd' => $studioShare,
 
         ];
     }

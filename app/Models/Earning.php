@@ -3,15 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Performance;
+use App\Models\Platform;
 
 class Earning extends Model
 {
     protected $fillable = [
 
         'performance_id',
+        'platform_id',
 
-        'period_start',
-        'period_end',
+        'earned_at',
+
+        'original_amount',
+        'original_currency',
+        'real_tokens',
+
+        'conversion_rate',
+        'multiplier',
 
         'gross_usd',
 
@@ -33,31 +42,35 @@ class Earning extends Model
 
     protected $casts = [
 
-        'period_start' => 'date',
-        'period_end'   => 'date',
-        'paid_at'      => 'datetime',
+        'earned_at' => 'datetime',
+        'paid_at'   => 'datetime',
 
-        'gross_usd'         => 'decimal:2',
-        'bonus_usd'         => 'decimal:2',
-        'penalty_usd'       => 'decimal:2',
-        'deduction_usd'     => 'decimal:2',
-        'net_usd'           => 'decimal:2',
+        'original_amount' => 'decimal:2',
+        'real_tokens'     => 'decimal:2',
+
+        'conversion_rate' => 'decimal:6',
+        'multiplier'      => 'decimal:4',
+
+        'gross_usd'     => 'decimal:2',
+        'bonus_usd'     => 'decimal:2',
+        'penalty_usd'   => 'decimal:2',
+        'deduction_usd' => 'decimal:2',
+        'net_usd'       => 'decimal:2',
 
         'model_percentage'  => 'decimal:2',
         'studio_percentage' => 'decimal:2',
 
-        'model_share_usd'   => 'decimal:2',
-        'studio_share_usd'  => 'decimal:2',
+        'model_share_usd'  => 'decimal:2',
+        'studio_share_usd' => 'decimal:2',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
 
     public function performance()
     {
         return $this->belongsTo(Performance::class);
+    }
+
+    public function platform()
+    {
+        return $this->belongsTo(Platform::class);
     }
 }

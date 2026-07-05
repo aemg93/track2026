@@ -12,79 +12,78 @@ return new class extends Migration
 
             $table->id();
 
-            /*
-            |--------------------------------------------------------------------------
-            | PERFORMANCE
-            |--------------------------------------------------------------------------
-            */
-
             $table->foreignId('performance_id')
                 ->constrained('performances')
                 ->cascadeOnDelete();
 
-            /*
-            |--------------------------------------------------------------------------
-            | PERIODO LIQUIDADO
-            |--------------------------------------------------------------------------
-            */
+            $table->foreignId('platform_id')
+                ->constrained('platforms')
+                ->cascadeOnDelete();
 
-            $table->date('period_start');
-            $table->date('period_end');
+            $table->timestamp('earned_at');
 
-            /*
-            |--------------------------------------------------------------------------
-            | INGRESOS Y AJUSTES
-            |--------------------------------------------------------------------------
-            */
+            $table->decimal('original_amount', 14, 2);
 
-            $table->decimal('gross_usd', 12, 2)->default(0);
+            $table->enum('original_currency', [
+                'usd',
+                'tokens',
+            ]);
 
-            $table->decimal('bonus_usd', 12, 2)->default(0);
-            $table->decimal('penalty_usd', 12, 2)->default(0);
-            $table->decimal('deduction_usd', 12, 2)->default(0);
+            $table->decimal('real_tokens', 14, 2)
+                ->nullable();
 
-            $table->decimal('net_usd', 12, 2)->default(0);
+            $table->decimal('conversion_rate', 12, 6)
+                ->default(1);
 
-            /*
-            |--------------------------------------------------------------------------
-            | SPLIT
-            |--------------------------------------------------------------------------
-            */
+            $table->decimal('multiplier', 10, 4)
+                ->default(1);
 
-            $table->decimal('model_percentage', 5, 2)->default(60);
-            $table->decimal('studio_percentage', 5, 2)->default(40);
+            $table->decimal('gross_usd', 14, 2);
 
-            $table->decimal('model_share_usd', 12, 2)->default(0);
-            $table->decimal('studio_share_usd', 12, 2)->default(0);
+            $table->decimal('bonus_usd', 14, 2)
+                ->default(0);
 
-            /*
-            |--------------------------------------------------------------------------
-            | ESTADO DEL CIERRE
-            |--------------------------------------------------------------------------
-            */
+            $table->decimal('penalty_usd', 14, 2)
+                ->default(0);
+
+            $table->decimal('deduction_usd', 14, 2)
+                ->default(0);
+
+            $table->decimal('net_usd', 14, 2)
+                ->default(0);
+
+            $table->decimal('model_percentage', 5, 2)
+                ->default(60);
+
+            $table->decimal('studio_percentage', 5, 2)
+                ->default(40);
+
+            $table->decimal('model_share_usd', 14, 2)
+                ->default(0);
+
+            $table->decimal('studio_share_usd', 14, 2)
+                ->default(0);
 
             $table->enum('status', [
                 'draft',
-                'pending',
                 'approved',
                 'paid',
-                'cancelled'
+                'cancelled',
             ])->default('draft');
 
-            $table->timestamp('paid_at')->nullable();
+            $table->timestamp('paid_at')
+                ->nullable();
 
             $table->timestamps();
 
-            /*
-            |--------------------------------------------------------------------------
-            | ÍNDICES
-            |--------------------------------------------------------------------------
-            */
-
             $table->index([
                 'performance_id',
-                'period_start',
-                'period_end'
+                'earned_at',
+            ]);
+
+            $table->index([
+                'platform_id',
+                'earned_at',
             ]);
         });
     }

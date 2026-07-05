@@ -10,7 +10,8 @@ class RevenueService
     public function __construct(
         private PlatformConversionService $conversionService,
         private SplitService $splitService
-    ) {}
+    ) {
+    }
 
     public function calculate(
         Performance $performance,
@@ -25,28 +26,34 @@ class RevenueService
 
         $split = $this->splitService->calculate(
             $performance,
-            $conversion['usd']
+            $conversion['gross_usd']
         );
 
         return [
 
-            'platform' =>
-                $platform->name,
+            'platform_id' => $platform->id,
 
-            'gross_usd' =>
-                $conversion['usd'],
+            'original_amount' => $conversion['original_amount'],
 
-            'model_percentage' =>
-                $split['model_percentage'],
+            'original_currency' => $conversion['original_currency'],
 
-            'studio_percentage' =>
-                $split['studio_percentage'],
+            'real_tokens' => $conversion['real_tokens'],
 
-            'model_usd' =>
-                $split['model_usd'],
+            'conversion_rate' => $conversion['conversion_rate'],
 
-            'studio_usd' =>
-                $split['studio_usd'],
+            'multiplier' => $conversion['multiplier'],
+
+            'gross_usd' => $conversion['gross_usd'],
+
+            'net_usd' => $conversion['gross_usd'],
+
+            'model_percentage' => $split['model_percentage'],
+
+            'studio_percentage' => $split['studio_percentage'],
+
+            'model_share_usd' => $split['model_share_usd'],
+
+            'studio_share_usd' => $split['studio_share_usd'],
 
         ];
     }

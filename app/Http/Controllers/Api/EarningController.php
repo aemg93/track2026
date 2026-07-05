@@ -25,6 +25,7 @@ class EarningController extends Controller
 
     }
 
+
     public function store(
         Request $request,
         EarningService $service
@@ -37,37 +38,49 @@ class EarningController extends Controller
                 'exists:performances,id',
             ],
 
-            'period_start' => [
+            'platform_id' => [
+                'required',
+                'exists:platforms,id',
+            ],
+
+            'earned_at' => [
                 'required',
                 'date',
             ],
 
-            'period_end' => [
-                'required',
-                'date',
-                'after_or_equal:period_start',
-            ],
-
-            'gross_usd' => [
+            'original_amount' => [
                 'required',
                 'numeric',
                 'min:0',
             ],
 
+            'original_currency' => [
+                'required',
+                'in:usd,tokens',
+            ],
+
         ]);
+
 
         $user = $request->user();
 
+
         if (
-            $user->hasRole('Performance') ||
-            $user->hasRole('Monitor')
+            $user->hasRole('Performance')
         ) {
 
-            abort(403, 'Not allowed to create earnings');
+            abort(
+                403,
+                'Not allowed to create earnings'
+            );
 
         }
 
-        $earning = $service->create($data);
+
+        $earning = $service->create(
+            $data
+        );
+
 
         return response()->json([
 

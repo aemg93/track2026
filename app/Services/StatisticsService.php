@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Cache;
 
 class StatisticsService
 {
+    private const CACHE_VERSION = 'v6';
+
+    public function __construct(
+        private FinancialSummaryService $financialSummary
+    ) {
+    }
+
     public function performanceStats(
         Performance $performance
     ): array {
@@ -43,7 +50,6 @@ class StatisticsService
             ),
 
         ];
-
     }
 
     private function cached(
@@ -62,14 +68,14 @@ class StatisticsService
 
             now()->addMinutes(10),
 
-            fn () => $this->sumRange(
-                $performance,
-                $start,
-                $end
-            )
+            fn () => $this->financialSummary
+                ->summaryBetween(
+                    $performance,
+                    $start,
+                    $end
+                )
 
         );
-
     }
 
     private function cacheKey(
@@ -77,75 +83,11 @@ class StatisticsService
         string $range
     ): string {
 
-        return "stats:v4:performance:{$performanceId}:{$range}";
-
-    }
-
-    private function sumRange(
-        Performance $performance,
-        Carbon $start,
-        Carbon $end
-    ): array {
-
-        $earnings = $performance
-            ->earnings()
-            ->where(function ($query) use ($start, $end) {
-
-                $query
-
-                    ->where(
-                        'period_start',
-                        '<=',
-                        $end->toDateString()
-                    )
-
-                    ->where(
-                        'period_end',
-                        '>=',
-                        $start->toDateString()
-                    );
-
-            })
-            ->get();
-
-        return [
-
-            'gross_usd' => round(
-                (float) $earnings->sum('gross_usd'),
-                2
-            ),
-
-            'bonus_usd' => round(
-                (float) $earnings->sum('bonus_usd'),
-                2
-            ),
-
-            'penalty_usd' => round(
-                (float) $earnings->sum('penalty_usd'),
-                2
-            ),
-
-            'deduction_usd' => round(
-                (float) $earnings->sum('deduction_usd'),
-                2
-            ),
-
-            'net_usd' => round(
-                (float) $earnings->sum('net_usd'),
-                2
-            ),
-
-            'model_usd' => round(
-                (float) $earnings->sum('model_share_usd'),
-                2
-            ),
-
-            'studio_usd' => round(
-                (float) $earnings->sum('studio_share_usd'),
-                2
-            ),
-
-        ];
-
+        return sprintf(
+            'stats:%s:performance:%d:%s',
+            self::CACHE_VERSION,
+            $performanceId,
+            $range
+        );
     }
 }
