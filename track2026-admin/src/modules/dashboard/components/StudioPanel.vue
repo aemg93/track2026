@@ -1,128 +1,53 @@
 <template>
 
-    <div
-        class="grid grid-cols-1 xl:grid-cols-3 gap-6"
+    <section
+        class="rounded-3xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 p-6"
     >
 
-        <!-- STUDIO INFO -->
-        <div
-            class="xl:col-span-2 bg-gray-900 border border-gray-800 rounded-3xl p-6"
-        >
+        <ShiftToolbar
+            :models="models"
+            @start-shift="handleModelSelection"
+        />
 
-            <div class="flex items-center justify-between mb-6">
+        <div class="mt-6">
 
-                <div>
-
-                    <h2 class="text-2xl font-bold text-white">
-                        Studio Updates
-                    </h2>
-
-                    <p class="text-gray-400 text-sm mt-1">
-                        Información general del estudio
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div class="space-y-4">
-
-                <div
-                    class="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5"
-                >
-
-                    <h3 class="text-white font-semibold">
-                        Weekly payouts updated
-                    </h3>
-
-                    <p class="text-gray-400 text-sm mt-2">
-                        Los pagos semanales serán procesados todos los viernes.
-                    </p>
-
-                </div>
-
-                <div
-                    class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5"
-                >
-
-                    <h3 class="text-white font-semibold">
-                        Monthly growth
-                    </h3>
-
-                    <p class="text-gray-400 text-sm mt-2">
-                        El estudio creció un 18% este mes.
-                    </p>
-
-                </div>
-
-            </div>
+            <ShiftModelList
+                :models="models"
+                :selected-model="selectedModel"
+                @select="handleModelSelection"
+            />
 
         </div>
 
-        <!-- QUICK METRICS -->
-        <div
-            class="bg-gray-900 border border-gray-800 rounded-3xl p-6"
-        >
+        <div class="mt-8">
 
-            <h2 class="text-2xl font-bold text-white mb-6">
-                Quick Metrics
-            </h2>
-
-            <div class="space-y-5">
-
-                <div
-                    class="bg-gray-800 rounded-2xl p-5"
-                >
-
-                    <p class="text-gray-400 text-sm">
-                        Active Models
-                    </p>
-
-                    <h3 class="text-3xl font-bold text-blue-400 mt-2">
-                        {{ dashboard.total_models }}
-                    </h3>
-
-                </div>
-
-                <div
-                    class="bg-gray-800 rounded-2xl p-5"
-                >
-
-                    <p class="text-gray-400 text-sm">
-                        Installments
-                    </p>
-
-                    <h3 class="text-3xl font-bold text-purple-400 mt-2">
-                        {{ finance.installments.active }}
-                    </h3>
-
-                </div>
-
-                <div
-                    class="bg-gray-800 rounded-2xl p-5"
-                >
-
-                    <p class="text-gray-400 text-sm">
-                        Pending Amount
-                    </p>
-
-                    <h3 class="text-3xl font-bold text-orange-400 mt-2">
-                        ${{ finance.installments.pending_amount }}
-                    </h3>
-
-                </div>
-
-            </div>
+            <ShiftWorkspace
+                :selected-model="selectedModel"
+                @earning="registerEarning"
+                @bonus="registerBonus"
+                @penalty="registerPenalty"
+                @deduction="registerDeduction"
+                @finish="finishShift"
+            />
 
         </div>
 
-    </div>
+    </section>
 
 </template>
 
 <script setup>
 
-defineProps({
+import {
+    computed,
+    ref
+} from 'vue'
+
+import ShiftToolbar from './studio/ShiftToolbar.vue'
+import ShiftModelList from './studio/ShiftModelList.vue'
+import ShiftWorkspace from './studio/ShiftWorkspace.vue'
+
+const props = defineProps({
 
     dashboard: {
         type: Object,
@@ -133,6 +58,91 @@ defineProps({
         type: Object,
         required: true,
     },
+
 })
+
+const emit = defineEmits([
+
+    'earning',
+    'bonus',
+    'penalty',
+    'deduction',
+    'finish',
+
+])
+
+const models = computed(() => {
+
+    return props.dashboard?.models ?? []
+
+})
+
+const selectedModel = ref(null)
+
+const selectedPerformance = computed(() => {
+
+    return selectedModel.value ?? null
+
+})
+
+function handleModelSelection(model) {
+
+    if (!model) {
+        return
+    }
+
+    selectedModel.value = model
+
+}
+
+function registerEarning() {
+
+    emit(
+        'earning',
+        selectedModel.value,
+        selectedPerformance.value
+    )
+
+}
+
+function registerBonus() {
+
+    emit(
+        'bonus',
+        selectedModel.value,
+        selectedPerformance.value
+    )
+
+}
+
+function registerPenalty() {
+
+    emit(
+        'penalty',
+        selectedModel.value,
+        selectedPerformance.value
+    )
+
+}
+
+function registerDeduction() {
+
+    emit(
+        'deduction',
+        selectedModel.value,
+        selectedPerformance.value
+    )
+
+}
+
+function finishShift() {
+
+    emit(
+        'finish',
+        selectedModel.value,
+        selectedPerformance.value
+    )
+
+}
 
 </script>

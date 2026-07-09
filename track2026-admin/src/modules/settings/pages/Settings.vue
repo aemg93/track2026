@@ -95,10 +95,8 @@ const security = ref({
 })
 
 const savePreferences = () => {
-  console.log('Preferencias guardadas:', preferences.value)
 }
 
 const updatePassword = () => {
-  console.log('Nueva contraseña:', security.value.newPassword)
 }
 </script>

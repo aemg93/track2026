@@ -1,37 +1,83 @@
 <template>
 
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+    <section
+        class="
+            overflow-hidden
+            rounded-3xl
+            border
+            border-gray-800
+            bg-gradient-to-br
+            from-gray-900
+            to-gray-950
+        "
+    >
 
-        <div class="p-6 border-b border-gray-800">
+        <header
+            class="
+                flex
+                items-center
+                justify-between
+                border-b
+                border-gray-800
+                p-6
+            "
+        >
 
-            <h2 class="text-2xl font-bold text-white">
-                Rendimiento
-            </h2>
+            <div>
 
-            <p class="text-gray-400 text-sm mt-1">
-                Modelos destacadas
-            </p>
+                <h2 class="text-2xl font-bold text-white">
+                    Top Ranking
+                </h2>
 
-        </div>
+                <p class="mt-1 text-sm text-gray-400">
+                    Modelos con mejor rendimiento
+                </p>
+
+            </div>
+
+            <span
+                class="
+                    rounded-xl
+                    border
+                    border-blue-500/20
+                    bg-blue-500/10
+                    px-4
+                    py-2
+                    text-sm
+                    text-blue-400
+                "
+            >
+                {{ ranking.length }} modelos
+            </span>
+
+        </header>
 
         <div class="overflow-x-auto">
 
             <table class="w-full">
 
-                <thead class="bg-gray-800">
+                <thead class="border-b border-gray-800 bg-gray-900/80">
 
                     <tr>
 
-                        <th class="table-head">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-400">
+                            #
+                        </th>
+
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-400">
                             Modelo
                         </th>
 
-                        <th class="table-head">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-400">
                             Horas
                         </th>
 
-                        <th class="table-head">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-400">
                             Score
+                        </th>
+
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-400">
+                            Acción
                         </th>
 
                     </tr>
@@ -41,43 +87,86 @@
                 <tbody>
 
                     <tr
-                        v-for="item in ranking"
+                        v-for="(item,index) in ranking"
                         :key="item.id"
-                        class="border-t border-gray-800 hover:bg-gray-800/40 transition"
+                        class="
+                            border-b
+                            border-gray-800/50
+                            transition-all
+                            duration-300
+                            hover:bg-gray-800/40
+                        "
                     >
 
-                        <!-- MODEL -->
-                        <td class="table-cell">
+                        <td class="px-6 py-5">
 
-                            <div>
-
-                                <p class="text-white font-semibold">
-                                    {{
-                                        item.first_name && item.last_name
-                                            ? `${item.first_name} ${item.last_name}`
-                                            : item.nickname || 'Sin nombre'
-                                    }}
-                                </p>
-
-                                <p class="text-sm text-gray-500">
-                                    Modelo #{{ item.id }}
-                                </p>
-
-                            </div>
-
-                        </td>
-
-                        <!-- HOURS -->
-                        <td class="table-cell text-white">
-                            {{ item.hours_streamed || 0 }} hrs
-                        </td>
-
-                        <!-- SCORE -->
-                        <td class="table-cell">
-
-                            <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-xl text-sm font-semibold">
-                                {{ item.ranking_score || 0 }}
+                            <span
+                                class="text-2xl"
+                            >
+                                {{ medal(index) }}
                             </span>
+
+                        </td>
+
+                        <td class="px-6 py-5">
+
+                            <p class="font-semibold text-white">
+
+                                {{
+                                    item.first_name && item.last_name
+                                        ? `${item.first_name} ${item.last_name}`
+                                        : item.nickname
+                                }}
+
+                            </p>
+
+                            <p class="text-sm text-gray-500">
+                                {{ item.nickname }}
+                            </p>
+
+                        </td>
+
+                        <td class="px-6 py-5 text-gray-300">
+                            {{ item.hours_streamed ?? 0 }} h
+                        </td>
+
+                        <td class="px-6 py-5">
+
+                            <span
+                                class="
+                                    rounded-xl
+                                    bg-blue-500/10
+                                    px-3
+                                    py-1
+                                    font-semibold
+                                    text-blue-400
+                                "
+                            >
+                                {{ item.ranking_score }}
+                            </span>
+
+                        </td>
+
+                        <td class="px-6 py-5 text-right">
+
+                            <button
+                                v-if="index < 3"
+                                class="
+                                    rounded-xl
+                                    border
+                                    border-yellow-500/20
+                                    bg-yellow-500/10
+                                    px-4
+                                    py-2
+                                    text-sm
+                                    font-medium
+                                    text-yellow-300
+                                    transition
+                                    hover:bg-yellow-500/20
+                                "
+                            >
+                                🎉 Felicitar
+                            </button>
 
                         </td>
 
@@ -89,35 +178,29 @@
 
         </div>
 
-    </div>
+    </section>
 
 </template>
 
 <script setup>
 
 defineProps({
-    ranking: {
-        type: Array,
-        default: () => [],
-    },
+
+    ranking:{
+        type:Array,
+        default:()=>[]
+    }
+
 })
 
+const medal = index => {
+
+    if(index===0) return '🥇'
+    if(index===1) return '🥈'
+    if(index===2) return '🥉'
+
+    return `#${index+1}`
+
+}
+
 </script>
-
-<style scoped>
-
-.table-head {
-
-    padding: 18px 24px;
-    text-align: left;
-    font-size: 14px;
-    font-weight: 600;
-    color: #9ca3af;
-}
-
-.table-cell {
-
-    padding: 20px 24px;
-}
-
-</style>

@@ -1,219 +1,155 @@
 <template>
 
-  <div
-    class="
-      bg-gradient-to-br
-      from-gray-900
-      to-gray-950
-      border
-      border-gray-800
-      rounded-3xl
-      overflow-hidden
-    "
-  >
-
-    <!-- TOP HEADER -->
-
     <div
-      class="
-        flex
-        items-center
-        justify-between
-        px-8
-        py-6
-        border-b
-        border-gray-800
-      "
-    >
-
-      <div>
-
-        <p
-          class="
-            text-gray-500
-            text-xs
-            uppercase
-            tracking-[0.2em]
-          "
-        >
-          Finanzas
-        </p>
-
-        <h2
-          class="
-            text-2xl
-            font-bold
-            text-white
-            mt-2
-          "
-        >
-          Historial de Ganancias
-        </h2>
-
-        <p
-          class="
-            text-gray-400
-            text-sm
-            mt-2
-          "
-        >
-          Registro histórico de ingresos generados por el modelo
-        </p>
-
-      </div>
-
-      <div
         class="
-          hidden
-          lg:flex
-          items-center
-          gap-2
-          px-4
-          py-2
-          rounded-2xl
-          bg-green-500/10
-          border
-          border-green-500/20
+            bg-gradient-to-br
+            from-gray-900
+            to-gray-950
+            border
+            border-gray-800
+            rounded-3xl
+            overflow-hidden
         "
-      >
-
-        <span
-          class="w-2 h-2 rounded-full bg-green-400"
-        />
-
-        <span
-          class="
-            text-green-400
-            text-sm
-            font-medium
-          "
-        >
-          Historial Financiero
-        </span>
-
-      </div>
-
-    </div>
-
-    <!-- TABLE -->
-
-    <DataTable
-      :columns="columns"
-      :items="normalizedEarnings"
     >
 
-      <template #date="{ item }">
-
-        <div class="flex flex-col">
-
-          <span
+        <div
             class="
-              text-white
-              font-medium
+                flex
+                items-center
+                justify-between
+                px-8
+                py-6
+                border-b
+                border-gray-800
             "
-          >
-            {{ formatDate(item.date) }}
-          </span>
+        >
 
-          <span
-            class="
-              text-xs
-              text-gray-500
-              mt-1
-            "
-          >
-            Movimiento registrado
-          </span>
+            <div>
+
+                <p class="text-xs uppercase tracking-[.2em] text-gray-500">
+                    Finanzas
+                </p>
+
+                <h2 class="mt-2 text-2xl font-bold text-white">
+                    Historial de Ganancias
+                </h2>
+
+                <p class="mt-2 text-sm text-gray-400">
+                    Registro histórico de ingresos generados por el modelo
+                </p>
+
+            </div>
+
+            <div
+                class="
+                    hidden
+                    lg:flex
+                    items-center
+                    gap-2
+                    rounded-2xl
+                    border
+                    border-green-500/20
+                    bg-green-500/10
+                    px-4
+                    py-2
+                "
+            >
+
+                <span class="w-2 h-2 rounded-full bg-green-400"/>
+
+                <span class="text-sm font-medium text-green-400">
+                    Historial Financiero
+                </span>
+
+            </div>
 
         </div>
 
-      </template>
+        <DataTable
+            :columns="columns"
+            :items="earnings"
+        >
 
-      <template #amount="{ item }">
+            <template #date="{ item }">
 
-        <div class="flex justify-end">
+                <div class="flex flex-col">
 
-          <span
-            class="
-              inline-flex
-              items-center
-              gap-2
-              px-4
-              py-2
-              rounded-2xl
-              bg-green-500/10
-              border
-              border-green-500/20
-              text-green-400
-              font-semibold
-            "
-          >
+                    <span class="font-medium text-white">
+                        {{ formatDate(item.date) }}
+                    </span>
 
-            <span
-              class="w-2 h-2 rounded-full bg-green-400"
-            />
+                    <span class="mt-1 text-xs text-gray-500">
+                        Movimiento registrado
+                    </span>
 
-            ${{ formatAmount(item.amount) }}
+                </div>
 
-          </span>
+            </template>
+
+            <template #amount="{ item }">
+
+                <div class="flex justify-end">
+
+                    <span
+                        class="
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-2xl
+                            border
+                            border-green-500/20
+                            bg-green-500/10
+                            px-4
+                            py-2
+                            font-semibold
+                            text-green-400
+                        "
+                    >
+
+                        <span class="w-2 h-2 rounded-full bg-green-400"/>
+
+                        {{ formatAmount(item.amount) }}
+
+                    </span>
+
+                </div>
+
+            </template>
+
+        </DataTable>
+
+        <div
+            v-if="!earnings.length"
+            class="border-t border-gray-800 p-12 text-center"
+        >
+
+            <div
+                class="
+                    mx-auto
+                    flex
+                    h-20
+                    w-20
+                    items-center
+                    justify-center
+                    rounded-3xl
+                    bg-gray-800
+                    text-3xl
+                "
+            >
+                💰
+            </div>
+
+            <h3 class="mt-6 text-xl font-semibold text-white">
+                Sin ganancias registradas
+            </h3>
+
+            <p class="mt-2 text-gray-400">
+                No existen movimientos financieros para este modelo.
+            </p>
 
         </div>
 
-      </template>
-
-    </DataTable>
-
-    <!-- EMPTY -->
-
-    <div
-      v-if="!normalizedEarnings.length"
-      class="
-        p-12
-        text-center
-        border-t
-        border-gray-800
-      "
-    >
-
-      <div
-        class="
-          w-20
-          h-20
-          mx-auto
-          rounded-3xl
-          bg-gray-800
-          flex
-          items-center
-          justify-center
-          text-3xl
-        "
-      >
-        💰
-      </div>
-
-      <h3
-        class="
-          text-white
-          text-xl
-          font-semibold
-          mt-6
-        "
-      >
-        Sin ganancias registradas
-      </h3>
-
-      <p
-        class="
-          text-gray-400
-          mt-2
-        "
-      >
-        No existen movimientos financieros para este modelo.
-      </p>
-
     </div>
-
-  </div>
 
 </template>
 
@@ -223,62 +159,38 @@ import { computed } from 'vue'
 import DataTable from '@/components/ui/DataTable.vue'
 
 const props = defineProps({
-  earnings: {
-    type: Array,
-    default: () => []
-  }
+    earnings: {
+        type: Array,
+        default: () => []
+    }
 })
 
 const columns = [
-  {
-    key: 'date',
-    label: 'Fecha'
-  },
-  {
-    key: 'amount',
-    label: 'Monto'
-  }
+    { key: 'date', label: 'Fecha' },
+    { key: 'amount', label: 'Monto' }
 ]
 
-const normalizedEarnings = computed(() =>
-  (props.earnings || []).map((earning, index) => ({
-    id: earning.id ?? `earning-${index}`,
-
-    // Earning NO tiene date
-    date: earning.period_start,
-
-    // Campo correcto según tu modelo
-    amount: parseFloat(earning.gross_usd || 0),
-
-    status: earning.status,
-    net: parseFloat(earning.net_usd || 0)
-  }))
+const earnings = computed(() =>
+    props.earnings.map(earning => ({
+        id: earning.id,
+        date: earning.created_at,
+        amount: Number(earning.gross_usd ?? 0)
+    }))
 )
 
-const formatAmount = (value) => {
+const formatAmount = value =>
+    new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value)
 
-  const amount = Number(value || 0)
-
-  return amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
-
-const formatDate = (value) => {
-
-  if (!value) {
-    return '-'
-  }
-
-  return new Date(value).toLocaleDateString(
-    'es-CO',
-    {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }
-  )
-}
+const formatDate = value =>
+    value
+        ? new Intl.DateTimeFormat('es-CO', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+          }).format(new Date(value))
+        : '-'
 
 </script>

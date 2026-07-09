@@ -6,7 +6,8 @@
 
     <div class="w-full max-w-xl bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-3xl shadow-2xl overflow-hidden">
 
-        <div class="px-8 py-6 border-b border-gray-800">
+
+        <header class="px-8 py-6 border-b border-gray-800">
 
             <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
                 Finanzas
@@ -20,7 +21,8 @@
                 Registrar ingreso generado por plataforma.
             </p>
 
-        </div>
+        </header>
+
 
 
         <form
@@ -72,15 +74,10 @@
 
 
                 <input
-
                     v-model="form.earned_at"
-
                     type="date"
-
                     required
-
                     class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
-
                 >
 
             </div>
@@ -95,28 +92,23 @@
 
 
                 <select
-
                     v-model="form.original_currency"
-
                     required
-
                     class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
-
                 >
 
                     <option value="usd">
                         USD
                     </option>
 
+
                     <option value="tokens">
                         Tokens
                     </option>
 
-
                 </select>
 
             </div>
-
 
 
 
@@ -126,27 +118,20 @@
 
                     {{
                         form.original_currency === 'tokens'
-                            ? 'Cantidad de tokens'
-                            : 'Cantidad USD'
+                        ? 'Cantidad de tokens'
+                        : 'Cantidad USD'
                     }}
 
                 </label>
 
 
                 <input
-
                     v-model="form.original_amount"
-
                     type="number"
-
                     min="0"
-
                     step="0.01"
-
                     required
-
                     class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
-
                 >
 
             </div>
@@ -157,13 +142,9 @@
 
 
                 <button
-
                     type="button"
-
                     @click="close"
-
                     class="px-6 py-3 rounded-xl border border-gray-700 text-gray-300 hover:bg-gray-800"
-
                 >
 
                     Cancelar
@@ -173,17 +154,12 @@
 
 
                 <button
-
                     type="submit"
-
                     :disabled="loading"
-
                     class="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold disabled:opacity-50"
-
                 >
 
                     {{ loading ? 'Guardando...' : 'Guardar' }}
-
 
                 </button>
 
@@ -216,14 +192,15 @@ import api from '@/services/api'
 
 const props = defineProps({
 
-    performanceId: {
-        type: Number,
-        required: true
+    performanceId:{
+        type:Number,
+        required:true
     },
 
-    platforms: {
-        type: Array,
-        default: () => []
+
+    platforms:{
+        type:Array,
+        default:()=>[]
     }
 
 })
@@ -238,33 +215,33 @@ const emit = defineEmits([
 ])
 
 
+
 const loading = ref(false)
+
+
+
+const today = () =>
+    new Date()
+        .toISOString()
+        .substring(0,10)
 
 
 
 const form = ref({
 
-    platform_id: '',
+    platform_id:'',
 
-    earned_at: new Date()
-        .toISOString()
-        .substring(0, 10),
+    earned_at:today(),
 
-    original_amount: '',
+    original_amount:'',
 
-    original_currency: 'usd'
+    original_currency:'usd'
 
 })
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Plataforma seleccionada
-|--------------------------------------------------------------------------
-*/
-
-const selectedPlatform = computed(() => {
+const selectedPlatform = computed(()=>{
 
     return props.platforms.find(
         platform =>
@@ -275,38 +252,27 @@ const selectedPlatform = computed(() => {
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Sincronizar moneda según plataforma
-|--------------------------------------------------------------------------
-*/
-
 watch(
     selectedPlatform,
-    (platform) => {
+    platform=>{
 
-        if (!platform) {
+        if(!platform){
             return
         }
 
 
         form.value.original_currency =
             platform.type === 'token'
-                ? 'tokens'
-                : 'usd'
+            ? 'tokens'
+            : 'usd'
 
     }
+
 )
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Cerrar modal
-|--------------------------------------------------------------------------
-*/
-
-const close = () => {
+function close(){
 
     emit('close')
 
@@ -314,86 +280,56 @@ const close = () => {
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Reset formulario
-|--------------------------------------------------------------------------
-*/
+function reset(){
 
-const reset = () => {
+    form.value={
 
+        platform_id:'',
 
-    form.value = {
+        earned_at:today(),
 
-        platform_id: '',
+        original_amount:'',
 
-        earned_at: new Date()
-            .toISOString()
-            .substring(0, 10),
-
-        original_amount: '',
-
-        original_currency: 'usd'
+        original_currency:'usd'
 
     }
-
 
 }
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Guardar earning
-|--------------------------------------------------------------------------
-*/
+async function save(){
 
-const save = async () => {
+    loading.value=true
 
 
-    loading.value = true
-
-
-    try {
-
-
-        const payload = {
-
-
-            performance_id:
-                props.performanceId,
-
-
-            platform_id:
-                Number(form.value.platform_id),
-
-
-            earned_at:
-                form.value.earned_at,
-
-
-            original_amount:
-                Number(form.value.original_amount),
-
-
-            original_currency:
-                form.value.original_currency
-
-
-        }
-
-
-
-        console.log(
-            'CREATING EARNING:',
-            payload
-        )
-
+    try{
 
 
         await api.post(
             '/earnings',
-            payload
+            {
+
+                performance_id:
+                    props.performanceId,
+
+
+                platform_id:
+                    Number(form.value.platform_id),
+
+
+                earned_at:
+                    form.value.earned_at,
+
+
+                original_amount:
+                    Number(form.value.original_amount),
+
+
+                original_currency:
+                    form.value.original_currency
+
+            }
         )
 
 
@@ -408,21 +344,20 @@ const save = async () => {
 
 
     }
+    catch(error){
 
 
-   catch(error) {
-
-    console.error(
-        'ERROR CREATING EARNING:',
-        error.response?.data
-    )
-
-}
-
-    finally {
+        console.error(
+            'ERROR REGISTERING EARNING',
+            error.response?.data ?? error
+        )
 
 
-        loading.value = false
+    }
+    finally{
+
+
+        loading.value=false
 
 
     }
@@ -432,17 +367,3 @@ const save = async () => {
 
 
 </script>
-
-
-<style scoped>
-
-input:focus,
-select:focus{
-
-    outline:none;
-
-    border-color:#22c55e;
-
-}
-
-</style>
