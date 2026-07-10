@@ -25,12 +25,10 @@
                     class="border-b border-gray-800 hover:bg-gray-800/40 transition"
                 >
 
-                    <!-- MODELO -->
                     <td class="px-6 py-4">
 
                         <div class="flex items-center gap-4">
 
-                            <!-- INITIALS -->
                             <div
                                 class="w-11 h-11 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold"
                             >
@@ -52,22 +50,16 @@
                                     }}
                                 </h2>
 
-                                <!-- <p class="text-gray-500 text-sm">
-                                    #{{ model.id }}
-                                </p> -->
-
                             </div>
 
                         </div>
 
                     </td>
 
-                    <!-- EMAIL -->
                     <td class="px-6 py-4 text-gray-300">
                         {{ model.email || 'Sin correo' }}
                     </td>
 
-                    <!-- STATUS -->
                     <td class="px-6 py-4">
 
                         <span
@@ -81,7 +73,6 @@
 
                     </td>
 
-                    <!-- ACTIONS -->
                     <td class="px-6 py-4">
 
                         <ModelActions

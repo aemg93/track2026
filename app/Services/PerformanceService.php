@@ -126,42 +126,42 @@ class PerformanceService
 
     public function create(array $data)
     {
+    $data['active'] = $data['active'] ?? true;
 
-        $data['active'] =
-            $data['active'] ?? true;
+    $data['hours_streamed'] = $data['hours_streamed'] ?? 0;
 
+    $platforms = $data['platforms'] ?? [];
 
-        $data['hours_streamed'] =
-            $data['hours_streamed'] ?? 0;
+    unset($data['platforms']);
 
+    $performance = Performance::create($data);
 
-
-        return Performance::create($data)
-            ->load(
-                $this->relations()
-            );
-
+    if (!empty($platforms)) {
+        $performance->platforms()->sync($platforms);
     }
 
-    public function update(
-        $id,
-        array $data
-    )
+    return $performance
+        ->fresh()
+        ->load($this->relations());
+    }
+
+    public function update($id, array $data)
     {
+    $performance = Performance::findOrFail($id);
 
-        $performance =
-            Performance::findOrFail($id);
+    $platforms = $data['platforms'] ?? null;
 
+    unset($data['platforms']);
 
-        $performance->update($data);
+    $performance->update($data);
 
+    if ($platforms !== null) {
+        $performance->platforms()->sync($platforms);
+    }
 
-        return $performance
-            ->fresh()
-            ->load(
-                $this->relations()
-            );
-
+    return $performance
+        ->fresh()
+        ->load($this->relations());
     }
 
     public function delete($id)
@@ -248,6 +248,10 @@ class PerformanceService
 
             'hours_streamed'=>'nullable|integer',
 
+            'platforms' => 'nullable|array',
+            
+            'platforms.*' => 'exists:platforms,id',
+
         ];
 
     }
@@ -280,6 +284,10 @@ class PerformanceService
             'active'=>'nullable|boolean',
 
             'hours_streamed'=>'nullable|integer',
+
+            'platforms' => 'nullable|array',
+
+            'platforms.*' => 'exists:platforms,id',
 
         ];
 
