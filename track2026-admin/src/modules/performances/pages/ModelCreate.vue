@@ -1,8 +1,7 @@
 <template>
     <div class="mx-auto max-w-4xl space-y-6">
 
-        <!-- HEADER -->
-
+        <!-- Header -->
         <div>
 
             <h1 class="text-3xl font-bold text-white">
@@ -15,26 +14,24 @@
 
         </div>
 
-        <!-- FORM -->
-
+        <!-- Formulario -->
         <PerformanceSection
             v-for="section in fields"
             :key="section.id"
             :section="section"
             :form="form"
             :platforms="platforms"
+            :errors="errors"
         />
 
-        <!-- ACTIONS -->
-
+        <!-- Acciones -->
         <PerformanceActions
             :loading="loading"
-            @save="create"
-            @cancel="router.push('/performances')"
+            @save="save"
+            @cancel="goBack"
         />
 
-        <!-- ERROR -->
-
+        <!-- Error general -->
         <p
             v-if="error"
             class="text-sm text-red-400"
@@ -49,31 +46,44 @@
 
 import { useRouter } from 'vue-router'
 
-import PerformanceSection
-    from '../components/form/PerformanceSection.vue'
+import PerformanceActions from '../components/form/PerformanceActions.vue'
+import PerformanceSection from '../components/form/PerformanceSection.vue'
 
-import PerformanceActions
-    from '../components/form/PerformanceActions.vue'
-
-import { usePerformanceForm }
-    from '../composables/usePerformanceForm'
+import { usePerformanceForm } from '../composables/usePerformanceForm'
 
 const router = useRouter()
 
 const {
 
     form,
-
     fields,
-
     platforms,
 
     loading,
 
     error,
+    errors,
 
-    create,
+    create
 
 } = usePerformanceForm()
+
+const goBack = () => {
+
+    router.push('/performances')
+
+}
+
+const save = async () => {
+
+    const performance = await create()
+
+    if (!performance) {
+        return
+    }
+
+    goBack()
+
+}
 
 </script>

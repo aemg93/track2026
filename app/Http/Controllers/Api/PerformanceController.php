@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PerformanceRequest;
 use App\Services\FinancialSummaryService;
 use App\Services\PerformanceAnalyticsService;
 use App\Services\PerformanceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PerformanceController extends Controller
@@ -17,152 +19,99 @@ class PerformanceController extends Controller
     ) {
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         return response()->json([
-
             'success' => true,
-
-            'data' => $this->service->list(
-                $request
-            ),
-
+            'data' => $this->service->list($request),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(PerformanceRequest $request): JsonResponse
     {
         $performance = $this->service->create(
-
-            $request->validate(
-                $this->service->storeRules()
-            )
-
+            $request->validated()
         );
 
         return response()->json([
-
             'success' => true,
-
             'data' => $performance,
-
         ], 201);
     }
 
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
-        $performance = $this->service->find(
-            $id
-        );
+        $performance = $this->service->find($id);
 
         return response()->json([
-
             'success' => true,
-
             'data' => $performance,
-
-            'financial' =>
-
-                $this->financialSummary
-                    ->summary(
-                        $performance
-                    ),
-
+            'financial' => $this->financialSummary->summary($performance),
         ]);
     }
 
     public function update(
-        Request $request,
-        $id
-    ) {
+        PerformanceRequest $request,
+        int $id
+    ): JsonResponse {
+
         $performance = $this->service->update(
-
             $id,
-
-            $request->validate(
-                $this->service->updateRules()
-            )
-
+            $request->validated()
         );
 
         return response()->json([
-
             'success' => true,
-
             'data' => $performance,
-
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
-        $this->service->delete(
-            $id
-        );
+        $this->service->delete($id);
 
         return response()->json([
-
             'success' => true,
-
             'message' => 'Deleted',
-
         ]);
     }
 
-    public function analytics($id)
-    {
-        $performance = $this->service->find(
-            $id
-        );
+    public function analytics(
+        Request $request,
+        int $id
+    ): JsonResponse {
+
+        $performance = $this->service->find($id);
 
         return response()->json([
-
             'success' => true,
-
             'data' => $this->analytics->summary(
-
                 $performance,
-
-                request('from'),
-
-                request('to')
-
+                $request->input('from'),
+                $request->input('to')
             ),
-
         ]);
     }
 
     public function leaderboard(
         Request $request
-    ) {
+    ): JsonResponse {
+
         return response()->json([
-
             'success' => true,
-
             'data' => $this->service->leaderboard(
-
-                (int) $request->get(
-                    'limit',
-                    20
-                )
-
+                (int) $request->input('limit', 20)
             ),
-
         ]);
     }
 
-    public function platforms($id)
+    public function platforms(int $id): JsonResponse
     {
-        $performance = $this->service->find(
-            $id
-        );
+        $performance = $this->service->find($id);
 
         return response()->json([
-
             'success' => true,
-
             'data' => $performance->platforms,
-
         ]);
     }
 }

@@ -4,11 +4,17 @@ namespace App\Services;
 
 use App\Models\Performance;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PerformanceService
 {
+    public function __construct(
+        private SplitService $splitService
+    ) {
+    }
 
-    public function relations(): array
+    protected function relations(): array
     {
         return [
             'earnings',
@@ -24,46 +30,21 @@ class PerformanceService
 
     public function list(Request $request)
     {
-
         $query = Performance::query();
 
-
         if ($request->filled('search')) {
+            $search = trim($request->search);
 
-            $search = trim(
-                $request->search
-            );
-
-
-            $query->where(function($q) use ($search){
-
-                $q->where(
-                    'first_name',
-                    'like',
-                    "%{$search}%"
-                )
-                ->orWhere(
-                    'last_name',
-                    'like',
-                    "%{$search}%"
-                )
-                ->orWhere(
-                    'nickname',
-                    'like',
-                    "%{$search}%"
-                )
-                ->orWhere(
-                    'email',
-                    'like',
-                    "%{$search}%"
-                );
-
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('nickname', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
-
         }
 
         if ($request->filled('active')) {
-
             $query->where(
                 'active',
                 filter_var(
@@ -71,117 +52,126 @@ class PerformanceService
                     FILTER_VALIDATE_BOOLEAN
                 )
             );
-
         }
-
 
         $allowedSorts = [
             'created_at',
-            'hours_streamed'
+            'hours_streamed',
         ];
-
 
         $sort = $request->get(
             'sortBy',
             'created_at'
         );
 
-
-        if (!in_array($sort,$allowedSorts)) {
-
-            $sort='created_at';
-
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'created_at';
         }
 
         return $query
-
-            ->with(
-                $this->relations()
-            )
-
+            ->with($this->relations())
             ->orderBy(
                 $sort,
-                $request->get(
-                    'order',
-                    'desc'
-                )
+                $request->get('order', 'desc')
             )
-
             ->paginate(
-                (int)$request->get(
-                    'limit',
-                    10
-                )
+                (int) $request->get('limit', 10)
             );
-
     }
 
-    public function find($id)
+    public function find(int $id): Performance
     {
         return Performance::with(
             $this->relations()
-        )
-        ->findOrFail($id);
+        )->findOrFail($id);
     }
 
-    public function create(array $data)
+    public function create(array $data): Performance
     {
-    $data['active'] = $data['active'] ?? true;
+        return DB::transaction(function () use ($data) {
 
-    $data['hours_streamed'] = $data['hours_streamed'] ?? 0;
+            $data = $this->normalize($data);
 
-    $platforms = $data['platforms'] ?? [];
+            $platforms = $data['platforms'] ?? [];
 
-    unset($data['platforms']);
+            $split = $data['split']
+                ?? $this->splitService->defaults();
 
-    $performance = Performance::create($data);
+            unset(
+                $data['platforms'],
+                $data['split']
+            );
 
-    if (!empty($platforms)) {
-        $performance->platforms()->sync($platforms);
+            $performance = Performance::create($data);
+
+            $this->syncPlatforms(
+                $performance,
+                $platforms
+            );
+
+            $this->syncSplit(
+                $performance,
+                $split,
+                true
+            );
+
+            return $performance
+                ->fresh()
+                ->load($this->relations());
+        });
     }
 
-    return $performance
-        ->fresh()
-        ->load($this->relations());
+    public function update(
+        int $id,
+        array $data
+    ): Performance {
+
+        return DB::transaction(function () use ($id, $data) {
+
+            $performance = Performance::findOrFail($id);
+
+            $data = $this->normalize($data);
+
+            $platforms = $data['platforms']
+                ?? null;
+
+            $split = $data['split']
+                ?? null;
+
+            unset(
+                $data['platforms'],
+                $data['split']
+            );
+
+            $performance->update($data);
+
+            $this->syncPlatforms(
+                $performance,
+                $platforms
+            );
+
+            $this->syncSplit(
+                $performance,
+                $split
+            );
+
+            return $performance
+                ->fresh()
+                ->load($this->relations());
+        });
     }
 
-    public function update($id, array $data)
+    public function delete(int $id): void
     {
-    $performance = Performance::findOrFail($id);
-
-    $platforms = $data['platforms'] ?? null;
-
-    unset($data['platforms']);
-
-    $performance->update($data);
-
-    if ($platforms !== null) {
-        $performance->platforms()->sync($platforms);
-    }
-
-    return $performance
-        ->fresh()
-        ->load($this->relations());
-    }
-
-    public function delete($id)
-    {
-
-        $performance =
-            Performance::findOrFail($id);
-
-
-        $performance->delete();
-
+        Performance::findOrFail($id)
+            ->delete();
     }
 
     public function leaderboard(
         int $limit = 20
-    )
-    {
+    ) {
 
         return Performance::query()
-
             ->select([
                 'id',
                 'first_name',
@@ -189,108 +179,212 @@ class PerformanceService
                 'nickname',
                 'profile_photo',
                 'hours_streamed',
+                'ranking_score',
                 'active',
             ])
-
             ->where(
                 'active',
                 true
             )
-
             ->orderByDesc(
                 'hours_streamed'
             )
-
             ->limit($limit)
-
-            ->get()
-
-            ->map(function($performance){
-
-                $performance->ranking_score = 0;
-
-                return $performance;
-
-            });
-
+            ->get();
     }
 
     public function storeRules(): array
     {
-
         return [
 
-            'studio_id'=>'nullable|integer',
+            'studio_id' =>
+                'required|exists:studios,id',
 
-            'user_id'=>'nullable|integer',
+            'user_id' =>
+                'nullable|exists:users,id',
 
-            'first_name'=>'required|string|max:255',
+            'first_name' =>
+                'required|string|max:255',
 
-            'last_name'=>'required|string|max:255',
+            'last_name' =>
+                'required|string|max:255',
 
-            'nickname'=>'nullable|string|max:255',
+            'nickname' =>
+                'nullable|string|max:255',
 
-            'email'=>'required|email|unique:performances,email',
+            'email' =>
+                'required|email|unique:performances,email',
 
-            'phone'=>'nullable|string|max:255',
+            'phone' =>
+                'nullable|string|max:255',
 
-            'country'=>'nullable|string|max:255',
+            'country' =>
+                'nullable|string|max:255',
 
-            'city'=>'nullable|string|max:255',
+            'city' =>
+                'nullable|string|max:255',
 
-            'address'=>'nullable|string',
+            'address' =>
+                'nullable|string',
 
-            'birth_date'=>'required|date',
+            'birth_date' => [
+                'required',
+                'date',
+                'before_or_equal:' .
+                now()->subYears(18)->toDateString(),
+            ],
 
-            'profile_photo'=>'nullable|string',
+            'profile_photo' =>
+                'nullable|string',
 
-            'active'=>'nullable|boolean',
+            'active' =>
+                'nullable|boolean',
 
-            'hours_streamed'=>'nullable|integer',
+            'hours_streamed' =>
+                'nullable|numeric|min:0',
 
-            'platforms' => 'nullable|array',
-            
-            'platforms.*' => 'exists:platforms,id',
+            'ranking_score' =>
+                'nullable|numeric|min:0',
 
+            'platforms' =>
+                'required|array|min:1',
+
+            'platforms.*' =>
+                'exists:platforms,id',
+
+            'split' =>
+                'required|array',
+
+            'split.model_percentage' =>
+                'required|numeric|min:0|max:100',
+
+            'split.studio_percentage' =>
+                'required|numeric|min:0|max:100',
         ];
-
     }
 
-    public function updateRules(): array
+    public function updateRules(int $id): array
     {
-
         return [
 
-            'first_name'=>'nullable|string|max:255',
+            'first_name' =>
+                'nullable|string|max:255',
 
-            'last_name'=>'nullable|string|max:255',
+            'last_name' =>
+                'nullable|string|max:255',
 
-            'nickname'=>'nullable|string|max:255',
+            'nickname' =>
+                'nullable|string|max:255',
 
-            'email'=>'nullable|email',
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('performances')
+                    ->ignore($id),
+            ],
 
-            'phone'=>'nullable|string|max:255',
+            'birth_date' => [
+                'nullable',
+                'date',
+                'before_or_equal:' .
+                now()->subYears(18)->toDateString(),
+            ],
 
-            'country'=>'nullable|string|max:255',
+            'platforms' =>
+                'nullable|array',
 
-            'city'=>'nullable|string|max:255',
+            'platforms.*' =>
+                'exists:platforms,id',
 
-            'address'=>'nullable|string',
+            'split' =>
+                'nullable|array',
 
-            'birth_date'=>'nullable|date',
+            'split.model_percentage' =>
+                'required_with:split|numeric|min:0|max:100',
 
-            'profile_photo'=>'nullable|string',
-
-            'active'=>'nullable|boolean',
-
-            'hours_streamed'=>'nullable|integer',
-
-            'platforms' => 'nullable|array',
-
-            'platforms.*' => 'exists:platforms,id',
-
+            'split.studio_percentage' =>
+                'required_with:split|numeric|min:0|max:100',
         ];
-
     }
 
+    public function messages(): array
+    {
+        return [
+
+            'birth_date.before_or_equal' =>
+                'Debes ser mayor de edad para registrarte.',
+
+            'studio_id.required' =>
+                'Debes seleccionar un estudio.',
+
+            'platforms.required' =>
+                'Debes seleccionar al menos una plataforma.',
+
+            'platforms.min' =>
+                'Debes seleccionar al menos una plataforma.',
+
+        ];
+    }
+
+    private function normalize(array $data): array
+    {
+        $data['active'] =
+            $data['active'] ?? true;
+
+        $data['hours_streamed'] =
+            $data['hours_streamed'] ?? 0;
+
+        $data['ranking_score'] =
+            $data['ranking_score'] ?? 0;
+
+        return $data;
+    }
+
+    private function syncPlatforms(
+        Performance $performance,
+        ?array $platforms
+    ): void {
+
+        if ($platforms === null) {
+            return;
+        }
+
+        $performance
+            ->platforms()
+            ->sync(
+                array_unique($platforms)
+            );
+    }
+
+    private function syncSplit(
+        Performance $performance,
+        ?array $split,
+        bool $creating = false
+    ): void {
+
+        if ($split === null) {
+            return;
+        }
+
+        $this->splitService->validate(
+            $split['model_percentage'],
+            $split['studio_percentage']
+        );
+
+        if ($creating) {
+
+            $performance
+                ->split()
+                ->create($split);
+
+            return;
+        }
+
+        $performance
+            ->split()
+            ->updateOrCreate(
+                [],
+                $split
+            );
+    }
 }

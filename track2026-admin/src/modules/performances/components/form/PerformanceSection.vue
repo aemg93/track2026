@@ -1,10 +1,7 @@
 <template>
-
     <section
         class="rounded-2xl border border-gray-800 bg-gray-900 p-6"
     >
-
-        <!-- HEADER -->
 
         <header
             v-if="section.title || section.description"
@@ -27,88 +24,68 @@
 
         </header>
 
-        <!-- CAMPOS -->
-
-        <div
-            :class="gridClass"
-        >
+        <div :class="gridClass">
 
             <PerformanceField
-
                 v-for="field in section.fields"
-
                 :key="field.model"
-
                 :field="field"
-
                 :form="form"
-
                 :platforms="platforms"
-
+                :errors="errors"
             />
 
         </div>
 
     </section>
-
 </template>
 
 <script setup>
 
-import {
-
-    computed
-
-} from 'vue'
+import { computed } from 'vue'
 
 import PerformanceField from './PerformanceField.vue'
 
 const props = defineProps({
 
     section: {
-
         type: Object,
-
         required: true
-
     },
 
     form: {
-
         type: Object,
-
         required: true
-
     },
 
     platforms: {
-
         type: Array,
-
         default: () => []
+    },
 
+    errors: {
+        type: Object,
+        default: () => ({})
     }
 
 })
 
-const gridClass = computed(() => {
+const layouts = Object.freeze({
 
-    switch (props.section.columns) {
+    1: 'grid grid-cols-1 gap-4',
 
-        case 1:
+    2: 'grid grid-cols-1 md:grid-cols-2 gap-4',
 
-            return 'grid grid-cols-1 gap-4'
-
-        case 3:
-
-            return 'grid grid-cols-1 md:grid-cols-3 gap-4'
-
-        default:
-
-            return 'grid grid-cols-1 md:grid-cols-2 gap-4'
-
-    }
+    3: 'grid grid-cols-1 md:grid-cols-3 gap-4'
 
 })
+
+const gridClass = computed(() =>
+
+    layouts[
+        props.section.columns ?? 2
+    ] ?? layouts[2]
+
+)
 
 </script>
