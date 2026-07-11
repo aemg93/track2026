@@ -6,12 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('shifts', function (Blueprint $table) {
+
             $table->id();
 
             $table->foreignId('performance_id')
@@ -31,19 +29,25 @@ return new class extends Migration
                 'active',
                 'paused',
                 'finished',
-            ])->default('active');
+            ])
+            ->default('active');
+
 
             $table->timestamps();
 
+
             $table->index('status');
-            $table->index('started_at');
+
+            $table->index([
+                'status',
+                'started_at',
+            ]);
+
             $table->index('ended_at');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+
     public function down(): void
     {
         Schema::dropIfExists('shifts');

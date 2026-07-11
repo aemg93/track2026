@@ -15,6 +15,7 @@ class Shift extends Model
         'status',
     ];
 
+
     protected $casts = [
         'started_at' => 'datetime',
         'ended_at'   => 'datetime',
@@ -25,6 +26,7 @@ class Shift extends Model
     {
         return $this->belongsTo(Performance::class);
     }
+
 
     public function studio(): BelongsTo
     {
@@ -37,13 +39,28 @@ class Shift extends Model
         return $this->status === 'active';
     }
 
+
     public function isPaused(): bool
     {
         return $this->status === 'paused';
     }
 
+
     public function isFinished(): bool
     {
         return $this->status === 'finished';
+    }
+
+
+    public function durationMinutes(): int
+    {
+        if (! $this->started_at) {
+            return 0;
+        }
+
+        return $this->started_at
+            ->diffInMinutes(
+                $this->ended_at ?? now()
+            );
     }
 }
