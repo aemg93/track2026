@@ -3,15 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Studio;
-use App\Models\User;
-use App\Models\Earning;
-use App\Models\Bonus;
-use App\Models\Penalty;
-use App\Models\Deduction;
-use App\Models\Sale;
-use App\Models\PerformanceSplit;
-use App\Models\Platform;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Performance extends Model
 {
@@ -41,48 +36,58 @@ class Performance extends Model
         'ranking_score',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
-    public function studio()
+    public function studio(): BelongsTo
     {
         return $this->belongsTo(Studio::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function earnings()
+    public function earnings(): HasMany
     {
         return $this->hasMany(Earning::class);
     }
 
-    public function bonuses()
+    public function bonuses(): HasMany
     {
         return $this->hasMany(Bonus::class);
     }
 
-    public function penalties()
+    public function penalties(): HasMany
     {
         return $this->hasMany(Penalty::class);
     }
 
-    public function deductions()
+    public function deductions(): HasMany
     {
         return $this->hasMany(Deduction::class);
     }
 
-    public function sales()
+    public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
     }
 
-    public function split()
+    public function split(): HasOne
     {
         return $this->hasOne(PerformanceSplit::class);
     }
 
-    public function platforms()
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class);
+    }
+
+    public function platforms(): BelongsToMany
     {
         return $this->belongsToMany(
             Platform::class,
@@ -90,21 +95,27 @@ class Performance extends Model
             'performance_id',
             'platform_id'
         )
-        ->withPivot([
-            'hours_streamed',
-            'earnings_usd',
-            'tokens',
-            'multiplier',
-            'conversion_rate',
-            'recorded_at',
-        ])
-        ->withTimestamps();
+            ->withPivot([
+                'hours_streamed',
+                'earnings_usd',
+                'tokens',
+                'multiplier',
+                'conversion_rate',
+                'recorded_at',
+            ])
+            ->withTimestamps();
     }
 
-    public function getNameAttribute()
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+
+    public function getNameAttribute(): string
     {
         return trim(
-            ($this->first_name ?? '') . ' ' . ($this->last_name ?? '')
+            "{$this->first_name} {$this->last_name}"
         ) ?: ($this->nickname ?? 'Sin nombre');
     }
 }
