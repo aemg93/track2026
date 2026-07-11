@@ -25,13 +25,13 @@ class ShiftService
             'performance_id' => $performance->id,
             'studio_id'      => $performance->studio_id,
             'started_at'     => now(),
-            'status'         => 'active',
+            'status'         => Shift::STATUS_ACTIVE,
         ]);
     }
 
     public function pause(Shift $shift): Shift
     {
-        if ($shift->status !== 'active') {
+        if (! $shift->isActive()) {
             throw ValidationException::withMessages([
                 'shift' => [
                     'Solo un turno activo puede pausarse.',
@@ -40,7 +40,7 @@ class ShiftService
         }
 
         $shift->update([
-            'status' => 'paused',
+            'status' => Shift::STATUS_PAUSED,
         ]);
 
         return $shift->fresh();
@@ -48,7 +48,7 @@ class ShiftService
 
     public function resume(Shift $shift): Shift
     {
-        if ($shift->status !== 'paused') {
+        if (! $shift->isPaused()) {
             throw ValidationException::withMessages([
                 'shift' => [
                     'Solo un turno pausado puede reanudarse.',
@@ -57,7 +57,7 @@ class ShiftService
         }
 
         $shift->update([
-            'status' => 'active',
+            'status' => Shift::STATUS_ACTIVE,
         ]);
 
         return $shift->fresh();
@@ -65,13 +65,13 @@ class ShiftService
 
     public function finish(Shift $shift): Shift
     {
-        if ($shift->status === 'finished') {
+        if ($shift->isFinished()) {
             return $shift;
         }
 
         if (! in_array($shift->status, [
-            'active',
-            'paused',
+            Shift::STATUS_ACTIVE,
+            Shift::STATUS_PAUSED,
         ])) {
             throw ValidationException::withMessages([
                 'shift' => [
@@ -81,19 +81,20 @@ class ShiftService
         }
 
         $shift->update([
-            'status'   => 'finished',
+            'status'   => Shift::STATUS_FINISHED,
             'ended_at' => now(),
         ]);
 
         return $shift->fresh();
     }
 
-    public function current(Performance $performance): ?Shift
-    {
+    public function current(
+        Performance $performance
+    ): ?Shift {
         return $performance->shifts()
             ->whereIn('status', [
-                'active',
-                'paused',
+                Shift::STATUS_ACTIVE,
+                Shift::STATUS_PAUSED,
             ])
             ->latest('started_at')
             ->first();
@@ -107,15 +108,16 @@ class ShiftService
                 'studio',
             ])
             ->whereIn('status', [
-                'active',
-                'paused',
+                Shift::STATUS_ACTIVE,
+                Shift::STATUS_PAUSED,
             ])
             ->orderBy('started_at')
             ->get();
     }
 
-    public function activeByStudio(Studio $studio): Collection
-    {
+    public function activeByStudio(
+        Studio $studio
+    ): Collection {
         return Shift::query()
             ->with([
                 'performance',
@@ -123,8 +125,8 @@ class ShiftService
             ])
             ->where('studio_id', $studio->id)
             ->whereIn('status', [
-                'active',
-                'paused',
+                Shift::STATUS_ACTIVE,
+                Shift::STATUS_PAUSED,
             ])
             ->orderBy('started_at')
             ->get();
@@ -142,15 +144,16 @@ class ShiftService
         return $this->current($performance) !== null;
     }
 
-    public function durationMinutes(Shift $shift): int
-    {
+    public function durationMinutes(
+        Shift $shift
+    ): int {
         if (! $shift->started_at) {
             return 0;
         }
 
-        $end = $shift->ended_at ?? now();
-
         return $shift->started_at
-            ->diffInMinutes($end);
+            ->diffInMinutes(
+                $shift->ended_at ?? now()
+            );
     }
 }

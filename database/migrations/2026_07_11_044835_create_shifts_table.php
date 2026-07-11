@@ -12,18 +12,23 @@ return new class extends Migration
 
             $table->id();
 
+
             $table->foreignId('performance_id')
                 ->constrained()
                 ->cascadeOnDelete();
+
 
             $table->foreignId('studio_id')
                 ->constrained()
                 ->cascadeOnDelete();
 
+
             $table->timestamp('started_at');
+
 
             $table->timestamp('ended_at')
                 ->nullable();
+
 
             $table->enum('status', [
                 'active',
@@ -36,14 +41,22 @@ return new class extends Migration
             $table->timestamps();
 
 
-            $table->index('status');
-
             $table->index([
                 'status',
                 'started_at',
             ]);
 
-            $table->index('ended_at');
+
+            $table->index([
+                'studio_id',
+                'status',
+                'started_at',
+            ]);
+
+            $table->index([
+                'performance_id',
+                'started_at',
+            ]);
         });
     }
 

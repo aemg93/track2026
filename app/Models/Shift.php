@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Shift extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_PAUSED = 'paused';
+
+    public const STATUS_FINISHED = 'finished';
+
+
     protected $fillable = [
         'performance_id',
         'studio_id',
@@ -36,19 +43,19 @@ class Shift extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === self::STATUS_ACTIVE;
     }
 
 
     public function isPaused(): bool
     {
-        return $this->status === 'paused';
+        return $this->status === self::STATUS_PAUSED;
     }
 
 
     public function isFinished(): bool
     {
-        return $this->status === 'finished';
+        return $this->status === self::STATUS_FINISHED;
     }
 
 
