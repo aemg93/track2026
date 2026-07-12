@@ -1,7 +1,7 @@
 <template>
 
     <div
-        v-if="!selectedModel"
+        v-if="!selectedPerformance"
         class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/50 py-20 text-center"
     >
 
@@ -46,8 +46,8 @@
             >
                 {{
                     (
-                        (selectedModel.first_name?.charAt(0) || '') +
-                        (selectedModel.last_name?.charAt(0) || '')
+                        (selectedPerformance.first_name?.charAt(0) || '') +
+                        (selectedPerformance.last_name?.charAt(0) || '')
                     ).toUpperCase()
                 }}
             </div>
@@ -55,7 +55,7 @@
             <div>
 
                 <h2 class="text-xl font-bold text-white">
-                    {{ selectedModel.name }}
+                    {{ selectedPerformance.name }}
                 </h2>
 
                 <p class="text-sm text-emerald-400">
@@ -130,7 +130,7 @@
 
 defineProps({
 
-    selectedModel: {
+    selectedPerformance: {
         type: Object,
         default: null
     }

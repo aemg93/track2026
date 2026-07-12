@@ -1,6 +1,6 @@
 <template>
 
-    <div v-if="!selectedModel">
+    <div v-if="!selectedPerformance">
 
         <ShiftEmptyState />
 
@@ -14,16 +14,14 @@
 
         <div class="space-y-6">
 
-
             <ShiftSummary
-                :model="selectedModel"
+                :performance="selectedPerformance"
             />
-
 
 
             <ShiftActions
 
-                :model="selectedModel"
+                :performance="selectedPerformance"
 
                 @earning="handleAction('earning')"
 
@@ -37,9 +35,7 @@
 
             />
 
-
         </div>
-
 
 
         <ShiftTimeline
@@ -52,7 +48,6 @@
     </div>
 
 </template>
-
 
 
 <script setup>
@@ -68,19 +63,17 @@ import ShiftSummary from './ShiftSummary.vue'
 import ShiftTimeline from './ShiftTimeline.vue'
 
 
-
 const props = defineProps({
 
-    selectedModel: {
+    selectedPerformance: {
 
-        type:Object,
+        type: Object,
 
-        default:null,
+        default: null,
 
     },
 
 })
-
 
 
 const emit = defineEmits([
@@ -98,49 +91,26 @@ const emit = defineEmits([
 ])
 
 
+const timeline = computed(() => {
 
-const timeline = computed(() =>
+    return props.selectedPerformance?.timeline ?? []
 
-    props.selectedModel?.timeline ?? []
-
-)
-
+})
 
 
-const performance = computed(() =>
-
-    props.selectedModel?.current_performance ?? null
-
-)
+function handleAction(action) {
 
 
-
-function handleAction(action){
-
-
-    if(!props.selectedModel){
+    if (!props.selectedPerformance) {
 
         return
 
     }
 
 
-
     emit(
-
         action,
-
-        {
-
-            model:
-                props.selectedModel,
-
-
-            performance:
-                performance.value
-
-        }
-
+        props.selectedPerformance
     )
 
 

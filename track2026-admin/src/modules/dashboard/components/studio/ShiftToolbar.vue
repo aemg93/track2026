@@ -1,5 +1,4 @@
 <template>
-
     <div class="rounded-2xl border border-gray-800 bg-gray-900 p-6">
 
         <div class="mb-6 flex items-center justify-between">
@@ -11,7 +10,7 @@
                 </h2>
 
                 <p class="text-sm text-gray-400">
-                    Selecciona una modelo para comenzar a registrar movimientos financieros.
+                    Selecciona una modelo para comenzar un turno.
                 </p>
 
             </div>
@@ -21,8 +20,8 @@
         <div class="grid gap-4 lg:grid-cols-[1fr_auto]">
 
             <select
-                v-model="selectedModelId"
-                class="rounded-xl border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-indigo-500 focus:outline-none"
+                v-model="selectedPerformanceId"
+                class="rounded-xl border border-gray-700 bg-gray-950 px-4 py-3 text-white"
             >
 
                 <option :value="null">
@@ -30,19 +29,19 @@
                 </option>
 
                 <option
-                    v-for="model in models"
-                    :key="model.id"
-                    :value="model.id"
+                    v-for="performance in performances"
+                    :key="performance.id"
+                    :value="performance.id"
                 >
-                    {{ model.name }}
+                    {{ performance.name }}
                 </option>
 
             </select>
 
             <button
                 @click="startShift"
-                :disabled="!selectedModel"
-                class="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="!selectedPerformance"
+                class="rounded-xl bg-indigo-600 px-6 py-3 text-white disabled:opacity-50"
             >
                 Iniciar turno
             </button>
@@ -50,48 +49,41 @@
         </div>
 
     </div>
-
 </template>
 
 <script setup>
-
 import { computed, ref } from 'vue'
 
 const props = defineProps({
-
-    models: {
+    performances: {
         type: Array,
         default: () => [],
     },
-
 })
 
 const emit = defineEmits([
     'start-shift',
 ])
 
-const selectedModelId = ref(null)
+const selectedPerformanceId = ref(null)
 
-const selectedModel = computed(() =>
+const selectedPerformance = computed(() => {
 
-    props.models.find(
-        model => model.id === selectedModelId.value
+    return props.performances.find(
+        performance => Number(performance.id) === Number(selectedPerformanceId.value)
     ) ?? null
 
-)
+})
 
 function startShift() {
 
-    if (!selectedModel.value) {
+    if (!selectedPerformance.value) {
         return
     }
 
-    emit(
-        'start-shift',
-        selectedModel.value
-    )
+    emit('start-shift', selectedPerformance.value)
 
-    selectedModelId.value = null
+    selectedPerformanceId.value = null
+
 }
-
 </script>

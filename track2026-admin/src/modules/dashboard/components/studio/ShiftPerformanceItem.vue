@@ -1,7 +1,7 @@
 <template>
 
     <button
-        @click="emit('select', model)"
+        @click="selectShift"
         class="w-full rounded-2xl border p-5 text-left transition-all"
         :class="
             selected
@@ -21,11 +21,11 @@
             <div class="flex-1">
 
                 <h3 class="font-semibold text-white">
-                    {{ model.name }}
+                    {{ performance.name }}
                 </h3>
 
                 <p class="text-sm text-gray-400">
-                    {{ model.nickname || 'Sin nickname' }}
+                    {{ performance.nickname || 'Sin nickname' }}
                 </p>
 
             </div>
@@ -33,41 +33,33 @@
             <span
                 class="rounded-full px-3 py-1 text-xs font-semibold"
                 :class="
-                    model.active
+                    status === 'active'
                         ? 'bg-green-500/10 text-green-400'
-                        : 'bg-red-500/10 text-red-400'
+                        : status === 'paused'
+                            ? 'bg-yellow-500/10 text-yellow-400'
+                            : 'bg-gray-500/10 text-gray-400'
                 "
             >
-                {{ model.active ? 'En línea' : 'Fuera' }}
+                {{
+                    status === 'active'
+                        ? 'En turno'
+                        : status === 'paused'
+                            ? 'Pausado'
+                            : 'Finalizado'
+                }}
             </span>
 
         </div>
 
-        <div class="mt-5 grid grid-cols-2 gap-4 text-sm">
+        <div class="mt-5 text-sm">
 
-            <div>
+            <p class="text-gray-500">
+                Estado del turno
+            </p>
 
-                <p class="text-gray-500">
-                    Horas
-                </p>
-
-                <p class="font-semibold text-white">
-                    {{ model.hours }}
-                </p>
-
-            </div>
-
-            <div>
-
-                <p class="text-gray-500">
-                    Ranking
-                </p>
-
-                <p class="font-semibold text-white">
-                    {{ model.ranking }}
-                </p>
-
-            </div>
+            <p class="font-semibold text-white capitalize">
+                {{ status }}
+            </p>
 
         </div>
 
@@ -79,27 +71,40 @@
 
 import { computed } from 'vue'
 
+
 const props = defineProps({
 
-    model: {
+    shiftId: {
+        type: Number,
+        required: true,
+    },
+
+    performance: {
         type: Object,
-        required: true
+        required: true,
+    },
+
+    status: {
+        type: String,
+        default: 'finished',
     },
 
     selected: {
         type: Boolean,
-        default: false
-    }
+        default: false,
+    },
 
 })
 
+
 const emit = defineEmits([
-    'select'
+    'select',
 ])
+
 
 const initials = computed(() => {
 
-    return props.model.name
+    return props.performance.name
         ?.split(' ')
         .map(word => word.charAt(0))
         .join('')
@@ -107,5 +112,19 @@ const initials = computed(() => {
         .toUpperCase() || '?'
 
 })
+
+
+function selectShift() {
+
+    emit(
+        'select',
+        {
+            id: props.shiftId,
+            performance: props.performance,
+            status: props.status,
+        }
+    )
+
+}
 
 </script>

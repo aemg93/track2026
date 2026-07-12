@@ -8,7 +8,7 @@
 
                 @click="action('earning')"
 
-                :disabled="!model"
+                :disabled="!performance"
 
                 class="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
 
@@ -22,7 +22,7 @@
 
                 @click="action('bonus')"
 
-                :disabled="!model"
+                :disabled="!performance"
 
                 class="rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-50"
 
@@ -36,7 +36,7 @@
 
                 @click="action('penalty')"
 
-                :disabled="!model"
+                :disabled="!performance"
 
                 class="rounded-xl bg-amber-600 px-4 py-3 font-medium text-white transition hover:bg-amber-500 disabled:opacity-50"
 
@@ -52,7 +52,7 @@
 
                 @click="action('deduction')"
 
-                :disabled="!model"
+                :disabled="!performance"
 
                 class="rounded-xl bg-rose-600 px-4 py-3 font-medium text-white transition hover:bg-rose-500 disabled:opacity-50"
 
@@ -69,7 +69,7 @@
 
             @click="action('finish')"
 
-            :disabled="!model"
+            :disabled="!performance"
 
             class="w-full rounded-xl border border-red-600 py-3 font-semibold text-red-400 transition hover:bg-red-600 hover:text-white disabled:opacity-50"
 
@@ -88,7 +88,7 @@
 
 const props = defineProps({
 
-    model: {
+    performance: {
 
         type:Object,
 
@@ -115,7 +115,7 @@ const emit = defineEmits([
 function action(type){
 
 
-    if(!props.model){
+    if(!props.performance){
 
         return
 
@@ -125,7 +125,7 @@ function action(type){
 
         type,
 
-        props.model
+        props.performance
 
     )
 
