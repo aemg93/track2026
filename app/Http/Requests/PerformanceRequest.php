@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Performance;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,11 @@ class PerformanceRequest extends FormRequest
 
     public function rules(): array
     {
-        $performanceId = $this->route('id');
+        $performance = $this->route('performance');
+
+        $performanceId = $performance instanceof Performance
+            ? $performance->id
+            : $performance;
 
         return [
             'studio_id' => [
