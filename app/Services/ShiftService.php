@@ -6,27 +6,34 @@ use App\Models\Performance;
 use App\Models\Shift;
 use App\Models\Studio;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ShiftService
 {
-    
     public function start(Performance $performance): Shift
     {
-        if ($this->hasActiveShift($performance)) {
-            throw ValidationException::withMessages([
-                'performance' => [
-                    'La modelo ya tiene un turno activo.',
-                ],
-            ]);
-        }
+        return DB::transaction(function () use ($performance) {
 
-        return Shift::create([
-            'performance_id' => $performance->id,
-            'studio_id'      => $performance->studio_id,
-            'started_at'     => now(),
-            'status'         => Shift::STATUS_ACTIVE,
-        ]);
+            $performance = Performance::query()
+                ->lockForUpdate()
+                ->findOrFail($performance->id);
+
+            if ($this->hasActiveShift($performance)) {
+                throw ValidationException::withMessages([
+                    'performance' => [
+                        'La modelo ya tiene un turno activo.',
+                    ],
+                ]);
+            }
+
+            return Shift::create([
+                'performance_id' => $performance->id,
+                'studio_id'      => $performance->studio_id,
+                'started_at'     => now(),
+                'status'         => Shift::STATUS_ACTIVE,
+            ]);
+        });
     }
 
     public function pause(Shift $shift): Shift
@@ -72,7 +79,7 @@ class ShiftService
         if (! in_array($shift->status, [
             Shift::STATUS_ACTIVE,
             Shift::STATUS_PAUSED,
-        ])) {
+        ], true)) {
             throw ValidationException::withMessages([
                 'shift' => [
                     'El turno no puede finalizarse.',
@@ -88,9 +95,8 @@ class ShiftService
         return $shift->fresh();
     }
 
-    public function current(
-        Performance $performance
-    ): ?Shift {
+    public function current(Performance $performance): ?Shift
+    {
         return $performance->shifts()
             ->whereIn('status', [
                 Shift::STATUS_ACTIVE,
@@ -115,9 +121,8 @@ class ShiftService
             ->get();
     }
 
-    public function activeByStudio(
-        Studio $studio
-    ): Collection {
+    public function activeByStudio(Studio $studio): Collection
+    {
         return Shift::query()
             ->with([
                 'performance',
@@ -132,28 +137,24 @@ class ShiftService
             ->get();
     }
 
-    public function activeByPerformance(
-        Performance $performance
-    ): ?Shift {
+    public function activeByPerformance(Performance $performance): ?Shift
+    {
         return $this->current($performance);
     }
 
-    public function hasActiveShift(
-        Performance $performance
-    ): bool {
+    public function hasActiveShift(Performance $performance): bool
+    {
         return $this->current($performance) !== null;
     }
 
-    public function durationMinutes(
-        Shift $shift
-    ): int {
+    public function durationMinutes(Shift $shift): int
+    {
         if (! $shift->started_at) {
             return 0;
         }
 
-        return $shift->started_at
-            ->diffInMinutes(
-                $shift->ended_at ?? now()
-            );
+        return $shift->started_at->diffInMinutes(
+            $shift->ended_at ?? now()
+        );
     }
 }
