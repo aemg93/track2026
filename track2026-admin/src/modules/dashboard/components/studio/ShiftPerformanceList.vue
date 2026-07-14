@@ -1,47 +1,53 @@
 <template>
-    <div
-        v-if="props.shifts.length"
-        class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-    >
-        <ShiftPerformanceItem
-            v-for="shift in props.shifts"
-            :key="shift.id"
-            :shift-id="shift.id"
-            :performance="shift.performance"
-            :status="shift.status"
-            :selected="props.selectedShift?.id === shift.id"
-            @select="selectShift"
-        />
-    </div>
+  <div
+    v-if="shifts.length"
+    class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+  >
+    <ShiftPerformanceItem
+  v-for="shift in shifts"
+  :key="shift.id"
+  :shift="shift"
+  :selected="selectedShift?.id === shift.id"
+  @select="selectShift"
+/>
+  </div>
 
-    <div
-        v-else
-        class="rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 py-12 text-center"
-    >
-        <p class="text-gray-400">
-            No hay turnos activos.
-        </p>
-    </div>
+  <div
+    v-else
+    class="rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 py-12 text-center"
+  >
+    <p class="text-gray-400">
+      No hay turnos activos.
+    </p>
+  </div>
 </template>
 
 <script setup>
+import { toRefs } from 'vue'
+
 import ShiftPerformanceItem from './ShiftPerformanceItem.vue'
 
-const props = defineProps({
-    shifts: {
-        type: Array,
-        default: () => [],
-    },
-
-    selectedShift: {
-        type: Object,
-        default: null,
-    },
+defineOptions({
+  name: 'ShiftPerformanceList',
 })
 
-const emit = defineEmits(['select'])
+const props = defineProps({
+  shifts: {
+    type: Array,
+    default: () => [],
+  },
 
-function selectShift(shift) {
-    emit('select', shift)
-}
+  selectedShift: {
+    type: Object,
+    default: null,
+  },
+})
+
+const { shifts, selectedShift } = toRefs(props)
+
+const emit = defineEmits([
+  'select',
+])
+
+const selectShift = shift => emit('select', shift)
 </script>

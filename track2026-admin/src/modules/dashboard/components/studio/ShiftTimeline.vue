@@ -1,89 +1,86 @@
 <template>
-
-<div class="rounded-xl border border-gray-800 bg-gray-900 p-6">
+  <div class="rounded-xl border border-gray-800 bg-gray-900 p-6">
 
     <h3 class="mb-6 text-lg font-semibold text-white">
-
-        Actividad reciente
-
+      Actividad reciente
     </h3>
 
     <div
-        v-if="timeline.length"
-        class="space-y-4"
+      v-if="timeline.length"
+      class="space-y-4"
     >
+      <div
+        v-for="item in timeline"
+        :key="item.id"
+        class="flex items-center justify-between border-b border-gray-800 pb-4 last:border-b-0 last:pb-0"
+      >
 
-        <div
-            v-for="item in timeline"
-            :key="item.id"
-            class="flex items-center justify-between border-b border-gray-800 pb-4"
-        >
+        <div>
 
-            <div>
+          <p class="font-medium text-white">
+            {{ item.title }}
+          </p>
 
-                <p class="font-medium text-white">
+          <p class="text-sm text-gray-500">
+            {{ item.type }}
 
-                    {{ item.title }}
-
-                </p>
-
-                <p class="text-sm text-gray-500">
-
-                    {{ item.type }}
-
-                    <span
-                        v-if="item.time"
-                    >
-                        • {{ item.time }}
-                    </span>
-
-                </p>
-
-            </div>
-
-            <div
-                class="text-right"
-            >
-
-                <p
-                    class="font-semibold"
-                    :class="item.amount >= 0
-                        ? 'text-emerald-400'
-                        : 'text-red-400'"
-                >
-
-                    {{ item.amount }}
-
-                </p>
-
-            </div>
+            <span v-if="item.time">
+              • {{ item.time }}
+            </span>
+          </p>
 
         </div>
+
+        <div class="text-right">
+
+          <p
+            class="font-semibold"
+            :class="Number(item.amount) >= 0
+              ? 'text-emerald-400'
+              : 'text-red-400'"
+          >
+            {{ formatAmount(item.amount) }}
+          </p>
+
+        </div>
+
+      </div>
 
     </div>
 
     <div
-        v-else
-        class="py-10 text-center text-gray-500"
+      v-else
+      class="py-10 text-center text-gray-500"
     >
-
-        No existen movimientos registrados.
-
+      No existen movimientos registrados.
     </div>
 
-</div>
-
+  </div>
 </template>
 
 <script setup>
+import { toRefs } from 'vue'
 
-defineProps({
-
-    timeline: {
-        type: Array,
-        default: () => [],
-    },
-
+defineOptions({
+  name: 'ShiftTimeline',
 })
 
+const props = defineProps({
+  timeline: {
+    type: Array,
+    default: () => [],
+  },
+})
+
+const { timeline } = toRefs(props)
+
+function formatAmount(value) {
+  const amount = Number(value ?? 0)
+
+  return amount.toLocaleString('es-CO', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  })
+}
 </script>

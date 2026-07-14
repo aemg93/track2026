@@ -4,12 +4,40 @@ import shiftService from '../services/shiftService'
 export function useShifts() {
 
     const activeShifts = ref([])
+    const statistics = ref(null)
+
     const loading = ref(false)
     const error = ref(null)
 
     async function refreshActiveShifts() {
 
-        activeShifts.value = await shiftService.active()
+        try {
+
+            activeShifts.value = await shiftService.active()
+
+        } catch (err) {
+
+            error.value = err
+
+            throw err
+
+        }
+
+    }
+
+    async function loadStatistics() {
+
+        try {
+
+            statistics.value = await shiftService.statistics()
+
+        } catch (err) {
+
+            error.value = err
+
+            throw err
+
+        }
 
     }
 
@@ -134,12 +162,15 @@ export function useShifts() {
 
     }
 
-    const activeCount = computed(() => activeShifts.value.length)
+    const activeCount = computed(
+        () => activeShifts.value.length
+    )
 
     return {
 
         // state
         activeShifts,
+        statistics,
         loading,
         error,
 
@@ -149,10 +180,15 @@ export function useShifts() {
         // loaders
         loadActiveShifts,
         refreshActiveShifts,
+        loadStatistics,
+
+        // actions
         startShift,
         pauseShift,
         resumeShift,
         finishShift,
+
+        // helpers
         getShift,
 
     }

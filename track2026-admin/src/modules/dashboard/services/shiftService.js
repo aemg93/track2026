@@ -27,6 +27,16 @@ const shiftService = {
         return data.data
     },
 
+    // 🔹 Endpoints adicionales recomendados
+    async statistics() {
+        const { data } = await api.get('/shifts/statistics')
+        return data.data
+    },
+
+    async current(performanceId) {
+        const { data } = await api.get(`/shifts/${performanceId}/current`)
+        return data.data
+    },
 }
 
 export default shiftService

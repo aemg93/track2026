@@ -15,14 +15,14 @@ use Illuminate\Http\JsonResponse;
 class ShiftController extends Controller
 {
     public function __construct(
-        protected ShiftService $service
+        private readonly ShiftService $shiftService
     ) {
     }
 
     public function active(): JsonResponse
     {
         return response()->json([
-            'data' => $this->service->active(),
+            'data' => $this->shiftService->active(),
         ]);
     }
 
@@ -30,14 +30,11 @@ class ShiftController extends Controller
         StartShiftRequest $request,
         Performance $performance
     ): JsonResponse {
-        $shift = $this->service->start($performance);
+        $shift = $this->shiftService->start($performance);
 
         return response()->json([
             'message' => 'Turno iniciado correctamente.',
-            'data' => $shift->load([
-                'performance',
-                'studio',
-            ]),
+            'data' => $this->loadRelations($shift),
         ], 201);
     }
 
@@ -45,14 +42,11 @@ class ShiftController extends Controller
         PauseShiftRequest $request,
         Shift $shift
     ): JsonResponse {
-        $shift = $this->service->pause($shift);
+        $shift = $this->shiftService->pause($shift);
 
         return response()->json([
             'message' => 'Turno pausado correctamente.',
-            'data' => $shift->load([
-                'performance',
-                'studio',
-            ]),
+            'data' => $this->loadRelations($shift),
         ]);
     }
 
@@ -60,14 +54,11 @@ class ShiftController extends Controller
         ResumeShiftRequest $request,
         Shift $shift
     ): JsonResponse {
-        $shift = $this->service->resume($shift);
+        $shift = $this->shiftService->resume($shift);
 
         return response()->json([
             'message' => 'Turno reanudado correctamente.',
-            'data' => $shift->load([
-                'performance',
-                'studio',
-            ]),
+            'data' => $this->loadRelations($shift),
         ]);
     }
 
@@ -75,14 +66,22 @@ class ShiftController extends Controller
         FinishShiftRequest $request,
         Shift $shift
     ): JsonResponse {
-        $shift = $this->service->finish($shift);
+        $shift = $this->shiftService->finish($shift);
 
         return response()->json([
             'message' => 'Turno finalizado correctamente.',
-            'data' => $shift->load([
-                'performance',
-                'studio',
-            ]),
+            'data' => $this->loadRelations($shift),
+        ]);
+    }
+
+    /**
+     * Carga las relaciones necesarias para la respuesta.
+     */
+    private function loadRelations(Shift $shift): Shift
+    {
+        return $shift->load([
+            'performance.platforms',
+            'studio',
         ]);
     }
 }

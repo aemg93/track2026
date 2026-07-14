@@ -1,120 +1,161 @@
 <template>
+  <ShiftEmptyState
+    v-if="!selectedShift"
+  />
 
-    <div v-if="!selectedPerformance">
+  <div
+    v-else
+    class="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]"
+  >
+    <!-- Panel lateral -->
+    <aside class="space-y-5">
 
-        <ShiftEmptyState />
+      <ShiftSummary
+        :performance="selectedPerformance"
+      />
 
-    </div>
+      <ShiftHeader
+        :shift="selectedShift"
+        @pause="handlePause"
+        @resume="handleResume"
+      />
 
+      <ShiftActions
+        :performance="selectedPerformance"
+        @earning="handleEarning"
+        @bonus="handleBonus"
+        @penalty="handlePenalty"
+        @deduction="handleDeduction"
+        @finish="handleFinish"
+      />
 
-    <div
-        v-else
-        class="grid gap-6 xl:grid-cols-[360px_1fr]"
+    </aside>
+
+    <!-- Actividad -->
+    <section
+      class="min-h-[650px] rounded-2xl border border-gray-800 bg-gray-900"
     >
+      <div class="border-b border-gray-800 px-6 py-4">
 
-        <div class="space-y-6">
+        <h2 class="text-base font-semibold text-white">
+          Actividad reciente
+        </h2>
 
-            <ShiftSummary
-                :performance="selectedPerformance"
-            />
+        <p class="mt-1 text-sm text-gray-400">
+          Movimientos financieros realizados durante este turno.
+        </p>
 
+      </div>
 
-            <ShiftActions
-
-                :performance="selectedPerformance"
-
-                @earning="handleAction('earning')"
-
-                @bonus="handleAction('bonus')"
-
-                @penalty="handleAction('penalty')"
-
-                @deduction="handleAction('deduction')"
-
-                @finish="handleAction('finish')"
-
-            />
-
-        </div>
-
+      <div class="h-[590px] overflow-y-auto">
 
         <ShiftTimeline
-
-            :timeline="timeline"
-
+          :timeline="timeline"
         />
 
+      </div>
 
-    </div>
+    </section>
 
+  </div>
 </template>
 
-
 <script setup>
-
 import {
-    computed
+  computed,
+  toRefs,
 } from 'vue'
 
-
-import ShiftEmptyState from './ShiftEmptyState.vue'
 import ShiftActions from './ShiftActions.vue'
+import ShiftEmptyState from './ShiftEmptyState.vue'
+import ShiftHeader from './ShiftHeader.vue'
 import ShiftSummary from './ShiftSummary.vue'
 import ShiftTimeline from './ShiftTimeline.vue'
 
+defineOptions({
+  name: 'ShiftWorkspace',
+})
 
 const props = defineProps({
-
-    selectedPerformance: {
-
-        type: Object,
-
-        default: null,
-
-    },
-
+  selectedShift: {
+    type: Object,
+    default: null,
+  },
 })
-
 
 const emit = defineEmits([
-
-    'earning',
-
-    'bonus',
-
-    'penalty',
-
-    'deduction',
-
-    'finish',
-
+  'earning',
+  'bonus',
+  'penalty',
+  'deduction',
+  'pause',
+  'resume',
+  'finish',
 ])
 
+const { selectedShift } = toRefs(props)
 
-const timeline = computed(() => {
+const selectedPerformance = computed(
+  () => selectedShift.value?.performance ?? null
+)
 
-    return props.selectedPerformance?.timeline ?? []
+const timeline = computed(
+  () => selectedShift.value?.timeline ?? []
+)
 
-})
+function handleEarning() {
+  if (!selectedPerformance.value) {
+    return
+  }
 
-
-function handleAction(action) {
-
-
-    if (!props.selectedPerformance) {
-
-        return
-
-    }
-
-
-    emit(
-        action,
-        props.selectedPerformance
-    )
-
-
+  emit('earning', selectedPerformance.value)
 }
 
+function handleBonus() {
+  if (!selectedPerformance.value) {
+    return
+  }
 
+  emit('bonus', selectedPerformance.value)
+}
+
+function handlePenalty() {
+  if (!selectedPerformance.value) {
+    return
+  }
+
+  emit('penalty', selectedPerformance.value)
+}
+
+function handleDeduction() {
+  if (!selectedPerformance.value) {
+    return
+  }
+
+  emit('deduction', selectedPerformance.value)
+}
+
+function handlePause() {
+  if (!selectedShift.value) {
+    return
+  }
+
+  emit('pause', selectedShift.value)
+}
+
+function handleResume() {
+  if (!selectedShift.value) {
+    return
+  }
+
+  emit('resume', selectedShift.value)
+}
+
+function handleFinish() {
+  if (!selectedShift.value) {
+    return
+  }
+
+  emit('finish', selectedShift.value)
+}
 </script>
