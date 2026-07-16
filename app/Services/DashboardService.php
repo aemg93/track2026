@@ -28,9 +28,18 @@ class DashboardService
     public function getData(User $user): array
     {
         $dashboard = match (true) {
-            $user->hasRole('Super Admin') => $this->buildDashboard(Performance::query()->with(self::PERFORMANCE_RELATIONS)->get(),'super_admin'),
-            $user->hasRole('Admin')       => $this->buildDashboard(Performance::query()->where('studio_id',$user->studio_id)->with(self::PERFORMANCE_RELATIONS)->get(),'admin'),
-            $user->hasRole('Monitor')     => $this->buildDashboard(Performance::query()->where('studio_id',$user->studio_id)->with(self::PERFORMANCE_RELATIONS)->get(),'monitor'),
+            $user->hasRole('Super Admin') => $this->buildDashboard(
+                Performance::query()->with(self::PERFORMANCE_RELATIONS)->get(),
+                'super_admin'
+            ),
+            $user->hasRole('Admin') => $this->buildDashboard(
+                Performance::query()->where('studio_id',$user->studio_id)->with(self::PERFORMANCE_RELATIONS)->get(),
+                'admin'
+            ),
+            $user->hasRole('Monitor') => $this->buildDashboard(
+                Performance::query()->where('studio_id',$user->studio_id)->with(self::PERFORMANCE_RELATIONS)->get(),
+                'monitor'
+            ),
             $user->hasRole('Performance') => $this->performanceData($user),
             default => ['view'=>'unknown','models'=>[]],
         };
@@ -146,82 +155,55 @@ class DashboardService
         ];
     }
 
-   private function buildShift(Shift $shift): array
-{
-    return [
-        'id' => $shift->id,
+    private function buildShift(Shift $shift): array
+    {
+        return [
+            'id' => $shift->id,
+            'status' => $shift->status?->value,
 
-        'status' => $shift->status?->value,
+            'started_at'      => $shift->started_at,
+            'last_resumed_at' => $shift->last_resumed_at,
+            'paused_at'       => $shift->paused_at,
+            'ended_at'        => $shift->ended_at,
 
-        'started_at' => $shift->started_at,
+            'worked_seconds'       => (int) $shift->worked_seconds,
+            'total_paused_seconds' => $shift->total_paused_seconds,
 
-        'paused_at' => $shift->paused_at,
+            // duración se mantiene solo como formato, no como reloj dinámico
+            'duration' => [
+                'minutes'   => $shift->workedMinutes(),
+                'hours'     => $shift->workedHours(),
+                'formatted' => $shift->workedTime(),
+            ],
 
-        'ended_at' => $shift->ended_at,
+            'performance' => [
+                'id' => $shift->performance->id,
+                'name' => trim(
+                    $shift->performance->first_name .
+                    ' ' .
+                    $shift->performance->last_name
+                ),
+                'nickname' => $shift->performance->nickname,
+                'platforms' => $this->buildPlatforms($shift->performance),
+                'financial' => $this->financialSummary->summary(
+                    $shift->performance
+                ),
+            ],
 
-        /*
-        |--------------------------------------------------------------------------
-        | Time
-        |--------------------------------------------------------------------------
-        */
+            'studio' => $shift->studio
+                ? [
+                    'id' => $shift->studio->id,
+                    'name' => $shift->studio->name,
+                ]
+                : null,
 
-        'worked_seconds' => $shift->workedSeconds(),
-
-        'total_paused_seconds' => $shift->total_paused_seconds,
-
-        'duration' => [
-            'seconds' => $shift->workedSeconds(),
-            'minutes' => $shift->workedMinutes(),
-            'hours' => $shift->workedHours(),
-            'formatted' => $shift->workedTime(),
-        ],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Performance
-        |--------------------------------------------------------------------------
-        */
-
-        'performance' => [
-            'id' => $shift->performance->id,
-            'name' => trim(
-                $shift->performance->first_name .
-                ' ' .
-                $shift->performance->last_name
-            ),
-            'nickname' => $shift->performance->nickname,
-            'platforms' => $this->buildPlatforms($shift->performance),
-            'financial' => $this->financialSummary->summary(
-                $shift->performance
-            ),
-        ],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Studio
-        |--------------------------------------------------------------------------
-        */
-
-        'studio' => $shift->studio
-            ? [
-                'id' => $shift->studio->id,
-                'name' => $shift->studio->name,
-            ]
-            : null,
-
-        /*
-        |--------------------------------------------------------------------------
-        | Actions
-        |--------------------------------------------------------------------------
-        */
-
-        'actions' => [
-            'can_pause' => $shift->isActive(),
-            'can_resume' => $shift->isPaused(),
-            'can_finish' => ! $shift->isFinished(),
-        ],
-    ];
-}
+            'actions' => [
+                'can_pause'  => $shift->isActive(),
+                'can_resume' => $shift->isPaused(),
+                'can_finish' => ! $shift->isFinished(),
+            ],
+        ];
+    }
 
     private function activePerformances(): array
     {

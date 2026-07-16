@@ -7,17 +7,10 @@
       :finance="finance"
     />
 
-    <LoadingCard
-      v-if="loading"
-      text="Cargando dashboard..."
-    />
+    <LoadingCard v-if="loading" text="Cargando dashboard..." />
 
     <template v-else-if="dashboard && finance">
-
-      <DashboardKpis
-        :dashboard="dashboard"
-        :finance="finance"
-      />
+      <DashboardKpis :dashboard="dashboard" :finance="finance" />
 
       <StudioPanel
         :dashboard="dashboard"
@@ -34,15 +27,10 @@
       />
 
       <FinanceChart :finance="finance" />
-
       <RankingTable :ranking="dashboard?.ranking ?? []" />
-
     </template>
 
-    <EmptyState
-      v-else
-      text="No hay información disponible"
-    />
+    <EmptyState v-else text="No hay información disponible" />
 
     <RegisterRevenueModal
       v-if="modals.revenue"
@@ -77,25 +65,18 @@
 </template>
 
 <script setup>
-import {
-  onMounted,
-  reactive,
-  ref,
-} from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 
 import dashboardService from '../services/dashboardService'
 import { useShifts } from '../composables/useShifts'
 
 import EmptyState from '@/components/ui/EmptyState.vue'
 import LoadingCard from '@/components/ui/LoadingCard.vue'
-
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardKpis from '../components/DashboardKpis.vue'
 import RankingTable from '../components/RankingTable.vue'
 import StudioPanel from '../components/StudioPanel.vue'
-
 import FinanceChart from '@/modules/finances/components/FinanceChart.vue'
-
 import RegisterBonusModal from '@/modules/finances/components/modals/RegisterBonusModal.vue'
 import RegisterDeductionModal from '@/modules/finances/components/modals/RegisterDeductionModal.vue'
 import RegisterPenaltyModal from '@/modules/finances/components/modals/RegisterPenaltyModal.vue'
@@ -104,9 +85,7 @@ import RegisterRevenueModal from '@/modules/finances/components/modals/RegisterR
 const dashboard = ref(null)
 const finance = ref(null)
 const operations = ref(null)
-
 const loading = ref(false)
-
 const selectedPerformance = ref(null)
 
 const modals = reactive({
@@ -116,41 +95,23 @@ const modals = reactive({
   deduction: false,
 })
 
-const {
-  startShift,
-  pauseShift,
-  resumeShift,
-  finishShift,
-} = useShifts()
-
-/*
-|--------------------------------------------------------------------------
-| Modales
-|--------------------------------------------------------------------------
-*/
+const { startShift, pauseShift, resumeShift, finishShift } = useShifts()
 
 function openModal(name, performance) {
-  if (!performance?.id) {
-    return
-  }
-
+  if (!performance?.id) return
   selectedPerformance.value = performance
   modals[name] = true
 }
 
 function closeModal(name) {
   modals[name] = false
-
   if (!Object.values(modals).some(Boolean)) {
     selectedPerformance.value = null
   }
 }
 
 function closeModals() {
-  Object.keys(modals).forEach(name => {
-    modals[name] = false
-  })
-
+  Object.keys(modals).forEach(name => { modals[name] = false })
   selectedPerformance.value = null
 }
 
@@ -161,200 +122,68 @@ const modalHandlers = {
   deduction: performance => openModal('deduction', performance),
 }
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard
-|--------------------------------------------------------------------------
-*/
-
-async function loadDashboard() {
-  loading.value = true
-
+async function reloadDashboard() {
   try {
-
     const data = await dashboardService.index()
-
     dashboard.value = data.dashboard
     finance.value = data.finance
     operations.value = data.operations
-
   } catch (error) {
-
-    console.error(error)
-
     dashboard.value = null
     finance.value = null
     operations.value = null
-
   } finally {
-
     loading.value = false
-
   }
 }
-
-/*
-|--------------------------------------------------------------------------
-| Refresh Parcial
-|--------------------------------------------------------------------------
-*/
-
-async function refreshOperations() {
-
-  try {
-
-    const data = await dashboardService.index()
-
-    operations.value = data.operations
-
-  } catch (error) {
-
-    console.error(error)
-
-  }
-
-}
-
-async function refreshFinance() {
-
-  try {
-
-    const data = await dashboardService.index()
-
-    finance.value = data.finance
-
-  } catch (error) {
-
-    console.error(error)
-
-  }
-
-}
-
-async function refreshRanking() {
-
-  try {
-
-    const data = await dashboardService.index()
-
-    dashboard.value.ranking = data.dashboard.ranking
-
-  } catch (error) {
-
-    console.error(error)
-
-  }
-
-}
-
-/*
-|--------------------------------------------------------------------------
-| Shift Actions
-|--------------------------------------------------------------------------
-*/
 
 async function startPerformanceShift(performance) {
-
-  if (!performance?.id) {
-    return
-  }
-
+  if (!performance?.id) return
   try {
-
     await startShift(performance.id)
-
-    await refreshOperations()
-
+    await reloadDashboard()
   } catch (error) {
-
     console.error(error)
-
   }
-
 }
 
 async function pausePerformanceShift(shift) {
-
-  if (!shift?.id) {
-    return
-  }
-
+  if (!shift?.id) return
   try {
-
     await pauseShift(shift.id)
-
-    await refreshOperations()
-
+    await reloadDashboard()
   } catch (error) {
-
     console.error(error)
-
   }
-
 }
 
 async function resumePerformanceShift(shift) {
-
-  if (!shift?.id) {
-    return
-  }
-
+  if (!shift?.id) return
   try {
-
     await resumeShift(shift.id)
-
-    await refreshOperations()
-
+    await reloadDashboard()
   } catch (error) {
-
     console.error(error)
-
   }
-
 }
 
 async function finishPerformanceShift(shift) {
-
-  if (!shift?.id) {
-    return
-  }
-
+  if (!shift?.id) return
   try {
-
     await finishShift(shift.id)
-
-    await refreshOperations()
-
+    await reloadDashboard()
   } catch (error) {
-
     console.error(error)
-
   }
-
 }
-
-/*
-|--------------------------------------------------------------------------
-| Finanzas
-|--------------------------------------------------------------------------
-*/
 
 async function handleFinanceSaved() {
-
   closeModals()
-
-  await Promise.all([
-    refreshFinance(),
-    refreshRanking(),
-  ])
-
+  await reloadDashboard()
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lifecycle
-|--------------------------------------------------------------------------
-*/
-
-onMounted(loadDashboard)
+onMounted(() => {
+  loading.value = true
+  reloadDashboard()
+})
 </script>

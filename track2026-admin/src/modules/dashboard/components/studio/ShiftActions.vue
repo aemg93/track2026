@@ -1,14 +1,18 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5">
 
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-3 md:grid-cols-2">
 
       <button
         v-for="item in actions"
         :key="item.type"
         type="button"
         :disabled="disabled"
-        :class="item.class"
+        :class="[
+          item.class,
+          'rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-200',
+          'disabled:cursor-not-allowed disabled:opacity-40'
+        ]"
         @click="handleAction(item.type)"
       >
         {{ item.label }}
@@ -19,10 +23,27 @@
     <button
       type="button"
       :disabled="disabled"
-      class="w-full rounded-xl border border-red-600 py-3 font-semibold text-red-400 transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+      class="
+        w-full
+        rounded-xl
+        border
+        border-red-500/40
+        bg-red-500/10
+        py-3
+        text-sm
+        font-semibold
+        text-red-300
+        transition-all
+        duration-200
+        hover:border-red-400
+        hover:bg-red-500/20
+        hover:text-red-200
+        disabled:cursor-not-allowed
+        disabled:opacity-40
+      "
       @click="handleAction('finish')"
     >
-      Finalizar Turno
+      Finalizar turno
     </button>
 
   </div>
@@ -55,32 +76,61 @@ const disabled = computed(() => !props.performance)
 const actions = [
   {
     type: 'earning',
-    label: 'Registrar Ganancia',
-    class:
-      'rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50',
+    label: 'Registrar ganancia',
+    class: `
+      border-emerald-500/40
+      bg-emerald-500/15
+      text-emerald-300
+      hover:border-emerald-400
+      hover:bg-emerald-500/25
+      hover:text-emerald-200
+    `,
   },
+
   {
     type: 'bonus',
-    label: 'Registrar Bono',
-    class:
-      'rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50',
+    label: 'Registrar bono',
+    class: `
+      border-blue-500/40
+      bg-blue-500/15
+      text-blue-300
+      hover:border-blue-400
+      hover:bg-blue-500/25
+      hover:text-blue-200
+    `,
   },
+
   {
     type: 'penalty',
-    label: 'Registrar Penalización',
-    class:
-      'rounded-xl bg-amber-600 px-4 py-3 font-medium text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50',
+    label: 'Registrar penalización',
+    class: `
+      border-amber-500/40
+      bg-amber-500/15
+      text-amber-300
+      hover:border-amber-400
+      hover:bg-amber-500/25
+      hover:text-amber-200
+    `,
   },
+
   {
     type: 'deduction',
-    label: 'Registrar Descuento',
-    class:
-      'rounded-xl bg-rose-600 px-4 py-3 font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50',
+    label: 'Registrar descuento',
+    class: `
+      border-rose-500/40
+      bg-rose-500/15
+      text-rose-300
+      hover:border-rose-400
+      hover:bg-rose-500/25
+      hover:text-rose-200
+    `,
   },
 ]
 
 function handleAction(type) {
-  if (disabled.value) return
+  if (disabled.value) {
+    return
+  }
 
   emit(type, props.performance)
 }

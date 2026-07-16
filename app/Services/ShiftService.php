@@ -17,7 +17,6 @@ class ShiftService
     public function start(Performance $performance): Shift
     {
         return DB::transaction(function () use ($performance) {
-
             $performance = Performance::query()
                 ->lockForUpdate()
                 ->findOrFail($performance->id);
@@ -25,13 +24,7 @@ class ShiftService
             if (
                 Shift::query()
                     ->where('performance_id', $performance->id)
-                    ->whereIn(
-                        'status',
-                        [
-                            ShiftStatus::Active,
-                            ShiftStatus::Paused,
-                        ]
-                    )
+                    ->whereIn('status', [ShiftStatus::Active, ShiftStatus::Paused])
                     ->exists()
             ) {
                 $this->throwShiftException(
@@ -41,32 +34,25 @@ class ShiftService
             }
 
             return Shift::create([
-                'performance_id' => $performance->id,
-                'studio_id' => $performance->studio_id,
-
-                'started_at' => now(),
-                'last_resumed_at' => now(),
-
-                'paused_at' => null,
-                'ended_at' => null,
-
+                'performance_id'       => $performance->id,
+                'studio_id'            => $performance->studio_id,
+                'started_at'           => now(),
+                'last_resumed_at'      => now(),
+                'paused_at'            => null,
+                'ended_at'             => null,
                 'total_paused_seconds' => 0,
-                'worked_seconds' => 0,
-
-                'status' => ShiftStatus::Active,
+                'worked_seconds'       => 0,
+                'status'               => ShiftStatus::Active,
             ]);
         });
     }
 
-
     public function pause(Shift $shift): Shift
     {
         return DB::transaction(function () use ($shift) {
-
             $shift = Shift::query()
                 ->lockForUpdate()
                 ->findOrFail($shift->id);
-
 
             if (! $shift->isActive()) {
                 $this->throwShiftException(
@@ -75,26 +61,30 @@ class ShiftService
                 );
             }
 
+            $now = now();
+
+            // acumulativo: snapshot + tramo desde last_resumed_at
+            $workedSeconds = $shift->worked_seconds;
+            if ($shift->last_resumed_at) {
+                $workedSeconds += $shift->last_resumed_at->diffInSeconds($now);
+            }
 
             $shift->update([
-                'status' => ShiftStatus::Paused,
-                'paused_at' => now(),
+                'status'         => ShiftStatus::Paused,
+                'paused_at'      => $now,
+                'worked_seconds' => $workedSeconds,
             ]);
-
 
             return $shift->fresh();
         });
     }
 
-
     public function resume(Shift $shift): Shift
     {
         return DB::transaction(function () use ($shift) {
-
             $shift = Shift::query()
                 ->lockForUpdate()
                 ->findOrFail($shift->id);
-
 
             if (! $shift->isPaused()) {
                 $this->throwShiftException(
@@ -103,181 +93,111 @@ class ShiftService
                 );
             }
 
+            $now = now();
 
             $pausedSeconds = $shift->paused_at
-                ? $shift->paused_at->diffInSeconds(now())
+                ? $shift->paused_at->diffInSeconds($now)
                 : 0;
 
-
             $shift->update([
-                'status' => ShiftStatus::Active,
-
-                'paused_at' => null,
-
-                'last_resumed_at' => now(),
-
-                'total_paused_seconds' =>
-                    $shift->total_paused_seconds + $pausedSeconds,
+                'status'               => ShiftStatus::Active,
+                'paused_at'            => null,
+                'last_resumed_at'      => $now,
+                'total_paused_seconds' => $shift->total_paused_seconds + $pausedSeconds,
             ]);
-
 
             return $shift->fresh();
         });
     }
 
-
     public function finish(Shift $shift): Shift
     {
         return DB::transaction(function () use ($shift) {
-
             $shift = Shift::query()
                 ->lockForUpdate()
                 ->findOrFail($shift->id);
-
 
             if ($shift->isFinished()) {
                 return $shift;
             }
 
-
             if (! $shift->isActive() && ! $shift->isPaused()) {
-
                 $this->throwShiftException(
                     'shift',
                     'El turno no puede finalizarse.'
                 );
-
             }
-
 
             $now = now();
 
-
             $pausedSeconds = $shift->total_paused_seconds;
-
-
-            if (
-                $shift->isPaused()
-                &&
-                $shift->paused_at
-            ) {
-                $pausedSeconds +=
-                    $shift->paused_at->diffInSeconds($now);
+            if ($shift->isPaused() && $shift->paused_at) {
+                $pausedSeconds += $shift->paused_at->diffInSeconds($now);
             }
 
-
-            $workedSeconds = max(
-                0,
-                $shift->started_at->diffInSeconds($now)
-                -
-                $pausedSeconds
-            );
-
+            // acumulativo: snapshot + tramo desde last_resumed_at si está activo
+            $workedSeconds = $shift->worked_seconds;
+            if ($shift->isActive() && $shift->last_resumed_at) {
+                $workedSeconds += $shift->last_resumed_at->diffInSeconds($now);
+            }
 
             $shift->update([
-                'status' => ShiftStatus::Finished,
-
-                'ended_at' => $now,
-
-                'paused_at' => null,
-
+                'status'               => ShiftStatus::Finished,
+                'ended_at'             => $now,
+                'paused_at'            => null,
                 'total_paused_seconds' => $pausedSeconds,
-
-                'worked_seconds' => $workedSeconds,
+                'worked_seconds'       => $workedSeconds,
             ]);
-
 
             return $shift->fresh();
         });
     }
 
-
     public function current(Performance $performance): ?Shift
     {
         return $performance->shifts()
-            ->with([
-                'performance',
-                'performance.platforms',
-                'studio',
-            ])
-            ->whereIn(
-                'status',
-                [
-                    ShiftStatus::Active,
-                    ShiftStatus::Paused,
-                ]
-            )
+            ->with(['performance', 'performance.platforms', 'studio'])
+            ->whereIn('status', [ShiftStatus::Active, ShiftStatus::Paused])
             ->latest('started_at')
             ->first();
     }
 
-
     public function active(): Collection
     {
         return Shift::query()
-            ->with([
-                'performance',
-                'performance.platforms',
-                'studio',
-            ])
-            ->whereIn(
-                'status',
-                [
-                    ShiftStatus::Active,
-                    ShiftStatus::Paused,
-                ]
-            )
+            ->with(['performance', 'performance.platforms', 'studio'])
+            ->whereIn('status', [ShiftStatus::Active, ShiftStatus::Paused])
             ->orderBy('started_at')
             ->get();
     }
-
 
     public function activeByStudio(Studio $studio): Collection
     {
         return Shift::query()
-            ->with([
-                'performance',
-                'performance.platforms',
-                'studio',
-            ])
+            ->with(['performance', 'performance.platforms', 'studio'])
             ->where('studio_id', $studio->id)
-            ->whereIn(
-                'status',
-                [
-                    ShiftStatus::Active,
-                    ShiftStatus::Paused,
-                ]
-            )
+            ->whereIn('status', [ShiftStatus::Active, ShiftStatus::Paused])
             ->orderBy('started_at')
             ->get();
     }
 
-
-    public function activeByPerformance(
-        Performance $performance
-    ): ?Shift {
+    public function activeByPerformance(Performance $performance): ?Shift
+    {
         return $this->current($performance);
     }
 
-
-    public function hasActiveShift(
-        Performance $performance
-    ): bool {
+    public function hasActiveShift(Performance $performance): bool
+    {
         return $this->current($performance) !== null;
     }
-
 
     public function workedMinutes(Shift $shift): int
     {
         return $shift->workedMinutes();
     }
 
-
-    private function throwShiftException(
-        string $field,
-        string $message
-    ): never {
-
+    private function throwShiftException(string $field, string $message): never
+    {
         throw ValidationException::withMessages([
             $field => [$message],
         ]);

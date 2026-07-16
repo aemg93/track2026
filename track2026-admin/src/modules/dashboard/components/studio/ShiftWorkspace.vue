@@ -11,7 +11,7 @@
     <aside class="space-y-5">
 
       <ShiftSummary
-        :performance="selectedPerformance"
+        :shift="selectedShift"
       />
 
       <ShiftHeader
