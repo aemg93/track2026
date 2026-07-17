@@ -7,12 +7,8 @@
     v-else
     class="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]"
   >
-    <!-- Panel lateral -->
+    <!-- Panel operativo -->
     <aside class="space-y-5">
-
-      <ShiftSummary
-        :shift="selectedShift"
-      />
 
       <ShiftHeader
         :shift="selectedShift"
@@ -31,18 +27,18 @@
 
     </aside>
 
-    <!-- Actividad -->
+    <!-- Actividad del turno -->
     <section
       class="min-h-[650px] rounded-2xl border border-gray-800 bg-gray-900"
     >
       <div class="border-b border-gray-800 px-6 py-4">
 
         <h2 class="text-base font-semibold text-white">
-          Actividad reciente
+          Actividad del turno
         </h2>
 
         <p class="mt-1 text-sm text-gray-400">
-          Movimientos financieros realizados durante este turno.
+          Ganancias, bonos, penalizaciones y descuentos registrados durante esta sesión.
         </p>
 
       </div>
@@ -64,12 +60,12 @@
 import {
   computed,
   toRefs,
+  watch,
 } from 'vue'
 
 import ShiftActions from './ShiftActions.vue'
 import ShiftEmptyState from './ShiftEmptyState.vue'
 import ShiftHeader from './ShiftHeader.vue'
-import ShiftSummary from './ShiftSummary.vue'
 import ShiftTimeline from './ShiftTimeline.vue'
 
 defineOptions({
@@ -100,61 +96,75 @@ const selectedPerformance = computed(
 )
 
 const timeline = computed(
-  () => selectedShift.value?.timeline ?? []
+  () => selectedShift.value?.activity?.timeline ?? []
+)
+
+const activitySummary = computed(
+  () => selectedShift.value?.activity?.summary ?? {}
+)
+
+/*
+|--------------------------------------------------------------------------
+| DEBUG
+|--------------------------------------------------------------------------
+*/
+
+watch(
+  selectedShift,
+  shift => {
+    console.log('========== SHIFT ==========')
+    console.log(shift)
+
+    console.log('========== ACTIVITY ==========')
+    console.log(shift?.activity)
+
+    console.log('========== TIMELINE ==========')
+    console.log(shift?.activity?.timeline)
+  },
+  {
+    immediate: true,
+    deep: true,
+  }
 )
 
 function handleEarning() {
-  if (!selectedPerformance.value) {
-    return
-  }
+  if (!selectedPerformance.value) return
 
   emit('earning', selectedPerformance.value)
 }
 
 function handleBonus() {
-  if (!selectedPerformance.value) {
-    return
-  }
+  if (!selectedPerformance.value) return
 
   emit('bonus', selectedPerformance.value)
 }
 
 function handlePenalty() {
-  if (!selectedPerformance.value) {
-    return
-  }
+  if (!selectedPerformance.value) return
 
   emit('penalty', selectedPerformance.value)
 }
 
 function handleDeduction() {
-  if (!selectedPerformance.value) {
-    return
-  }
+  if (!selectedPerformance.value) return
 
   emit('deduction', selectedPerformance.value)
 }
 
 function handlePause() {
-  if (!selectedShift.value) {
-    return
-  }
+  if (!selectedShift.value) return
 
   emit('pause', selectedShift.value)
 }
 
 function handleResume() {
-  if (!selectedShift.value) {
-    return
-  }
+  if (!selectedShift.value) return
 
   emit('resume', selectedShift.value)
 }
 
 function handleFinish() {
-  if (!selectedShift.value) {
-    return
-  }
+  if (!selectedShift.value) return
 
   emit('finish', selectedShift.value)
 }

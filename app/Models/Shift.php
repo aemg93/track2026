@@ -24,6 +24,7 @@ class Shift extends Model
         'status',
     ];
 
+
     protected function casts(): array
     {
         return [
@@ -32,39 +33,43 @@ class Shift extends Model
             'paused_at' => 'datetime',
             'ended_at' => 'datetime',
 
+            'total_paused_seconds' => 'integer',
+            'worked_seconds' => 'integer',
+
             'status' => ShiftStatus::class,
         ];
     }
+
 
     public function performance(): BelongsTo
     {
         return $this->belongsTo(Performance::class);
     }
 
+
     public function studio(): BelongsTo
     {
         return $this->belongsTo(Studio::class);
     }
+
 
     public function isActive(): bool
     {
         return $this->status === ShiftStatus::Active;
     }
 
+
     public function isPaused(): bool
     {
         return $this->status === ShiftStatus::Paused;
     }
+
 
     public function isFinished(): bool
     {
         return $this->status === ShiftStatus::Finished;
     }
 
-    /**
-     * Tiempo total transcurrido desde que inició el turno.
-     * Este tiempo NUNCA se pausa.
-     */
     public function elapsedSeconds(
         ?CarbonInterface $at = null
     ): int {
@@ -73,24 +78,15 @@ class Shift extends Model
             return 0;
         }
 
-        $reference = $at;
+        $reference = $at
+            ?? $this->ended_at
+            ?? now();
 
-        if (! $reference) {
-            $reference = $this->ended_at ?? now();
-        }
-
-        return (int) $this->started_at->diffInSeconds($reference);
+        return (int) floor(
+            $this->started_at->diffInSeconds($reference)
+        );
     }
 
-    /**
-     * Tiempo efectivo de transmisión.
-     *
-     * Utiliza la arquitectura por snapshots:
-     *
-     * worked_seconds
-     * +
-     * (now - last_resumed_at)
-     */
     public function workedSeconds(
         ?CarbonInterface $at = null
     ): int {
@@ -99,21 +95,28 @@ class Shift extends Model
             return (int) $this->worked_seconds;
         }
 
+
         if ($this->isPaused()) {
             return (int) $this->worked_seconds;
         }
 
+
         $seconds = (int) $this->worked_seconds;
+
 
         if ($this->last_resumed_at) {
 
             $reference = $at ?? now();
 
-            $seconds += $this->last_resumed_at->diffInSeconds($reference);
+            $seconds += (int) floor(
+                $this->last_resumed_at->diffInSeconds($reference)
+            );
         }
+
 
         return max(0, $seconds);
     }
+
 
     public function workedMinutes(
         ?CarbonInterface $at = null
@@ -125,6 +128,7 @@ class Shift extends Model
         );
     }
 
+
     public function workedHours(
         ?CarbonInterface $at = null
     ): float {
@@ -134,6 +138,7 @@ class Shift extends Model
             2
         );
     }
+
 
     public function workedTime(
         ?CarbonInterface $at = null
@@ -149,10 +154,6 @@ class Shift extends Model
         );
     }
 
-    /**
-     * Tiempo total dentro del estudio.
-     * No se detiene cuando el turno está pausado.
-     */
     public function studioTime(
         ?CarbonInterface $at = null
     ): string {

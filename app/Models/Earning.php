@@ -3,15 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Performance;
-use App\Models\Platform;
 
 class Earning extends Model
 {
     protected $fillable = [
-
         'performance_id',
         'platform_id',
+        'user_id',
 
         'earned_at',
 
@@ -41,26 +39,25 @@ class Earning extends Model
     ];
 
     protected $casts = [
-
         'earned_at' => 'datetime',
-        'paid_at'   => 'datetime',
+        'paid_at' => 'datetime',
 
         'original_amount' => 'decimal:2',
-        'real_tokens'     => 'decimal:2',
+        'real_tokens' => 'decimal:2',
 
         'conversion_rate' => 'decimal:6',
-        'multiplier'      => 'decimal:4',
+        'multiplier' => 'decimal:4',
 
-        'gross_usd'     => 'decimal:2',
-        'bonus_usd'     => 'decimal:2',
-        'penalty_usd'   => 'decimal:2',
+        'gross_usd' => 'decimal:2',
+        'bonus_usd' => 'decimal:2',
+        'penalty_usd' => 'decimal:2',
         'deduction_usd' => 'decimal:2',
-        'net_usd'       => 'decimal:2',
+        'net_usd' => 'decimal:2',
 
-        'model_percentage'  => 'decimal:2',
+        'model_percentage' => 'decimal:2',
         'studio_percentage' => 'decimal:2',
 
-        'model_share_usd'  => 'decimal:2',
+        'model_share_usd' => 'decimal:2',
         'studio_share_usd' => 'decimal:2',
     ];
 
@@ -72,5 +69,10 @@ class Earning extends Model
     public function platform()
     {
         return $this->belongsTo(Platform::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

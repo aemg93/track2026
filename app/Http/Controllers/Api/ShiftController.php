@@ -19,6 +19,7 @@ class ShiftController extends Controller
     ) {
     }
 
+
     public function active(): JsonResponse
     {
         return response()->json([
@@ -26,10 +27,12 @@ class ShiftController extends Controller
         ]);
     }
 
+
     public function start(
         StartShiftRequest $request,
         Performance $performance
     ): JsonResponse {
+
         $shift = $this->shiftService->start($performance);
 
         return response()->json([
@@ -38,10 +41,12 @@ class ShiftController extends Controller
         ], 201);
     }
 
+
     public function pause(
         PauseShiftRequest $request,
         Shift $shift
     ): JsonResponse {
+
         $shift = $this->shiftService->pause($shift);
 
         return response()->json([
@@ -50,10 +55,12 @@ class ShiftController extends Controller
         ]);
     }
 
+
     public function resume(
         ResumeShiftRequest $request,
         Shift $shift
     ): JsonResponse {
+
         $shift = $this->shiftService->resume($shift);
 
         return response()->json([
@@ -62,10 +69,12 @@ class ShiftController extends Controller
         ]);
     }
 
+
     public function finish(
         FinishShiftRequest $request,
         Shift $shift
     ): JsonResponse {
+
         $shift = $this->shiftService->finish($shift);
 
         return response()->json([
@@ -74,12 +83,14 @@ class ShiftController extends Controller
         ]);
     }
 
+
     /**
-     * Carga las relaciones necesarias para la respuesta.
+     * Relaciones necesarias para respuestas del módulo Shift.
      */
     private function loadRelations(Shift $shift): Shift
     {
         return $shift->load([
+            'performance.user',
             'performance.platforms',
             'studio',
         ]);

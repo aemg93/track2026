@@ -20,6 +20,11 @@ return new class extends Migration
                 ->constrained('platforms')
                 ->cascadeOnDelete();
 
+            // Usuario que registró la ganancia
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
             $table->timestamp('earned_at');
 
             $table->decimal('original_amount', 14, 2);
@@ -82,7 +87,17 @@ return new class extends Migration
             ]);
 
             $table->index([
+                'performance_id',
+                'status',
+            ]);
+
+            $table->index([
                 'platform_id',
+                'earned_at',
+            ]);
+
+            $table->index([
+                'user_id',
                 'earned_at',
             ]);
         });
