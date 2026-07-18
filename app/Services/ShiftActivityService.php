@@ -21,7 +21,7 @@ class ShiftActivityService
 
         return [
             'timeline' => $this->buildTimeline($data),
-            'summary' => $this->buildSummary($data),
+            'summary'  => $this->buildSummary($data),
         ];
     }
 
@@ -45,57 +45,106 @@ class ShiftActivityService
 
     private function buildTimeline(array $data): array
     {
-        $timeline = collect();
+        return collect()
 
-        foreach ($data['earnings'] as $earning) {
-            $timeline->push([
-                'id' => $earning->id,
-                'type' => 'earning',
-                'title' => 'Ganancia',
-                'description' => optional($earning->platform)->name,
-                'performed_by' => null,
-                'amount' => (float) $earning->gross_usd,
-                'date' => $earning->earned_at,
-            ]);
-        }
+            ->merge(
+                $data['earnings']->map(fn ($earning) => [
 
-        foreach ($data['bonuses'] as $bonus) {
-            $timeline->push([
-                'id' => $bonus->id,
-                'type' => 'bonus',
-                'title' => 'Bono',
-                'description' => $bonus->reason,
-                'performed_by' => optional($bonus->user)->name,
-                'amount' => (float) $bonus->amount,
-                'date' => $bonus->created_at,
-            ]);
-        }
+                    'id' => $earning->id,
 
-        foreach ($data['penalties'] as $penalty) {
-            $timeline->push([
-                'id' => $penalty->id,
-                'type' => 'penalty',
-                'title' => 'Penalización',
-                'description' => $penalty->reason,
-                'performed_by' => optional($penalty->user)->name,
-                'amount' => (float) $penalty->amount,
-                'date' => $penalty->created_at,
-            ]);
-        }
+                    'type' => 'earning',
 
-        foreach ($data['deductions'] as $deduction) {
-            $timeline->push([
-                'id' => $deduction->id,
-                'type' => 'deduction',
-                'title' => 'Descuento',
-                'description' => $deduction->reason,
-                'performed_by' => optional($deduction->user)->name,
-                'amount' => (float) $deduction->amount,
-                'date' => $deduction->created_at,
-            ]);
-        }
+                    'title' => 'Ganancia',
 
-        return $timeline
+                    'description' => $earning->platform?->name,
+
+                    'performed_by' => $earning->user?->name,
+
+                    'amount' => (float) $earning->gross_usd,
+
+                    'tokens' => $earning->real_tokens !== null
+                        ? (float) $earning->real_tokens
+                        : null,
+
+                    'currency' => $earning->original_currency,
+
+                    'date' => $earning->earned_at,
+
+                ])
+            )
+
+            ->merge(
+                $data['bonuses']->map(fn ($bonus) => [
+
+                    'id' => $bonus->id,
+
+                    'type' => 'bonus',
+
+                    'title' => 'Bono',
+
+                    'description' => $bonus->reason,
+
+                    'performed_by' => $bonus->user?->name,
+
+                    'amount' => (float) $bonus->amount,
+
+                    'tokens' => null,
+
+                    'currency' => 'usd',
+
+                    'date' => $bonus->created_at,
+
+                ])
+            )
+
+            ->merge(
+                $data['penalties']->map(fn ($penalty) => [
+
+                    'id' => $penalty->id,
+
+                    'type' => 'penalty',
+
+                    'title' => 'Penalización',
+
+                    'description' => $penalty->reason,
+
+                    'performed_by' => $penalty->user?->name,
+
+                    'amount' => (float) $penalty->amount,
+
+                    'tokens' => null,
+
+                    'currency' => 'usd',
+
+                    'date' => $penalty->created_at,
+
+                ])
+            )
+
+            ->merge(
+                $data['deductions']->map(fn ($deduction) => [
+
+                    'id' => $deduction->id,
+
+                    'type' => 'deduction',
+
+                    'title' => 'Descuento',
+
+                    'description' => $deduction->reason,
+
+                    'performed_by' => $deduction->user?->name,
+
+                    'amount' => (float) $deduction->amount,
+
+                    'tokens' => null,
+
+                    'currency' => 'usd',
+
+                    'date' => $deduction->created_at,
+
+                ])
+            )
+
             ->sortByDesc('date')
             ->values()
             ->toArray();
@@ -104,22 +153,34 @@ class ShiftActivityService
     private function buildSummary(array $data): array
     {
         $earnings = $data['earnings']->sum('gross_usd');
+
+        $tokens = $data['earnings']->sum(
+            fn ($earning) => (float) ($earning->real_tokens ?? 0)
+        );
+
         $bonuses = $data['bonuses']->sum('amount');
+
         $penalties = $data['penalties']->sum('amount');
+
         $deductions = $data['deductions']->sum('amount');
 
         return [
+
             'earnings' => round($earnings, 2),
+
+            'tokens' => round($tokens, 0),
+
             'bonuses' => round($bonuses, 2),
+
             'penalties' => round($penalties, 2),
+
             'deductions' => round($deductions, 2),
+
             'net' => round(
-                $earnings
-                + $bonuses
-                - $penalties
-                - $deductions,
+                $earnings + $bonuses - $penalties - $deductions,
                 2
             ),
+
         ];
     }
 
@@ -128,15 +189,17 @@ class ShiftActivityService
         Carbon $from,
         Carbon $to
     ): Collection {
-        if (! $shift->performance) {
-            return collect();
-        }
 
         return $shift->performance
-            ->earnings()
-            ->with('platform')
-            ->whereBetween('earned_at', [$from, $to])
-            ->get();
+            ? $shift->performance
+                ->earnings()
+                ->with([
+                    'platform',
+                    'user:id,name',
+                ])
+                ->whereBetween('earned_at', [$from, $to])
+                ->get()
+            : collect();
     }
 
     private function bonuses(
@@ -144,15 +207,14 @@ class ShiftActivityService
         Carbon $from,
         Carbon $to
     ): Collection {
-        if (! $shift->performance) {
-            return collect();
-        }
 
         return $shift->performance
-            ->bonuses()
-            ->with('user')
-            ->whereBetween('created_at', [$from, $to])
-            ->get();
+            ? $shift->performance
+                ->bonuses()
+                ->with('user:id,name')
+                ->whereBetween('created_at', [$from, $to])
+                ->get()
+            : collect();
     }
 
     private function penalties(
@@ -160,15 +222,14 @@ class ShiftActivityService
         Carbon $from,
         Carbon $to
     ): Collection {
-        if (! $shift->performance) {
-            return collect();
-        }
 
         return $shift->performance
-            ->penalties()
-            ->with('user')
-            ->whereBetween('created_at', [$from, $to])
-            ->get();
+            ? $shift->performance
+                ->penalties()
+                ->with('user:id,name')
+                ->whereBetween('created_at', [$from, $to])
+                ->get()
+            : collect();
     }
 
     private function deductions(
@@ -176,14 +237,13 @@ class ShiftActivityService
         Carbon $from,
         Carbon $to
     ): Collection {
-        if (! $shift->performance) {
-            return collect();
-        }
 
         return $shift->performance
-            ->deductions()
-            ->with('user')
-            ->whereBetween('created_at', [$from, $to])
-            ->get();
+            ? $shift->performance
+                ->deductions()
+                ->with('user:id,name')
+                ->whereBetween('created_at', [$from, $to])
+                ->get()
+            : collect();
     }
 }

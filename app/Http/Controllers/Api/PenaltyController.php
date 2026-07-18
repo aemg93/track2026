@@ -13,70 +13,175 @@ class PenaltyController extends Controller
     {
         $user = $request->user();
 
-        $query = Penalty::with('performance');
+        $query = Penalty::with([
+            'performance',
+            'user:id,name',
+        ]);
+
 
         if ($user->hasRole('Performance')) {
-            $query->where('user_id', $user->id);
+
+            $query->where(
+                'performance_id',
+                $user->performance?->id
+            );
+
         }
+
 
         if ($user->hasRole('Admin')) {
-            $query->whereHas('performance', function ($q) use ($user) {
-                $q->where('studio_id', $user->studio_id);
-            });
+
+            $query->whereHas(
+                'performance',
+                function ($q) use ($user) {
+
+                    $q->where(
+                        'studio_id',
+                        $user->studio_id
+                    );
+
+                }
+            );
+
         }
 
+
         return response()->json([
-            'data' => $query->latest()->get()->map(function ($penalty) {
-                return [
-                    'id' => $penalty->id,
 
-                    'type' => 'penalty',
+            'data' => $query
+                ->latest()
+                ->get()
+                ->map(function ($penalty) {
 
-                    'performance' => [
-                        'id' => $penalty->performance?->id,
-                        'name' => $penalty->performance?->name,
-                    ],
+                    return [
 
-                    'user_id' => $penalty->user_id,
+                        'id' =>
+                            $penalty->id,
 
-                    'amount' => (float) $penalty->amount,
-                    'currency' => 'COP',
+                        'type' =>
+                            'penalty',
 
-                    'date' => $penalty->date,
-                ];
-            })
+                        'performance' => [
+
+                            'id' =>
+                                $penalty->performance?->id,
+
+                            'name' =>
+                                $penalty->performance?->name,
+
+                        ],
+
+                        'performed_by' =>
+                            $penalty->user?->name,
+
+                        'amount' =>
+                            (float) $penalty->amount,
+
+                        'currency' =>
+                            'USD',
+
+                        'reason' =>
+                            $penalty->reason,
+
+                        'date' =>
+                            $penalty->date,
+
+                    ];
+
+                }),
+
         ]);
+
     }
 
-    public function store(Request $request, PenaltyService $service)
-    {
+
+    public function store(
+        Request $request,
+        PenaltyService $service
+    ) {
+
         $data = $request->validate([
-            'performance_id' => ['required', 'exists:performances,id'],
-            'reason'         => ['required', 'string', 'max:255'],
-            'amount'         => ['required', 'numeric', 'min:0'],
-            'date'           => ['required', 'date'],
+
+            'performance_id' => [
+                'required',
+                'exists:performances,id',
+            ],
+
+            'reason' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'amount' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'date' => [
+                'required',
+                'date',
+            ],
+
         ]);
+
 
         $user = $request->user();
 
-        if ($user->hasRole('Performance') || $user->hasRole('Monitor')) {
-            abort(403, 'Not allowed to create penalties');
+
+        if (
+            $user->hasRole('Performance') ||
+            $user->hasRole('Monitor')
+        ) {
+
+            abort(
+                403,
+                'Not allowed to create penalties'
+            );
+
         }
 
-        $penalty = $service->create($data);
+
+        $penalty = $service->create(
+            $data
+        );
+
 
         return response()->json([
-            'message' => 'Penalty created successfully',
+
+            'message' =>
+                'Penalty created successfully',
 
             'data' => [
-                'id' => $penalty->id,
-                'type' => 'penalty',
-                'performance' => $penalty->performance,
-                'user_id' => $penalty->user_id,
-                'amount' => (float) $penalty->amount,
-                'currency' => 'COP',
-                'date' => $penalty->date,
-            ]
+
+                'id' =>
+                    $penalty->id,
+
+                'type' =>
+                    'penalty',
+
+                'performance' =>
+                    $penalty->performance,
+
+                'performed_by' =>
+                    $penalty->user?->name,
+
+                'amount' =>
+                    (float) $penalty->amount,
+
+                'currency' =>
+                    'USD',
+
+                'reason' =>
+                    $penalty->reason,
+
+                'date' =>
+                    $penalty->date,
+
+            ],
+
         ], 201);
+
     }
 }

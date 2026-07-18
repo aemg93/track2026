@@ -16,22 +16,27 @@ class PenaltyService
     ) {
     }
 
+
     public function create(array $data): Penalty
     {
         /** @var User|null $user */
         $user = Auth::user();
 
+
         if (! $user) {
             abort(401);
         }
+
 
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
 
+
         if (! $user->can('create', Penalty::class)) {
             abort(403);
         }
+
 
         if (
             $user->isPerformance() ||
@@ -40,9 +45,12 @@ class PenaltyService
             abort(403);
         }
 
+
         if (
             $user->isAdmin() &&
-            ! $user->canAccessStudio($performance->studio_id)
+            ! $user->canAccessStudio(
+                $performance->studio_id
+            )
         ) {
             abort(
                 403,
@@ -50,34 +58,46 @@ class PenaltyService
             );
         }
 
+
         $penalty = Penalty::create([
 
-            'performance_id' => $performance->id,
+            'performance_id' =>
+                $performance->id,
 
-            'user_id' => $performance->user_id,
+            // Usuario que registra la penalización
+            'user_id' =>
+                $user->id,
 
-            'reason' => $data['reason'],
+            'reason' =>
+                $data['reason'],
 
-            'amount' => $data['amount'],
+            'amount' =>
+                $data['amount'],
 
-            'date' => $data['date'],
+            'date' =>
+                $data['date'],
 
         ]);
 
 
         $this->rankingService
-            ->recalculate($performance->id);
+            ->recalculate(
+                $performance->id
+            );
+
 
         $this->financialSynchronizationService
             ->synchronizePerformance(
                 $performance
             );
 
+
         $this->auditService
             ->log(
                 $penalty,
                 'created'
             );
+
 
         return $penalty;
     }

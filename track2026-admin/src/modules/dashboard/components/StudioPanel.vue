@@ -31,7 +31,11 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import {
+  computed,
+  ref,
+  watch,
+} from 'vue'
 
 import ShiftToolbar from './studio/ShiftToolbar.vue'
 import ShiftPerformanceList from './studio/ShiftPerformanceList.vue'
@@ -83,7 +87,16 @@ function startShift(performance) {
   emit('start-shift', performance)
 }
 
+/**
+ * Seleccionar / deseleccionar turno
+ */
 function selectShift(shift) {
+
+  if (selectedShift.value?.id === shift.id) {
+    selectedShift.value = null
+    return
+  }
+
   selectedShift.value = shift
 }
 
@@ -117,17 +130,23 @@ function finishCurrentShift(shift) {
   }
 }
 
+/**
+ * Mantiene sincronizado el turno seleccionado
+ * cuando llega nueva información desde el backend.
+ */
 watch(
   activeShifts,
   shifts => {
+
     if (!selectedShift.value) {
       return
     }
 
-    selectedShift.value =
-      shifts.find(
-        shift => shift.id === selectedShift.value.id
-      ) ?? null
+    const current = shifts.find(
+      item => item.id === selectedShift.value.id
+    )
+
+    selectedShift.value = current ?? null
   },
   {
     immediate: true,

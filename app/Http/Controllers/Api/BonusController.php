@@ -13,66 +13,165 @@ class BonusController extends Controller
     {
         $user = $request->user();
 
-        $query = Bonus::with('performance');
+        $query = Bonus::with([
+            'performance',
+            'user:id,name',
+        ]);
+
 
         if ($user->hasRole('Admin')) {
-            $query->whereHas('performance', function ($q) use ($user) {
-                $q->where('studio_id', $user->studio_id);
-            });
+
+            $query->whereHas(
+                'performance',
+                function ($q) use ($user) {
+
+                    $q->where(
+                        'studio_id',
+                        $user->studio_id
+                    );
+
+                }
+            );
+
         }
 
+
         return response()->json([
-            'data' => $query->latest()->get()->map(function ($bonus) {
-                return [
-                    'id' => $bonus->id,
 
-                    'type' => 'bonus',
+            'data' => $query
+                ->latest()
+                ->get()
+                ->map(function ($bonus) {
 
-                    'performance' => [
-                        'id' => $bonus->performance?->id,
-                        'name' => $bonus->performance?->name,
-                    ],
+                    return [
 
-                    'user_id' => $bonus->user_id,
+                        'id' =>
+                            $bonus->id,
 
-                    'amount' => (float) $bonus->amount,
-                    'currency' => 'COP',
+                        'type' =>
+                            'bonus',
 
-                    'date' => $bonus->date,
-                ];
-            })
+                        'performance' => [
+
+                            'id' =>
+                                $bonus->performance?->id,
+
+                            'name' =>
+                                $bonus->performance?->name,
+
+                        ],
+
+                        'performed_by' =>
+                            $bonus->user?->name,
+
+                        'amount' =>
+                            (float) $bonus->amount,
+
+                        'currency' =>
+                            'USD',
+
+                        'reason' =>
+                            $bonus->reason,
+
+                        'date' =>
+                            $bonus->date,
+
+                    ];
+
+                }),
+
         ]);
+
     }
 
-    public function store(Request $request, BonusService $service)
-    {
+
+    public function store(
+        Request $request,
+        BonusService $service
+    ) {
+
         $data = $request->validate([
-            'performance_id' => ['required', 'exists:performances,id'],
-            'reason'         => ['required', 'string', 'max:255'],
-            'amount'         => ['required', 'numeric', 'min:0'],
-            'date'           => ['required', 'date'],
+
+            'performance_id' => [
+                'required',
+                'exists:performances,id',
+            ],
+
+            'reason' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'amount' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'date' => [
+                'required',
+                'date',
+            ],
+
         ]);
+
 
         $user = $request->user();
 
-        if ($user->hasRole('Performance') || $user->hasRole('Monitor')) {
-            abort(403, 'Not allowed to create bonuses');
+
+        if (
+            $user->hasRole('Performance') ||
+            $user->hasRole('Monitor')
+        ) {
+
+            abort(
+                403,
+                'Not allowed to create bonuses'
+            );
+
         }
 
-        $bonus = $service->create($data);
+
+        $bonus = $service->create(
+            $data
+        );
+
 
         return response()->json([
-            'message' => 'Bonus created successfully',
+
+            'message' =>
+                'Bonus created successfully',
 
             'data' => [
-                'id' => $bonus->id,
-                'type' => 'bonus',
-                'performance' => $bonus->performance,
-                'user_id' => $bonus->user_id,
-                'amount' => (float) $bonus->amount,
-                'currency' => 'COP',
-                'date' => $bonus->date,
-            ]
+
+                'id' =>
+                    $bonus->id,
+
+                'type' =>
+                    'bonus',
+
+                'performance' =>
+                    $bonus->performance,
+
+                'performed_by' =>
+                    $bonus->user?->name,
+
+                'amount' =>
+                    (float) $bonus->amount,
+
+                'currency' =>
+                    'USD',
+
+                'reason' =>
+                    $bonus->reason,
+
+                'date' =>
+                    $bonus->date,
+
+            ],
+
         ], 201);
+
     }
 }

@@ -16,6 +16,7 @@ class BonusService
     ) {
     }
 
+
     public function create(array $data): Bonus
     {
         /** @var User|null $user */
@@ -25,13 +26,16 @@ class BonusService
             abort(401);
         }
 
+
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
 
+
         if (! $user->can('create', Bonus::class)) {
             abort(403);
         }
+
 
         if (
             $user->isPerformance() ||
@@ -40,9 +44,12 @@ class BonusService
             abort(403);
         }
 
+
         if (
             $user->isAdmin() &&
-            ! $user->canAccessStudio($performance->studio_id)
+            ! $user->canAccessStudio(
+                $performance->studio_id
+            )
         ) {
             abort(
                 403,
@@ -50,34 +57,33 @@ class BonusService
             );
         }
 
+
         $bonus = Bonus::create([
 
-            'performance_id' => $performance->id,
+            'performance_id' =>
+                $performance->id,
 
-            'user_id' => $performance->user_id,
+            // Usuario que REGISTRA el bono
+            'user_id' =>
+                $user->id,
 
-            'reason' => $data['reason'],
+            'reason' =>
+                $data['reason'],
 
-            'amount' => $data['amount'],
+            'amount' =>
+                $data['amount'],
 
-            'date' => $data['date'],
+            'date' =>
+                $data['date'],
 
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ranking
-        |--------------------------------------------------------------------------
-        */
 
         $this->rankingService
-            ->recalculate($performance->id);
+            ->recalculate(
+                $performance->id
+            );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Financial synchronization
-        |--------------------------------------------------------------------------
-        */
 
         $this->financialSynchronizationService
             ->synchronizePerformance(
@@ -90,6 +96,7 @@ class BonusService
                 $bonus,
                 'created'
             );
+
 
         return $bonus;
     }

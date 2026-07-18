@@ -8,6 +8,9 @@ import './style.css'
 
 import { useAuthStore } from './stores/auth'
 
+import icons from './plugins/icons'
+
+
 /*
 |--------------------------------------------------------------------------
 | ECHARTS
@@ -35,6 +38,7 @@ import {
     TitleComponent,
 } from 'echarts/components'
 
+
 use([
     CanvasRenderer,
     BarChart,
@@ -46,6 +50,7 @@ use([
     TitleComponent,
 ])
 
+
 /*
 |--------------------------------------------------------------------------
 | APP
@@ -56,8 +61,11 @@ const app = createApp(App)
 
 const pinia = createPinia()
 
+
 app.use(pinia)
 app.use(router)
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +74,10 @@ app.use(router)
 */
 
 app.component('v-chart', ECharts)
+
+app.use(icons)
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -76,6 +88,8 @@ app.component('v-chart', ECharts)
 const auth = useAuthStore()
 
 auth.me()
+
+
 
 /*
 |--------------------------------------------------------------------------
