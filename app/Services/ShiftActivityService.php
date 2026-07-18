@@ -5,9 +5,14 @@ namespace App\Services;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use App\Services\ShiftFinancialSummaryService;
 
 class ShiftActivityService
 {
+     public function __construct(
+        protected ShiftFinancialSummaryService $financialSummaryService
+    ) {}
+    
     public function activity(Shift $shift): array
     {
         [$from, $to] = $this->range($shift);
@@ -20,9 +25,14 @@ class ShiftActivityService
         ];
 
         return [
-            'timeline' => $this->buildTimeline($data),
-            'summary'  => $this->buildSummary($data),
-        ];
+    'timeline' => $this->buildTimeline($data),
+
+    'summary' => $this->buildSummary($data),
+
+    'financial_summary' =>
+        $this->financialSummaryService
+            ->summary($shift),
+];
     }
 
     public function timeline(Shift $shift): array

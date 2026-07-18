@@ -1,7 +1,7 @@
 import { onMounted, ref } from 'vue'
 import api from '@/services/api'
-import performanceDefaults from '../config/performanceDefaults'
-import performanceFields from '../config/performanceFields'
+import performanceDefaults from '@/modules/performances/config/performanceDefaults'
+import performanceFields from '@/modules/performances/config/performanceFields'
 
 export function usePerformanceForm() {
   const form = ref(performanceDefaults())

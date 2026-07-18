@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import shiftService from '../services/shiftService'
+import shiftService from '@/modules/dashboard/services/shiftService'
 
 export function useShifts() {
 

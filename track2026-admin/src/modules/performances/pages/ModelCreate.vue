@@ -46,10 +46,10 @@
 
 import { useRouter } from 'vue-router'
 
-import PerformanceActions from '../components/form/PerformanceActions.vue'
-import PerformanceSection from '../components/form/PerformanceSection.vue'
+import PerformanceActions from '@/modules/performances/components/form/PerformanceActions.vue'
+import PerformanceSection from '@/modules/performances/components/form/PerformanceSection.vue'
 
-import { usePerformanceForm } from '../composables/usePerformanceForm'
+import { usePerformanceForm } from '@/modules/performances/composables/usePerformanceForm'
 
 const router = useRouter()
 

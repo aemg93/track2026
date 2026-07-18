@@ -67,15 +67,15 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 
-import dashboardService from '../services/dashboardService'
-import { useShifts } from '../composables/useShifts'
+import dashboardService from '@/modules/dashboard/services/dashboardService'
+import { useShifts } from '@/modules/dashboard/composables/useShifts'
 
 import EmptyState from '@/components/ui/EmptyState.vue'
 import LoadingCard from '@/components/ui/LoadingCard.vue'
-import DashboardHeader from '../components/DashboardHeader.vue'
-import DashboardKpis from '../components/DashboardKpis.vue'
-import RankingTable from '../components/RankingTable.vue'
-import StudioPanel from '../components/StudioPanel.vue'
+import DashboardHeader from '@/modules/dashboard/components/DashboardHeader.vue'
+import DashboardKpis from '@/modules/dashboard/components/DashboardKpis.vue'
+import RankingTable from '@/modules/dashboard/components/RankingTable.vue'
+import StudioPanel from '@/modules/dashboard/components/StudioPanel.vue'
 import FinanceChart from '@/modules/finances/components/FinanceChart.vue'
 import RegisterBonusModal from '@/modules/finances/components/modals/RegisterBonusModal.vue'
 import RegisterDeductionModal from '@/modules/finances/components/modals/RegisterDeductionModal.vue'
