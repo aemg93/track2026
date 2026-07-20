@@ -72,9 +72,13 @@ class ShiftActivityService
 
                     'amount' => (float) $earning->gross_usd,
 
-                    'tokens' => $earning->real_tokens !== null
-                        ? (float) $earning->real_tokens
-                        : null,
+                    'tokens' => $earning->original_currency === 'tokens'
+                              ? (float) $earning->original_amount
+                              : null,
+
+                    'real_tokens' => $earning->real_tokens !== null
+                              ? (float) $earning->real_tokens
+                              : null,
 
                     'currency' => $earning->original_currency,
 
@@ -165,8 +169,11 @@ class ShiftActivityService
         $earnings = $data['earnings']->sum('gross_usd');
 
         $tokens = $data['earnings']->sum(
-            fn ($earning) => (float) ($earning->real_tokens ?? 0)
-        );
+            fn ($earning) =>
+        $earning->original_currency === 'tokens'
+            ? (float) $earning->original_amount
+            : 0
+           );
 
         $bonuses = $data['bonuses']->sum('amount');
 

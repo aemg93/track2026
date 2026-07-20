@@ -23,55 +23,39 @@ export function useShiftEarningBreakdown(
 
       const grouped = {}
 
-      platforms
-        .filter(
-          platform => {
+      platforms.forEach(
+        platform => {
 
-            return (
-              Array.isArray(platform.currencies)
-              &&
-              platform.currencies.includes('USD')
-            )
+          const name =
+            platform.platform_name ??
+            'Sin plataforma'
 
-          }
-        )
-        .forEach(
-          platform => {
+          if (!grouped[name]) {
 
-            const name =
-              platform.platform_name
-              ??
-              'Sin plataforma'
+            grouped[name] = {
 
-            if (!grouped[name]) {
+              name,
 
-              grouped[name] = {
-
-                name,
-
-                usd: 0,
-
-              }
+              usd: 0,
 
             }
 
-            grouped[name].usd += Number(
-              platform.original_amount
-              ??
-              platform.usd
-              ??
-              0
-            )
-
           }
-        )
+
+          grouped[name].usd += Number(
+            platform.usd ?? 0
+          )
+
+        }
+      )
 
       return Object.values(grouped)
+        .filter(
+          platform =>
+            platform.usd > 0
+        )
         .sort(
-          (
-            a,
-            b,
-          ) =>
+          (a, b) =>
             b.usd - a.usd
         )
 

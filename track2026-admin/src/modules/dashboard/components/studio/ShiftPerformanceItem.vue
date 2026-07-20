@@ -5,14 +5,12 @@
     class="relative w-full overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200"
     :class="cardClass"
   >
-    <!-- Indicador lateral -->
     <div
       v-if="selected"
       class="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-emerald-400"
     />
 
     <div class="flex items-center gap-4">
-      <!-- Avatar -->
       <div
         class="flex h-12 w-12 shrink-0 overflow-hidden rounded-xl transition-all duration-200"
         :class="avatarClass"
@@ -31,7 +29,6 @@
         </div>
       </div>
 
-      <!-- Información -->
       <div class="min-w-0 flex-1">
         <h3
           class="truncate font-semibold transition-colors"
@@ -47,7 +44,6 @@
         </p>
       </div>
 
-      <!-- Estado -->
       <span
         class="rounded-full border px-3 py-1 text-xs font-semibold"
         :class="statusBadgeClass"
