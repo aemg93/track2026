@@ -49,23 +49,32 @@
         >
 
           <!-- Ganancias -->
-          <div
-            class="
-              rounded-xl
-              border
-              border-emerald-500/20
-              bg-emerald-500/10
-              p-4
-            "
-          >
-            <p class="text-xs font-medium uppercase tracking-wider text-emerald-300">
-              Ganancias
-            </p>
+<button
+  type="button"
+  @click="handleEarnings"
+  class="
+    rounded-xl
+    border
+    border-emerald-500/20
+    bg-emerald-500/10
+    p-4
+    text-left
+    transition
+    duration-200
+    hover:border-emerald-400/50
+    hover:bg-emerald-500/20
+  "
+>
 
-            <p class="mt-2 text-2xl font-bold text-emerald-300">
-              {{ formatUsd(totalUsd) }}
-            </p>
-          </div>
+  <p class="text-xs font-medium uppercase tracking-wider text-emerald-300">
+    Ganancias
+  </p>
+
+  <p class="mt-2 text-2xl font-bold text-emerald-300">
+    {{ formatUsd(totalUsd) }}
+  </p>
+
+</button>
 
 
           <!-- Tokens -->
@@ -86,11 +95,26 @@
             "
           >
 
-            <p class="text-xs font-medium uppercase tracking-wider text-cyan-300">
+            <p
+              class="
+                text-xs
+                font-medium
+                uppercase
+                tracking-wider
+                text-cyan-300
+              "
+            >
               Tokens
             </p>
 
-            <p class="mt-2 text-2xl font-bold text-cyan-300">
+            <p
+              class="
+                mt-2
+                text-2xl
+                font-bold
+                text-cyan-300
+              "
+            >
               {{ formatTokens(totalTokens) }}
             </p>
 
@@ -107,13 +131,30 @@
               p-4
             "
           >
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400">
+
+            <p
+              class="
+                text-xs
+                font-medium
+                uppercase
+                tracking-wider
+                text-gray-400
+              "
+            >
               Movimientos
             </p>
 
-            <p class="mt-2 text-2xl font-bold text-white">
+            <p
+              class="
+                mt-2
+                text-2xl
+                font-bold
+                text-white
+              "
+            >
               {{ totalMovements }}
             </p>
+
           </div>
 
         </div>
@@ -135,17 +176,14 @@
 
       </div>
 
-
     </section>
 
   </div>
 
 </template>
-
-
 <script setup>
+
 import {
-  computed,
   toRefs,
 } from 'vue'
 
@@ -156,147 +194,100 @@ import ShiftHeader from './ShiftHeader.vue'
 import ShiftTimeline from './timeline/ShiftTimeline.vue'
 
 
+import {
+  useShiftWorkspace,
+} from '@/composables/useShiftWorkspace'
+
+
+
 defineOptions({
   name: 'ShiftWorkspace',
 })
 
 
+
 const props = defineProps({
+
   selectedShift: {
     type: Object,
     default: null,
   },
+
 })
 
 
+
 const emit = defineEmits([
+
+  // Acciones financieras
   'earning',
   'bonus',
   'penalty',
   'deduction',
+
+
+  // Apertura de detalles
+  'earnings',
   'tokens',
+
+
+  // Control del turno
   'pause',
   'resume',
   'finish',
+
 ])
 
 
-const { selectedShift } = toRefs(props)
+
+const {
+  selectedShift,
+} = toRefs(props)
 
 
 
-const selectedPerformance = computed(
-  () => selectedShift.value?.performance ?? null
+const {
+
+  selectedPerformance,
+
+
+  timeline,
+
+
+  totalUsd,
+
+  totalTokens,
+
+  totalMovements,
+
+
+  formatUsd,
+
+  formatTokens,
+
+
+  // Abrir modales
+  handleEarnings,
+  handleTokens,
+
+
+  // Registrar movimientos
+  handleEarning,
+  handleBonus,
+  handlePenalty,
+  handleDeduction,
+
+
+  // Control turno
+  handlePause,
+  handleResume,
+  handleFinish,
+
+
+} = useShiftWorkspace(
+  selectedShift,
+  emit
 )
 
-
-const timeline = computed(
-  () => selectedShift.value?.activity?.timeline ?? []
-)
-
-
-const activitySummary = computed(
-  () => selectedShift.value?.activity?.summary ?? {}
-)
-
-
-const totalUsd = computed(
-  () => Number(activitySummary.value.earnings ?? 0)
-)
-
-
-const totalTokens = computed(
-  () => Number(activitySummary.value.tokens ?? 0)
-)
-
-
-const totalMovements = computed(
-  () => timeline.value.length
-)
-
-
-
-function formatUsd(value) {
-  return Number(value).toLocaleString(
-    'es-CO',
-    {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }
-  )
-}
-
-
-
-function formatTokens(value) {
-  return Number(value).toLocaleString(
-    'es-CO',
-    {
-      maximumFractionDigits: 0,
-    }
-  )
-}
-
-
-
-function handleTokens() {
-  if (!selectedShift.value) return
-
-  emit(
-    'tokens',
-    selectedShift.value
-  )
-}
-
-
-
-function handleEarning() {
-  if (!selectedPerformance.value) return
-
-  emit('earning', selectedPerformance.value)
-}
-
-
-function handleBonus() {
-  if (!selectedPerformance.value) return
-
-  emit('bonus', selectedPerformance.value)
-}
-
-
-function handlePenalty() {
-  if (!selectedPerformance.value) return
-
-  emit('penalty', selectedPerformance.value)
-}
-
-
-function handleDeduction() {
-  if (!selectedPerformance.value) return
-
-  emit('deduction', selectedPerformance.value)
-}
-
-
-function handlePause() {
-  if (!selectedShift.value) return
-
-  emit('pause', selectedShift.value)
-}
-
-
-function handleResume() {
-  if (!selectedShift.value) return
-
-  emit('resume', selectedShift.value)
-}
-
-
-function handleFinish() {
-  if (!selectedShift.value) return
-
-  emit('finish', selectedShift.value)
-}
 
 </script>

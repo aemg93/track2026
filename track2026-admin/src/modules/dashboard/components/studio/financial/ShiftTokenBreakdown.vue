@@ -26,7 +26,6 @@
       "
     >
 
-      <!-- Header -->
       <header
         class="
           flex
@@ -51,7 +50,6 @@
 
         </div>
 
-
         <button
           type="button"
           class="
@@ -60,7 +58,6 @@
             py-2
             text-sm
             text-gray-400
-            transition
             hover:bg-gray-800
             hover:text-white
           "
@@ -71,8 +68,6 @@
 
       </header>
 
-
-      <!-- Resumen -->
       <div
         class="
           grid
@@ -94,7 +89,7 @@
           "
         >
 
-          <p class="text-xs uppercase tracking-wider text-cyan-300">
+          <p class="text-xs uppercase text-cyan-300">
             Total Tokens
           </p>
 
@@ -103,7 +98,6 @@
           </p>
 
         </div>
-
 
         <div
           class="
@@ -115,7 +109,7 @@
           "
         >
 
-          <p class="text-xs uppercase tracking-wider text-emerald-300">
+          <p class="text-xs uppercase text-emerald-300">
             Valor USD
           </p>
 
@@ -127,8 +121,6 @@
 
       </div>
 
-
-      <!-- Plataformas -->
       <div
         class="
           max-h-[420px]
@@ -163,7 +155,7 @@
                 {{ platform.name }}
               </p>
 
-              <p class="mt-1 text-sm text-gray-400">
+              <p class="text-sm text-gray-400">
                 Tokens registrados
               </p>
 
@@ -186,7 +178,6 @@
 
         </div>
 
-
         <div
           v-else
           class="
@@ -196,12 +187,14 @@
             bg-gray-900
             p-6
             text-center
-            text-sm
             text-gray-400
           "
         >
+
           No hay tokens registrados en este turno.
+
         </div>
+
 
       </div>
 
@@ -210,18 +203,19 @@
   </div>
 </template>
 
-
 <script setup>
 
 import {
-  computed,
+  toRef,
 } from 'vue'
 
+import {
+  useShiftTokenBreakdown,
+} from '@/composables/useShiftTokenBreakdown'
 
 defineOptions({
   name: 'ShiftTokenBreakdown',
 })
-
 
 const props = defineProps({
 
@@ -231,102 +225,53 @@ const props = defineProps({
   },
 
 })
-console.log(
-  'SHIFT TOKENS:',
-  JSON.parse(JSON.stringify(props.shift))
-)
 
 const emit = defineEmits([
   'close',
 ])
 
-
-
-const tokenData = computed(
-  () => ({
-    total_tokens:
-      Number(
-        props.shift?.activity?.summary?.tokens ?? 0
-      ),
-
-    total_usd:
-      Number(
-        props.shift?.activity?.summary?.token_usd ?? 0
-      ),
-
-    platforms:
-      props.shift?.activity?.token_platforms ?? {},
-  })
+const shift = toRef(
+  props,
+  'shift'
 )
 
+const {
 
+  tokenPlatforms: platformTokens,
 
-const platformTokens = computed(
-  () => {
+  totalTokens,
 
-    const platforms =
-      tokenData.value.platforms ?? {}
+  totalUsd,
 
-
-    return Object.entries(platforms)
-      .map(
-        ([name, value]) => ({
-          name,
-          tokens: Number(value.tokens ?? 0),
-          usd: Number(value.usd ?? 0),
-        })
-      )
-
-  }
+} = useShiftTokenBreakdown(
+  shift
 )
-
-
-
-const totalTokens = computed(
-  () =>
-    Number(
-      tokenData.value.total_tokens ?? 0
-    )
-)
-
-
-
-const totalUsd = computed(
-  () =>
-    Number(
-      tokenData.value.total_usd ?? 0
-    )
-)
-
-
 
 function formatTokens(value) {
 
-  return Number(value).toLocaleString(
-    'es-CO',
-    {
-      maximumFractionDigits: 0,
-    }
-  )
+  return Number(value)
+    .toLocaleString(
+      'es-CO',
+      {
+        maximumFractionDigits: 0,
+      }
+    )
 
 }
-
-
 
 function formatUsd(value) {
 
-  return Number(value).toLocaleString(
-    'es-CO',
-    {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }
-  )
+  return Number(value)
+    .toLocaleString(
+      'es-CO',
+      {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+      }
+    )
 
 }
-
-
 
 function close() {
 

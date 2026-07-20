@@ -337,103 +337,61 @@ class DashboardService
 
 
     private function buildShift(Shift $shift): array
-    {
-        $workedSeconds = $shift->workedSeconds();
-        return [
-            'id' => $shift->id,
+{
+    $workedSeconds = $shift->workedSeconds();
 
-            'status' =>
-                $shift->status?->value,
+    // Traer actividad completa del turno
+    $activity = $this->shiftActivityService->activity($shift);
 
-            'started_at' =>
-                $shift->started_at,
+    return [
+        'id' => $shift->id,
+        'status' => $shift->status?->value,
+        'started_at' => $shift->started_at,
+        'last_resumed_at' => $shift->last_resumed_at,
+        'paused_at' => $shift->paused_at,
+        'ended_at' => $shift->ended_at,
+        'worked_seconds' => $workedSeconds,
+        'total_paused_seconds' => (int) $shift->total_paused_seconds,
 
-            'last_resumed_at' =>
-                $shift->last_resumed_at,
+        'duration' => [
+            'minutes'   => intdiv($workedSeconds, 60),
+            'hours'     => round($workedSeconds / 3600, 2),
+            'formatted' => gmdate('H:i:s', $workedSeconds),
+        ],
 
-            'paused_at' =>
-                $shift->paused_at,
-
-            'ended_at' =>
-                $shift->ended_at,
-
-            'worked_seconds' =>
-                $workedSeconds,
-
-            'total_paused_seconds' =>
-                 (int) $shift->total_paused_seconds,           
-
-
-            'duration' => [
-            'minutes' =>
-               intdiv($workedSeconds, 60),
-
-            'hours' =>
-               round($workedSeconds / 3600, 2),
-
-            'formatted' =>
-              gmdate('H:i:s', $workedSeconds),
-             ],
-
-
-           'performance' => $shift->performance
-    ? [
-        'id' =>
-            $shift->performance->id,
-
-        'name' =>
-            trim(
+        'performance' => $shift->performance ? [
+            'id' => $shift->performance->id,
+            'name' => trim(
                 $shift->performance->first_name .
                 ' ' .
                 $shift->performance->last_name
             ),
+            'nickname' => $shift->performance->nickname,
+            'platforms' => $this->buildPlatforms($shift->performance),
+        ] : null,
 
-        'nickname' =>
-            $shift->performance->nickname,
+        'studio' => $shift->studio
+            ? [
+                'id' => $shift->studio->id,
+                'name' => $shift->studio->name,
+            ]
+            : null,
 
-        'platforms' =>
-            $this->buildPlatforms(
-                $shift->performance
-            ),
+        'actions' => [
+            'can_pause'  => $shift->isActive(),
+            'can_resume' => $shift->isPaused(),
+            'can_finish' => ! $shift->isFinished(),
+        ],
 
-        'financial' =>
-            $this->financialSummary
-                ->summary($shift->performance),
-    ]
-    : null,
+        // Ajuste: ahora se expone también financial_summary
+        'activity' => [
+            'timeline'          => $activity['timeline'],
+            'metrics'           => $activity['summary'],
+            'financial_summary' => $activity['financial_summary'],
+        ],
+    ];
+}
 
-
-            'studio' =>
-                $shift->studio
-                    ? [
-                        'id' => $shift->studio->id,
-                        'name' => $shift->studio->name,
-                    ]
-                    : null,
-
-
-            'actions' => [
-                'can_pause' =>
-                    $shift->isActive(),
-
-                'can_resume' =>
-                    $shift->isPaused(),
-
-                'can_finish' =>
-                    ! $shift->isFinished(),
-            ],
-
-            'activity' => [
-    'timeline' =>
-        $this->shiftActivityService
-            ->timeline($shift),
-
-    'summary' =>
-        $this->shiftActivityService
-            ->summary($shift),
-            ],
-                ];
-    }
 
 
    private function activePerformances(): array

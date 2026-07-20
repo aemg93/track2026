@@ -7,13 +7,19 @@ use Illuminate\Support\Collection;
 
 class ShiftFinancialSummaryService
 {
+    private const UNKNOWN_PLATFORM = 'Sin plataforma';
+
+
     /**
      * Genera el resumen financiero consolidado de un turno.
      *
      * Fuente de verdad:
      * - earnings
-     * - platform
      * - conversiones almacenadas en earnings
+     * - plataforma asociada al earning
+     *
+     * Sólo incluye movimientos registrados
+     * dentro del rango temporal del turno.
      */
     public function summary(Shift $shift): array
     {
@@ -26,10 +32,12 @@ class ShiftFinancialSummaryService
                 2
             ),
 
-            'total_tokens' => $earnings
-                ->where('original_currency', 'tokens')
-                ->sum('original_amount'),
-
+            'total_tokens' => round(
+                $earnings
+                    ->where('original_currency', 'tokens')
+                    ->sum('original_amount'),
+                2
+            ),
 
             'platforms' => $this->groupByPlatform(
                 $earnings
@@ -39,10 +47,17 @@ class ShiftFinancialSummaryService
 
 
     /**
-     * Obtiene earnings relacionados al turno.
+     * Obtiene earnings pertenecientes al turno.
+     *
+     * @return Collection<int,\App\Models\Earning>
      */
     protected function earnings(Shift $shift): Collection
     {
+        if (! $shift->performance) {
+            return collect();
+        }
+
+
         return $shift
             ->performance
             ->earnings()
@@ -61,49 +76,85 @@ class ShiftFinancialSummaryService
 
 
     /**
-     * Agrupa ganancias por plataforma.
+     * Agrupa earnings por plataforma.
+     *
+     * @param Collection<int,\App\Models\Earning> $earnings
      */
-    protected function groupByPlatform(Collection $earnings): array
-    {
+    protected function groupByPlatform(
+        Collection $earnings
+    ): array {
+
         return $earnings
+
             ->groupBy(
                 fn ($earning) =>
-                    $earning->platform->name
+                    $earning->platform?->name
+                    ?? self::UNKNOWN_PLATFORM
             )
-            ->map(
-                function ($items, $platform) {
 
-                    $currency =
-                        $items
-                            ->pluck('original_currency')
-                            ->unique()
-                            ->first();
+            ->map(
+                function (
+                    Collection $items,
+                    string $platformName
+                ) {
+
+
+                    $first = $items->first();
 
 
                     return [
-                        'platform' => $platform,
 
-                        'currency' => strtoupper(
-                            $currency
-                        ),
+                        'platform_id' =>
+                            $first?->platform?->id,
 
-                        'amount' => round(
-                            $items->sum(
-                                'original_amount'
+                        'platform_name' =>
+                            $platformName,
+
+                        'type' =>
+                            $first?->platform?->type,
+
+
+                        'currencies' =>
+                            $items
+                                ->pluck(
+                                    'original_currency'
+                                )
+                                ->unique()
+                                ->map(
+                                    fn ($currency) =>
+                                        strtoupper($currency)
+                                )
+                                ->values()
+                                ->toArray(),
+
+
+                        'original_amount' =>
+                            round(
+                                $items->sum(
+                                    'original_amount'
+                                ),
+                                2
                             ),
-                            2
-                        ),
 
-                        'usd' => round(
-                            $items->sum(
-                                'gross_usd'
+
+                        'usd' =>
+                            round(
+                                $items->sum(
+                                    'gross_usd'
+                                ),
+                                2
                             ),
-                            2
-                        ),
                     ];
                 }
             )
+
+            ->sortByDesc(
+                fn ($platform) =>
+                    $platform['usd']
+            )
+
             ->values()
+
             ->toArray();
     }
 }
