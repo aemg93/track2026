@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Enums\ShiftStatus;
 use App\Models\Performance;
 use App\Models\Shift;
-use App\Models\Studio;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,10 +25,7 @@ class ShiftService
             if (
                 Shift::query()
                     ->where('performance_id', $performance->id)
-                    ->whereIn('status', [
-                        ShiftStatus::Active,
-                        ShiftStatus::Paused,
-                    ])
+                    ->whereIn('status', $this->activeStatuses())
                     ->exists()
             ) {
                 $this->throwShiftException(
@@ -77,6 +73,7 @@ class ShiftService
 
 
             if ($shift->last_resumed_at) {
+
                 $workedSeconds +=
                     $shift->last_resumed_at
                         ->diffInSeconds($now);
@@ -165,6 +162,7 @@ class ShiftService
 
 
             if ($shift->isPaused() && $shift->paused_at) {
+
                 $pausedSeconds +=
                     $shift->paused_at
                         ->diffInSeconds($now);
@@ -176,6 +174,7 @@ class ShiftService
 
 
             if ($shift->isActive() && $shift->last_resumed_at) {
+
                 $workedSeconds +=
                     $shift->last_resumed_at
                         ->diffInSeconds($now);
@@ -199,15 +198,8 @@ class ShiftService
     public function current(Performance $performance): ?Shift
     {
         return $performance->shifts()
-            ->whereIn('status', [
-                ShiftStatus::Active,
-                ShiftStatus::Paused,
-            ])
-            ->with([
-                'performance.user',
-                'performance.platforms',
-                'studio',
-            ])
+            ->whereIn('status', $this->activeStatuses())
+            ->with($this->shiftRelations())
             ->latest('started_at')
             ->first();
     }
@@ -217,34 +209,20 @@ class ShiftService
     {
         return Shift::query()
             ->whereHas('performance')
-            ->whereIn('status', [
-                ShiftStatus::Active,
-                ShiftStatus::Paused,
-            ])
-            ->with([
-                'performance.user',
-                'performance.platforms',
-                'studio',
-            ])
+            ->whereIn('status', $this->activeStatuses())
+            ->with($this->shiftRelations())
             ->orderBy('started_at')
             ->get();
     }
 
 
-    public function activeByStudio(Studio $studio): Collection
+    public function activeByStudioId(int $studioId): Collection
     {
         return Shift::query()
             ->whereHas('performance')
-            ->where('studio_id', $studio->id)
-            ->whereIn('status', [
-                ShiftStatus::Active,
-                ShiftStatus::Paused,
-            ])
-            ->with([
-                'performance.user',
-                'performance.platforms',
-                'studio',
-            ])
+            ->where('studio_id', $studioId)
+            ->whereIn('status', $this->activeStatuses())
+            ->with($this->shiftRelations())
             ->orderBy('started_at')
             ->get();
     }
@@ -265,6 +243,24 @@ class ShiftService
     public function workedMinutes(Shift $shift): int
     {
         return $shift->workedMinutes();
+    }
+
+
+    private function activeStatuses(): array
+    {
+        return [
+            ShiftStatus::Active,
+            ShiftStatus::Paused,
+        ];
+    }
+
+
+    private function shiftRelations(): array
+    {
+        return [
+            'performance.platforms',
+            'studio',
+        ];
     }
 
 
