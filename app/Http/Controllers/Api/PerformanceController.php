@@ -7,6 +7,7 @@ use App\Http\Requests\PerformanceRequest;
 use App\Services\FinancialSummaryService;
 use App\Services\PerformanceAnalyticsService;
 use App\Services\PerformanceService;
+use App\Services\PerformanceWorkTimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,8 @@ class PerformanceController extends Controller
     public function __construct(
         private PerformanceService $service,
         private PerformanceAnalyticsService $analytics,
-        private FinancialSummaryService $financialSummary
+        private FinancialSummaryService $financialSummary,
+        private PerformanceWorkTimeService $workTime
     ) {
     }
 
@@ -45,8 +47,32 @@ class PerformanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $performance,
-            'financial' => $this->financialSummary->summary($performance),
+
+            'data' => [
+                ...$performance->toArray(),
+
+                'hours' => [
+                    'weekly' =>
+                        $this->workTime
+                            ->weeklyHours($performance),
+
+                    'weekly_seconds' =>
+                        $this->workTime
+                            ->weeklySeconds($performance),
+
+                    'total' =>
+                        $this->workTime
+                            ->totalHours($performance),
+
+                    'total_seconds' =>
+                        $this->workTime
+                            ->totalSeconds($performance),
+                ],
+            ],
+
+            'financial' =>
+                $this->financialSummary
+                    ->summary($performance),
         ]);
     }
 

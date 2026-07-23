@@ -1,17 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Performance;
+use App\Models\Shift;
 use Carbon\Carbon;
 
 class PerformanceWorkTimeService
 {
-    public function weeklyHours(
+    public function weeklySeconds(
         Performance $performance
-    ): float {
+    ): int {
 
-        $seconds = $performance
+        return (int) $performance
             ->shifts()
             ->whereBetween(
                 'started_at',
@@ -20,13 +23,35 @@ class PerformanceWorkTimeService
                     Carbon::now()->endOfWeek(),
                 ]
             )
-            ->sum('worked_seconds');
+            ->get()
+            ->sum(
+                fn (Shift $shift) =>
+                    $shift->workedSeconds()
+            );
+    }
 
 
-        return round(
-            $seconds / 3600,
-            2
+    public function weeklyHours(
+        Performance $performance
+    ): float {
+
+        return $this->toHours(
+            $this->weeklySeconds($performance)
         );
+    }
+
+
+    public function totalSeconds(
+        Performance $performance
+    ): int {
+
+        return (int) $performance
+            ->shifts()
+            ->get()
+            ->sum(
+                fn (Shift $shift) =>
+                    $shift->workedSeconds()
+            );
     }
 
 
@@ -34,13 +59,44 @@ class PerformanceWorkTimeService
         Performance $performance
     ): float {
 
+        return $this->toHours(
+            $this->totalSeconds($performance)
+        );
+    }
+
+
+    public function periodHours(
+        Performance $performance,
+        Carbon $from,
+        Carbon $to
+    ): float {
+
         $seconds = $performance
             ->shifts()
-            ->sum('worked_seconds');
+            ->whereBetween(
+                'started_at',
+                [
+                    $from,
+                    $to,
+                ]
+            )
+            ->get()
+            ->sum(
+                fn (Shift $shift) =>
+                    $shift->workedSeconds()
+            );
 
+
+        return $this->toHours($seconds);
+    }
+
+
+    private function toHours(
+        int|float|string $seconds
+    ): float {
 
         return round(
-            $seconds / 3600,
+            (float) $seconds / 3600,
             2
         );
     }
