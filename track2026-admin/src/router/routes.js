@@ -1,6 +1,7 @@
 import authRoutes from '@/modules/auth/router/index.js'
 
 import { dashboardRoutes } from '@/modules/dashboard'
+import { operationsRoutes } from '@/modules/operations'
 import { financesRoutes } from '@/modules/finances'
 import { performancesRoutes } from '@/modules/performances'
 import { analyticsRoutes } from '@/modules/analytics'
@@ -25,6 +26,7 @@ const routes = [
 
         children: [
             ...dashboardRoutes,
+            ...operationsRoutes,
             ...financesRoutes,
             ...performancesRoutes,
             ...analyticsRoutes,

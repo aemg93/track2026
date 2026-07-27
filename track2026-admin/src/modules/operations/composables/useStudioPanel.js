@@ -13,25 +13,13 @@ export function useStudioPanel(
 
   const selectedShift = ref(null)
 
-
-
-  /**
-   * Modal detalle tokens
-   */
   const tokenShift = ref(null)
 
   const showTokenBreakdown = ref(false)
 
-
-
-  /**
-   * Modal detalle ganancias USD
-   */
   const earningShift = ref(null)
 
   const showEarningBreakdown = ref(false)
-
-
 
   const performances = computed(
     () =>
@@ -40,14 +28,10 @@ export function useStudioPanel(
       []
   )
 
-
-
   const activeShifts = computed(
     () =>
       props.operations?.active_shifts ?? []
   )
-
-
 
   function startShift(performance) {
 
@@ -58,14 +42,11 @@ export function useStudioPanel(
 
   }
 
-
-
   function selectShift(shift) {
 
     if (!shift) {
       return
     }
-
 
     if (
       selectedShift.value?.id === shift.id
@@ -77,12 +58,9 @@ export function useStudioPanel(
 
     }
 
-
     selectedShift.value = shift
 
   }
-
-
 
   function registerEarning(performance) {
 
@@ -93,8 +71,6 @@ export function useStudioPanel(
 
   }
 
-
-
   function registerBonus(performance) {
 
     emit(
@@ -103,8 +79,6 @@ export function useStudioPanel(
     )
 
   }
-
-
 
   function registerPenalty(performance) {
 
@@ -115,8 +89,6 @@ export function useStudioPanel(
 
   }
 
-
-
   function registerDeduction(performance) {
 
     emit(
@@ -125,8 +97,6 @@ export function useStudioPanel(
     )
 
   }
-
-
 
   function pauseCurrentShift(shift) {
 
@@ -137,8 +107,6 @@ export function useStudioPanel(
 
   }
 
-
-
   function resumeCurrentShift(shift) {
 
     emit(
@@ -148,14 +116,11 @@ export function useStudioPanel(
 
   }
 
-
-
   function finishCurrentShift(shift) {
 
     if (!shift?.id) {
       return
     }
-
 
     emit(
       'finish',
@@ -164,11 +129,6 @@ export function useStudioPanel(
 
   }
 
-
-
-  /**
-   * Abrir detalle tokens
-   */
   function openTokens(shift) {
 
     if (!shift) {
@@ -182,11 +142,6 @@ export function useStudioPanel(
 
   }
 
-
-
-  /**
-   * Cerrar detalle tokens
-   */
   function closeTokenBreakdown() {
 
     tokenShift.value = null
@@ -195,11 +150,6 @@ export function useStudioPanel(
 
   }
 
-
-
-  /**
-   * Abrir detalle ganancias USD
-   */
   function openEarnings(shift) {
 
     if (!shift) {
@@ -213,11 +163,6 @@ export function useStudioPanel(
 
   }
 
-
-
-  /**
-   * Cerrar detalle ganancias USD
-   */
   function closeEarningBreakdown() {
 
     earningShift.value = null
@@ -226,11 +171,6 @@ export function useStudioPanel(
 
   }
 
-
-
-  /**
-   * Mantener turno seleccionado actualizado
-   */
   watch(
 
     activeShifts,

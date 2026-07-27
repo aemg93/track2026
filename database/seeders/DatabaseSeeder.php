@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
 
             StudioSeeder::class,
 
+            MonitorSeeder::class,
+
             PerformanceSeeder::class,
 
             PerformanceSplitSeeder::class,

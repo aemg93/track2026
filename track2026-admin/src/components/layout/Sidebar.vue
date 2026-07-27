@@ -1,90 +1,197 @@
 <template>
 
-    <aside class="w-64 h-screen bg-gray-950 text-white flex flex-col border-r border-gray-800">
+  <aside class="w-64 h-screen bg-gray-950 text-white flex flex-col border-r border-gray-800">
+    <div class="p-6 border-b border-gray-800">
+      <h1 class="text-xl font-bold tracking-wide">
+        Track Model
+      </h1>
+      <p class="text-xs text-gray-500 mt-1">
+        Gestor de Modelos
+      </p>
 
-        <!-- BRAND -->
-        <div class="p-6 border-b border-gray-800">
+    </div>
+    <nav class="flex-1 p-3 space-y-1">
 
-            <h1 class="text-xl font-bold tracking-wide">
-                Track Model
-            </h1>
+      <RouterLink
+        v-for="item in menu"
+        :key="item.path"
+        :to="item.path"
+        class="
+          group
+          relative
+          flex
+          items-center
+          gap-3
+          overflow-hidden
+          rounded-xl
+          px-4
+          py-3
+          transition-all
+          duration-300
+          ease-out
+        "
+        :class="isActive(item.path)"
+      >
 
-            <p class="text-xs text-gray-500 mt-1">
-                Gestor de Modelos
-            </p>
+        <span
+          class="
+            absolute
+            left-0
+            top-0
+            bottom-0
+            w-1
+            origin-top
+            scale-y-0
+            rounded-r
+            transition-transform
+            duration-300
+            ease-out
+          "
+          :class="[
+            route.path.startsWith(item.path)
+              ? 'scale-y-100'
+              : '',
+            item.barColor
+          ]"
+        />
 
-        </div>
+        <component
+          :is="item.icon"
+          class="
+            h-5
+            w-5
+            shrink-0
+            transition-all
+            duration-300
+            group-hover:scale-110
+          "
+          :class="[
+            item.color,
+            item.hoverColor,
 
-        <!-- NAVIGATION -->
-        <nav class="flex-1 p-3 space-y-1">
+            route.path.startsWith(item.path)
+              ? 'drop-shadow-lg scale-110'
+              : ''
+          ]"
+          :stroke-width="
+            route.path.startsWith(item.path)
+              ? 2.5
+              : 2
+          "
+        />
 
-            <RouterLink
-                v-for="item in menu"
-                :key="item.path"
-                :to="item.path"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl transition relative overflow-hidden group"
-                :class="isActive(item.path)"
-            >
-
-                <span
-                    v-if="route.path.startsWith(item.path)"
-                    class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r"
-                />
-
-                <span
-                    class="text-lg transition"
-                    :class="route.path.startsWith(item.path)
-                        ? 'text-blue-400'
-                        : 'text-gray-500 group-hover:text-white'"
-                >
-                    {{ item.icon }}
-                </span>
-
-                <span class="font-medium">
-                    {{ item.name }}
-                </span>
-
-            </RouterLink>
-
-        </nav>
-
-    </aside>
-
+        <span
+          class="
+            font-medium
+            transition-transform
+            duration-300
+            group-hover:translate-x-0.5
+          "
+        >
+          {{ item.name }}
+        </span>
+      </RouterLink>
+    </nav>
+  </aside>
 </template>
 
 <script setup>
 
 import { useRoute } from 'vue-router'
 
-const route = useRoute()
 
-/*
-|--------------------------------------------------------------------------
-| MENU
-|--------------------------------------------------------------------------
-*/
+import {
+  LayoutDashboard,
+  SlidersHorizontal,
+  UsersRound,
+  WalletCards,
+  ChartLine,
+  Settings
+} from 'lucide-vue-next'
+
+const route = useRoute()
 
 const menu = [
 
-    { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    { name: 'Modelos', path: '/performances', icon: '👩' },
-    { name: 'Finanzas', path: '/finances', icon: '💰' },
-    { name: 'Analytics', path: '/analytics', icon: '📈' },
-    { name: 'Configuración', path: '/settings', icon: '⚙️' },
+
+  {
+    name: 'Dashboard',
+    path: '/dashboard',
+    icon: LayoutDashboard,
+    color: 'text-blue-400',
+    hoverColor: 'group-hover:text-blue-300',
+    barColor: 'bg-blue-500'
+  },
+
+
+  {
+    name: 'Operaciones',
+    path: '/operations',
+    icon: SlidersHorizontal,
+    color: 'text-cyan-400',
+    hoverColor: 'group-hover:text-cyan-300',
+    barColor: 'bg-cyan-500'
+  },
+
+
+  {
+    name: 'Modelos',
+    path: '/performances',
+    icon: UsersRound,
+    color: 'text-pink-400',
+    hoverColor: 'group-hover:text-pink-300',
+    barColor: 'bg-pink-500'
+  },
+
+
+  {
+    name: 'Finanzas',
+    path: '/finances',
+    icon: WalletCards,
+    color: 'text-emerald-400',
+    hoverColor: 'group-hover:text-emerald-300',
+    barColor: 'bg-emerald-500'
+  },
+
+
+  {
+    name: 'Analytics',
+    path: '/analytics',
+    icon: ChartLine,
+    color: 'text-orange-400',
+    hoverColor: 'group-hover:text-orange-300',
+    barColor: 'bg-orange-500'
+  },
+
+
+  {
+    name: 'Configuración',
+    path: '/settings',
+    icon: Settings,
+    color: 'text-indigo-400',
+    hoverColor: 'group-hover:text-indigo-300',
+    barColor: 'bg-indigo-500'
+  },
+
 
 ]
 
-/*
-|--------------------------------------------------------------------------
-| ACTIVE STATE
-|--------------------------------------------------------------------------
-*/
-
 const isActive = (path) => {
 
-    return route.path.startsWith(path)
-        ? 'bg-blue-500/10 text-white shadow-[0_0_20px_rgba(59,130,246,0.15)]'
-        : 'text-gray-400 hover:bg-gray-800/60 hover:text-white'
+  return route.path.startsWith(path)
+
+    ? `
+        bg-white/5
+        text-white
+        shadow-[0_0_20px_rgba(255,255,255,0.05)]
+      `
+
+    : `
+        text-gray-400
+        hover:bg-gray-800/60
+        hover:text-white
+      `
+
 }
 
 </script>

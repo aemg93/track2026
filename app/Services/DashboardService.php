@@ -12,8 +12,6 @@ class DashboardService
         private ShiftDashboardService $shiftDashboard,
     ) {}
 
-
-
     public function getData(User $user): array
     {
         return [

@@ -41,14 +41,15 @@
         <div>
 
           <h2 class="text-lg font-semibold text-white">
-            Detalle de Tokens
+            Detalle de Ganancias
           </h2>
 
           <p class="mt-1 text-sm text-gray-400">
-            Distribución por plataforma del turno actual.
+            Distribución por plataforma en USD del turno actual.
           </p>
 
         </div>
+
 
         <button
           type="button"
@@ -68,14 +69,14 @@
 
       </header>
 
+
+
+      <!-- Resumen -->
       <div
         class="
-          grid
-          gap-4
           border-b
           border-gray-800
           p-6
-          md:grid-cols-2
         "
       >
 
@@ -83,37 +84,32 @@
           class="
             rounded-xl
             border
-            border-cyan-500/20
-            bg-cyan-500/10
-            p-4
-          "
-        >
-
-          <p class="text-xs uppercase text-cyan-300">
-            Total Tokens
-          </p>
-
-          <p class="mt-2 text-3xl font-bold text-cyan-300">
-            {{ formatTokens(totalTokens) }}
-          </p>
-
-        </div>
-
-        <div
-          class="
-            rounded-xl
-            border
             border-emerald-500/20
             bg-emerald-500/10
-            p-4
+            p-5
           "
         >
 
-          <p class="text-xs uppercase text-emerald-300">
-            Valor USD
+          <p
+            class="
+              text-xs
+              uppercase
+              tracking-wider
+              text-emerald-300
+            "
+          >
+            Total USD
           </p>
 
-          <p class="mt-2 text-3xl font-bold text-emerald-300">
+
+          <p
+            class="
+              mt-2
+              text-3xl
+              font-bold
+              text-emerald-300
+            "
+          >
             {{ formatUsd(totalUsd) }}
           </p>
 
@@ -121,6 +117,10 @@
 
       </div>
 
+
+
+
+      <!-- Plataformas -->
       <div
         class="
           max-h-[420px]
@@ -130,12 +130,12 @@
       >
 
         <div
-          v-if="platformTokens.length"
+          v-if="platformEarnings.length"
           class="space-y-3"
         >
 
           <article
-            v-for="platform in platformTokens"
+            v-for="platform in platformEarnings"
             :key="platform.name"
             class="
               flex
@@ -155,28 +155,35 @@
                 {{ platform.name }}
               </p>
 
+
               <p class="text-sm text-gray-400">
-                Tokens registrados
+                USD registrados
               </p>
 
             </div>
 
 
+
             <div class="text-right">
 
-              <p class="text-xl font-bold text-cyan-300">
-                {{ formatTokens(platform.tokens) }}
-              </p>
-
-              <p class="text-sm text-emerald-300">
+              <p
+                class="
+                  text-xl
+                  font-bold
+                  text-emerald-300
+                "
+              >
                 {{ formatUsd(platform.usd) }}
               </p>
 
             </div>
 
+
           </article>
 
         </div>
+
+
 
         <div
           v-else
@@ -187,21 +194,24 @@
             bg-gray-900
             p-6
             text-center
+            text-sm
             text-gray-400
           "
         >
 
-          No hay tokens registrados en este turno.
+          No hay ganancias USD registradas en este turno.
 
         </div>
 
 
       </div>
 
+
     </section>
 
   </div>
 </template>
+
 
 <script setup>
 
@@ -209,13 +219,18 @@ import {
   toRef,
 } from 'vue'
 
+
 import {
-  useShiftTokenBreakdown,
-} from '@/composables/useShiftTokenBreakdown'
+  useShiftEarningBreakdown,
+} from '@/modules/operations/composables/useShiftEarningBreakdown'
+
+
 
 defineOptions({
-  name: 'ShiftTokenBreakdown',
+  name: 'ShiftEarningBreakdown',
 })
+
+
 
 const props = defineProps({
 
@@ -226,38 +241,33 @@ const props = defineProps({
 
 })
 
+
+
 const emit = defineEmits([
   'close',
 ])
+
+
 
 const shift = toRef(
   props,
   'shift'
 )
 
+
+
 const {
 
-  tokenPlatforms: platformTokens,
-
-  totalTokens,
+  platformEarnings,
 
   totalUsd,
 
-} = useShiftTokenBreakdown(
+} = useShiftEarningBreakdown(
   shift
 )
 
-function formatTokens(value) {
 
-  return Number(value)
-    .toLocaleString(
-      'es-CO',
-      {
-        maximumFractionDigits: 0,
-      }
-    )
 
-}
 
 function formatUsd(value) {
 
@@ -272,6 +282,8 @@ function formatUsd(value) {
     )
 
 }
+
+
 
 function close() {
 

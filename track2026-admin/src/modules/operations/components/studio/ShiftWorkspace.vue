@@ -196,7 +196,7 @@ import ShiftTimeline from './timeline/ShiftTimeline.vue'
 
 import {
   useShiftWorkspace,
-} from '@/composables/useShiftWorkspace'
+} from '@/modules/operations/composables/useShiftWorkspace'
 
 
 

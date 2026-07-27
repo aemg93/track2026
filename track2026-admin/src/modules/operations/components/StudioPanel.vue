@@ -16,7 +16,6 @@
       @start-shift="startShift"
     />
 
-
     <div class="mt-6">
 
       <ShiftPerformanceList
@@ -46,8 +45,6 @@
     </div>
 
 
-
-    <!-- Modal tokens -->
     <ShiftTokenBreakdown
       v-if="showTokenBreakdown"
       :shift="tokenShift"
@@ -55,14 +52,11 @@
     />
 
 
-
-    <!-- Modal ganancias USD -->
     <ShiftEarningBreakdown
       v-if="showEarningBreakdown"
       :shift="earningShift"
       @close="closeEarningBreakdown"
     />
-
 
   </section>
 </template>
@@ -70,24 +64,19 @@
 
 <script setup>
 
-import ShiftToolbar from '@/modules/dashboard/components/studio/ShiftToolbar.vue'
-import ShiftPerformanceList from '@/modules/dashboard/components/studio/ShiftPerformanceList.vue'
-import ShiftWorkspace from '@/modules/dashboard/components/studio/ShiftWorkspace.vue'
+import ShiftToolbar from '@/modules/operations/components/studio/ShiftToolbar.vue'
+import ShiftPerformanceList from '@/modules/operations/components/studio/ShiftPerformanceList.vue'
+import ShiftWorkspace from '@/modules/operations/components/studio/ShiftWorkspace.vue'
 
-import ShiftTokenBreakdown from '@/modules/dashboard/components/studio/financial/ShiftTokenBreakdown.vue'
-import ShiftEarningBreakdown from '@/modules/dashboard/components/studio/financial/ShiftEarningBreakdown.vue'
+import ShiftTokenBreakdown from '@/modules/operations/components/studio/financial/ShiftTokenBreakdown.vue'
+import ShiftEarningBreakdown from '@/modules/operations/components/studio/financial/ShiftEarningBreakdown.vue'
 
-
-import {
-  useStudioPanel,
-} from '@/composables/useStudioPanel'
-
+import { useStudioPanel } from '@/modules/operations/composables/useStudioPanel'
 
 
 defineOptions({
   name: 'StudioPanel',
 })
-
 
 
 const props = defineProps({
@@ -108,7 +97,6 @@ const props = defineProps({
   },
 
 })
-
 
 
 const emit = defineEmits([
@@ -132,24 +120,19 @@ const {
 
   selectedShift,
 
-
   tokenShift,
   showTokenBreakdown,
 
-
   earningShift,
   showEarningBreakdown,
-
 
   performances,
 
   activeShifts,
 
-
   startShift,
 
   selectShift,
-
 
   registerEarning,
 
@@ -159,28 +142,23 @@ const {
 
   registerDeduction,
 
-
   pauseCurrentShift,
 
   resumeCurrentShift,
 
   finishCurrentShift,
 
-
   openTokens,
 
   closeTokenBreakdown,
-
 
   openEarnings,
 
   closeEarningBreakdown,
 
-
 } = useStudioPanel(
   props,
   emit
 )
-
 
 </script>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Earning extends Model
 {
@@ -10,6 +11,7 @@ class Earning extends Model
         'performance_id',
         'platform_id',
         'user_id',
+        'monitor_shift_id',
 
         'earned_at',
 
@@ -38,6 +40,7 @@ class Earning extends Model
         'paid_at',
     ];
 
+
     protected $casts = [
         'earned_at' => 'datetime',
         'paid_at' => 'datetime',
@@ -49,9 +52,11 @@ class Earning extends Model
         'multiplier' => 'decimal:4',
 
         'gross_usd' => 'decimal:2',
+
         'bonus_usd' => 'decimal:2',
         'penalty_usd' => 'decimal:2',
         'deduction_usd' => 'decimal:2',
+
         'net_usd' => 'decimal:2',
 
         'model_percentage' => 'decimal:2',
@@ -61,18 +66,33 @@ class Earning extends Model
         'studio_share_usd' => 'decimal:2',
     ];
 
-    public function performance()
+    public function performance(): BelongsTo
     {
-        return $this->belongsTo(Performance::class);
+        return $this->belongsTo(
+            Performance::class
+        );
     }
 
-    public function platform()
+
+    public function platform(): BelongsTo
     {
-        return $this->belongsTo(Platform::class);
+        return $this->belongsTo(
+            Platform::class
+        );
     }
 
-    public function user()
+
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class
+        );
+    }
+
+    public function monitorShift(): BelongsTo
+    {
+        return $this->belongsTo(
+            MonitorShift::class
+        );
     }
 }

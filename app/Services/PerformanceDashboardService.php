@@ -6,6 +6,7 @@ use App\Enums\ShiftStatus;
 use App\Models\Performance;
 use App\Models\Shift;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 class PerformanceDashboardService
 {
@@ -13,9 +14,6 @@ class PerformanceDashboardService
         'user:id,name,email',
         'platforms:id,name,type,conversion_rate,multiplier',
         'earnings',
-        'bonuses',
-        'penalties',
-        'deductions',
         'split',
     ];
 
@@ -24,7 +22,6 @@ class PerformanceDashboardService
         private StatisticsService $statistics,
         private FinancialSummaryService $financialSummary,
     ) {}
-
 
 
     public function data(User $user): array
@@ -77,47 +74,52 @@ class PerformanceDashboardService
         };
     }
 
-
-
-
     private function buildDashboard(
-        $performances,
+        Collection $performances,
         string $view
     ): array {
 
         return [
+
             'view' => $view,
+
 
             'total_models' =>
                 $performances->count(),
 
-
             'ranking' =>
                 $performances
-                    ->sortByDesc('ranking_score')
+                    ->sortByDesc(
+                        fn(Performance $performance) =>
+                            $performance->ranking_score ?? 0
+                    )
                     ->take(10)
-                    ->values(),
-
+                    ->values()
+                    ->map(
+                        fn(Performance $performance) =>
+                            $this->buildPerformance(
+                                $performance,
+                                $view
+                            )
+                    )
+                    ->toArray(),
 
             'models' =>
                 $performances
                     ->map(
-                        fn(Performance $p) =>
+                        fn(Performance $performance) =>
                             $this->buildPerformance(
-                                $p,
+                                $performance,
                                 $view
                             )
-                    ),
-
+                    )
+                    ->values()
+                    ->toArray(),
 
             'active_performances' =>
                 $this->activePerformances(),
         ];
     }
-
-
-
-
 
     private function performanceData(User $user): array
     {
@@ -126,8 +128,6 @@ class PerformanceDashboardService
                 ->performance()
                 ->with(self::PERFORMANCE_RELATIONS)
                 ->first();
-
-
 
         if (! $performance) {
 
@@ -140,8 +140,6 @@ class PerformanceDashboardService
             ];
         }
 
-
-
         return array_merge(
 
             [
@@ -153,10 +151,6 @@ class PerformanceDashboardService
         );
     }
 
-
-
-
-
     private function buildPerformance(
         Performance $performance,
         ?string $view = null
@@ -167,13 +161,9 @@ class PerformanceDashboardService
             $this->statistics
                 ->performanceStats($performance);
 
-
-
         $summary =
             $this->financialSummary
                 ->summary($performance);
-
-
 
         return [
 
@@ -191,9 +181,7 @@ class PerformanceDashboardService
 
             'name' =>
                 trim(
-                    $performance->first_name .
-                    ' ' .
-                    $performance->last_name
+                    "{$performance->first_name} {$performance->last_name}"
                 ),
 
 
@@ -202,11 +190,11 @@ class PerformanceDashboardService
 
 
             'ranking' =>
-                $performance->ranking_score,
+                $performance->ranking_score ?? 0,
 
 
             'hours' =>
-                $performance->hours_streamed,
+                $performance->hours_streamed ?? 0,
 
 
             'platforms' =>
@@ -219,12 +207,9 @@ class PerformanceDashboardService
 
             'statistics' =>
                 $stats,
+
         ];
     }
-
-
-
-
 
     private function buildPlatforms(
         Performance $performance
@@ -232,18 +217,25 @@ class PerformanceDashboardService
 
         return $performance
             ->platforms
-            ->map(fn($platform)=>[
-                'id'=>$platform->id,
-                'name'=>$platform->name,
-                'type'=>$platform->type,
-            ])
+            ->map(
+                fn($platform) => [
+
+                    'id' =>
+                        $platform->id,
+
+
+                    'name' =>
+                        $platform->name,
+
+
+                    'type' =>
+                        $platform->type,
+
+                ]
+            )
             ->values()
             ->toArray();
     }
-
-
-
-
 
     private function activePerformances(): array
     {
@@ -266,28 +258,28 @@ class PerformanceDashboardService
 
             ->get()
 
-            ->map(fn(Shift $shift)=>[
+            ->map(
+                fn(Shift $shift) => [
 
-                'id'=>
-                    $shift->performance->id,
-
-
-                'name'=>
-                    trim(
-                        $shift->performance->first_name .
-                        ' ' .
-                        $shift->performance->last_name
-                    ),
+                    'id' =>
+                        $shift->performance->id,
 
 
-                'nickname'=>
-                    $shift->performance->nickname,
+                    'name' =>
+                        trim(
+                            "{$shift->performance->first_name} {$shift->performance->last_name}"
+                        ),
 
 
-                'status'=>
-                    $shift->status?->value,
+                    'nickname' =>
+                        $shift->performance->nickname,
 
-            ])
+
+                    'status' =>
+                        $shift->status?->value,
+
+                ]
+            )
 
             ->values()
 
