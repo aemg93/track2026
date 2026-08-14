@@ -1,132 +1,140 @@
 <template>
+  <div class="space-y-10">
+    <!-- LOADING -->
+    <div
+      v-if="loading"
+      class="
+        flex
+        h-96
+        items-center
+        justify-center
+        text-gray-400
+      "
+    >
+      Cargando información del modelo...
+    </div>
 
-  <div
-    v-if="performance"
-    class="space-y-10"
-  >
+    <!-- ERROR -->
+    <div
+      v-else-if="error"
+      class="
+        rounded-3xl
+        border
+        border-red-500/20
+        bg-red-500/10
+        p-6
+        text-red-400
+      "
+    >
+      {{ error }}
+    </div>
 
-    <ModelHeader
-      :model="performance"
-    />
-
-    <ModelKpis
-      :model="performance"
-    />
-
-    <section class="space-y-4">
-
-      <h2 class="text-gray-400 text-xs uppercase tracking-[0.25em]">
-        Finanzas
-      </h2>
-
-      <FinancialSummary
-        :financial="financial"
+    <!-- CONTENT -->
+    <template v-else-if="performance">
+      <ModelHeader
+        :model="performance"
       />
 
-    </section>
-
-    <section class="space-y-4">
-
-      <h2 class="text-gray-400 text-xs uppercase tracking-[0.25em]">
-        Historial financiero
-      </h2>
-
-      <FinancialHistory
-        :earnings="performance.earnings"
-        :bonuses="performance.bonuses"
-        :penalties="performance.penalties"
-        :deductions="performance.deductions"
+      <ModelKpis
+        :model="performance"
       />
 
-    </section>
-
-    <section>
-
-      <details
-        class="
-          bg-gradient-to-br
-          from-gray-900
-          to-gray-950
-          border
-          border-gray-800
-          rounded-3xl
-          p-6
-        "
-      >
-
-        <summary
+      <!-- FINANZAS -->
+      <section class="space-y-4">
+        <h2
           class="
-            cursor-pointer
-            text-white
-            font-semibold
-            text-lg
+            text-xs
+            uppercase
+            tracking-[0.25em]
+            text-gray-400
           "
         >
-          Información del perfil
-        </summary>
+          Finanzas
+        </h2>
 
+        <FinancialSummary
+          :financial="financial"
+        />
+      </section>
 
-        <div
+      <!-- HISTORIAL FINANCIERO -->
+      <section class="space-y-4">
+        <h2
           class="
-            mt-6
-            grid
-            grid-cols-1
-            lg:grid-cols-3
-            gap-6
+            text-xs
+            uppercase
+            tracking-[0.25em]
+            text-gray-400
           "
         >
+          Historial financiero
+        </h2>
 
-          <ModelPersonalInfo
-            :model="performance"
-          />
+        <FinancialHistory
+          :earnings="performance.earnings"
+          :bonuses="performance.bonuses"
+          :penalties="performance.penalties"
+          :deductions="performance.deductions"
+        />
+      </section>
 
-          <ModelDocuments
-            :model="performance"
-          />
+      <!-- INFORMACIÓN DEL PERFIL -->
+      <section>
+        <details
+          class="
+            rounded-3xl
+            border
+            border-gray-800
+            bg-gradient-to-br
+            from-gray-900
+            to-gray-950
+            p-6
+          "
+        >
+          <summary
+            class="
+              cursor-pointer
+              text-lg
+              font-semibold
+              text-white
+            "
+          >
+            Información del perfil
+          </summary>
 
-          <ModelStudioInfo
-            :model="performance"
-          />
+          <div
+            class="
+              mt-6
+              grid
+              grid-cols-1
+              gap-6
+              lg:grid-cols-3
+            "
+          >
+            <ModelPersonalInfo
+              :model="performance"
+            />
 
-        </div>
+            <ModelDocuments
+              :model="performance"
+            />
 
-
-      </details>
-
-    </section>
-
-
+            <ModelStudioInfo
+              :model="performance"
+            />
+          </div>
+        </details>
+      </section>
+    </template>
   </div>
-
-
-  <div
-    v-else
-    class="
-      flex
-      justify-center
-      items-center
-      h-96
-      text-gray-400
-    "
-  >
-
-    Cargando...
-
-  </div>
-
 </template>
 
 <script setup>
-
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import api from '@/services/api'
 
-/**
- * Shared domain components (models)
- * Arquitectura: components compartidos reutilizables
- */
 import ModelHeader from '@/modules/performances/components/ModelHeader.vue'
 import ModelKpis from '@/modules/performances/components/ModelKpis.vue'
 
@@ -142,25 +150,64 @@ const route = useRoute()
 const performance = ref(null)
 const financial = ref(null)
 
+const loading = ref(true)
+const error = ref(null)
+
 const load = async () => {
+  loading.value = true
+  error.value = null
 
   try {
+    const performanceId = route.params.id
 
-    const { data } = await api.get(
-      `/performances/${route.params.id}`
+    if (!performanceId) {
+      throw new Error(
+        'No se encontró el ID del modelo.'
+      )
+    }
+
+    const response = await api.get(
+      `/performances/${performanceId}`
     )
 
-    performance.value = data.data
-    financial.value = data.financial
+    const payload = response.data
 
-  } catch (error) {
+    if (!payload?.success) {
+      throw new Error(
+        payload?.message ||
+        'No fue posible cargar la información del modelo.'
+      )
+    }
 
-    console.error('Error loading performance:', error)
+    performance.value =
+      payload.data ?? null
 
+    financial.value =
+      payload.financial ?? null
+
+    if (!performance.value) {
+      throw new Error(
+        'La API no devolvió información del modelo.'
+      )
+    }
+  } catch (err) {
+    console.error(
+      'Error loading performance:',
+      err
+    )
+
+    error.value =
+      err?.response?.data?.message ||
+      err?.message ||
+      'No fue posible cargar la información del modelo.'
+
+    performance.value = null
+    financial.value = null
+  } finally {
+    loading.value = false
   }
-
 }
 
 onMounted(load)
-
 </script>
+

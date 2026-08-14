@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Performance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class PerformanceService
 {
@@ -17,7 +16,7 @@ class PerformanceService
     protected function relations(): array
     {
         return [
-            'earnings',
+            'earnings.platform',
             'bonuses',
             'penalties',
             'deductions',
@@ -33,7 +32,7 @@ class PerformanceService
         $query = Performance::query();
 
         if ($request->filled('search')) {
-            $search = trim($request->search);
+            $search = trim($request->input('search'));
 
             $query->where(function ($query) use ($search) {
                 $query
@@ -48,9 +47,16 @@ class PerformanceService
             $query->where(
                 'active',
                 filter_var(
-                    $request->active,
+                    $request->input('active'),
                     FILTER_VALIDATE_BOOLEAN
                 )
+            );
+        }
+
+        if ($request->filled('work_shift')) {
+            $query->where(
+                'work_shift',
+                $request->input('work_shift')
             );
         }
 
@@ -59,7 +65,7 @@ class PerformanceService
             'hours_streamed',
         ];
 
-        $sort = $request->get(
+        $sort = $request->input(
             'sortBy',
             'created_at'
         );
@@ -68,15 +74,28 @@ class PerformanceService
             $sort = 'created_at';
         }
 
+        $order = strtolower(
+            $request->input('order', 'desc')
+        );
+
+        if (!in_array($order, ['asc', 'desc'], true)) {
+            $order = 'desc';
+        }
+
+        $limit = (int) $request->input(
+            'limit',
+            10
+        );
+
+        $limit = max(
+            1,
+            min($limit, 100)
+        );
+
         return $query
             ->with($this->relations())
-            ->orderBy(
-                $sort,
-                $request->get('order', 'desc')
-            )
-            ->paginate(
-                (int) $request->get('limit', 10)
-            );
+            ->orderBy($sort, $order)
+            ->paginate($limit);
     }
 
     public function find(int $id): Performance
@@ -89,7 +108,6 @@ class PerformanceService
     public function create(array $data): Performance
     {
         return DB::transaction(function () use ($data) {
-
             $data = $this->normalize($data);
 
             $platforms = $data['platforms'] ?? [];
@@ -125,18 +143,13 @@ class PerformanceService
         int $id,
         array $data
     ): Performance {
-
         return DB::transaction(function () use ($id, $data) {
-
             $performance = Performance::findOrFail($id);
 
             $data = $this->normalize($data);
 
-            $platforms = $data['platforms']
-                ?? null;
-
-            $split = $data['split']
-                ?? null;
+            $platforms = $data['platforms'] ?? null;
+            $split = $data['split'] ?? null;
 
             unset(
                 $data['platforms'],
@@ -163,13 +176,15 @@ class PerformanceService
 
     public function delete(int $id): void
     {
-        Performance::findOrFail($id)
-            ->delete();
+        Performance::findOrFail($id)->delete();
     }
 
-    public function leaderboard(
-        int $limit = 20
-    ) {
+    public function leaderboard(int $limit = 20)
+    {
+        $limit = max(
+            1,
+            min($limit, 100)
+        );
 
         return Performance::query()
             ->select([
@@ -178,152 +193,15 @@ class PerformanceService
                 'last_name',
                 'nickname',
                 'profile_photo',
+                'work_shift',
                 'hours_streamed',
                 'ranking_score',
                 'active',
             ])
-            ->where(
-                'active',
-                true
-            )
-            ->orderByDesc(
-                'hours_streamed'
-            )
+            ->where('active', true)
+            ->orderByDesc('hours_streamed')
             ->limit($limit)
             ->get();
-    }
-
-    public function storeRules(): array
-    {
-        return [
-
-            'studio_id' =>
-                'required|exists:studios,id',
-
-            'user_id' =>
-                'nullable|exists:users,id',
-
-            'first_name' =>
-                'required|string|max:255',
-
-            'last_name' =>
-                'required|string|max:255',
-
-            'nickname' =>
-                'nullable|string|max:255',
-
-            'email' =>
-                'required|email|unique:performances,email',
-
-            'phone' =>
-                'nullable|string|max:255',
-
-            'country' =>
-                'nullable|string|max:255',
-
-            'city' =>
-                'nullable|string|max:255',
-
-            'address' =>
-                'nullable|string',
-
-            'birth_date' => [
-                'required',
-                'date',
-                'before_or_equal:' .
-                now()->subYears(18)->toDateString(),
-            ],
-
-            'profile_photo' =>
-                'nullable|string',
-
-            'active' =>
-                'nullable|boolean',
-
-            'hours_streamed' =>
-                'nullable|numeric|min:0',
-
-            'ranking_score' =>
-                'nullable|numeric|min:0',
-
-            'platforms' =>
-                'required|array|min:1',
-
-            'platforms.*' =>
-                'exists:platforms,id',
-
-            'split' =>
-                'required|array',
-
-            'split.model_percentage' =>
-                'required|numeric|min:0|max:100',
-
-            'split.studio_percentage' =>
-                'required|numeric|min:0|max:100',
-        ];
-    }
-
-    public function updateRules(int $id): array
-    {
-        return [
-
-            'first_name' =>
-                'nullable|string|max:255',
-
-            'last_name' =>
-                'nullable|string|max:255',
-
-            'nickname' =>
-                'nullable|string|max:255',
-
-            'email' => [
-                'nullable',
-                'email',
-                Rule::unique('performances')
-                    ->ignore($id),
-            ],
-
-            'birth_date' => [
-                'nullable',
-                'date',
-                'before_or_equal:' .
-                now()->subYears(18)->toDateString(),
-            ],
-
-            'platforms' =>
-                'nullable|array',
-
-            'platforms.*' =>
-                'exists:platforms,id',
-
-            'split' =>
-                'nullable|array',
-
-            'split.model_percentage' =>
-                'required_with:split|numeric|min:0|max:100',
-
-            'split.studio_percentage' =>
-                'required_with:split|numeric|min:0|max:100',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-
-            'birth_date.before_or_equal' =>
-                'Debes ser mayor de edad para registrarte.',
-
-            'studio_id.required' =>
-                'Debes seleccionar un estudio.',
-
-            'platforms.required' =>
-                'Debes seleccionar al menos una plataforma.',
-
-            'platforms.min' =>
-                'Debes seleccionar al menos una plataforma.',
-
-        ];
     }
 
     private function normalize(array $data): array
@@ -344,7 +222,6 @@ class PerformanceService
         Performance $performance,
         ?array $platforms
     ): void {
-
         if ($platforms === null) {
             return;
         }
@@ -361,7 +238,6 @@ class PerformanceService
         ?array $split,
         bool $creating = false
     ): void {
-
         if ($split === null) {
             return;
         }
@@ -372,7 +248,6 @@ class PerformanceService
         );
 
         if ($creating) {
-
             $performance
                 ->split()
                 ->create($split);

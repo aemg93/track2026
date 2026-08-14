@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\WorkShift;
 use App\Models\Performance;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -80,6 +81,18 @@ class PerformanceRequest extends FormRequest
                 'string',
             ],
 
+            'document_type' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'document_number' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'birth_date' => [
                 'required',
                 'date',
@@ -98,6 +111,23 @@ class PerformanceRequest extends FormRequest
                 'boolean',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Turno habitual
+            |--------------------------------------------------------------------------
+            */
+
+            'work_shift' => [
+                'required',
+                Rule::enum(WorkShift::class),
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Estadísticas
+            |--------------------------------------------------------------------------
+            */
+
             'hours_streamed' => [
                 'nullable',
                 'numeric',
@@ -110,6 +140,12 @@ class PerformanceRequest extends FormRequest
                 'min:0',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Plataformas
+            |--------------------------------------------------------------------------
+            */
+
             'platforms' => [
                 'required',
                 'array',
@@ -119,6 +155,12 @@ class PerformanceRequest extends FormRequest
             'platforms.*' => [
                 'exists:platforms,id',
             ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Distribución financiera
+            |--------------------------------------------------------------------------
+            */
 
             'split' => [
                 'required',
@@ -151,13 +193,19 @@ class PerformanceRequest extends FormRequest
                 'La fecha de nacimiento no tiene un formato válido.',
 
             'birth_date.before_or_equal' =>
-                'Actualmente no cumples con la mayoría de edad requerida para registrarte.',
+                'Debes ser mayor de edad para registrarte.',
 
             'studio_id.required' =>
-                'Debes pertenecer a un estudio para registrar una modelo.',
+                'Debes seleccionar un estudio.',
 
             'studio_id.exists' =>
                 'El estudio seleccionado no existe.',
+
+            'work_shift.required' =>
+                'Debes seleccionar un turno.',
+
+            'work_shift.enum' =>
+                'El turno seleccionado no es válido.',
 
             'platforms.required' =>
                 'Debes seleccionar al menos una plataforma.',
@@ -171,11 +219,17 @@ class PerformanceRequest extends FormRequest
             'split.required' =>
                 'La distribución de ganancias es obligatoria.',
 
+            'split.model_percentage.required' =>
+                'La participación de la modelo es obligatoria.',
+
             'split.model_percentage.min' =>
                 'La participación de la modelo debe ser mínimo del 50%.',
 
             'split.model_percentage.max' =>
                 'La participación de la modelo no puede superar el 100%.',
+
+            'split.studio_percentage.required' =>
+                'La participación del estudio es obligatoria.',
 
             'split.studio_percentage.max' =>
                 'La participación del estudio no puede superar el 50%.',

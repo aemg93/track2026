@@ -12,6 +12,9 @@ class MonitorShiftService
 {
     /**
      * Inicia el turno operativo del monitor.
+     *
+     * Un estudio solo puede tener un monitor activo
+     * al mismo tiempo.
      */
     public function start(
         User $monitor,
@@ -25,9 +28,11 @@ class MonitorShiftService
 
             $exists = MonitorShift::query()
                 ->where('studio_id', $studioId)
-                ->where('status', MonitorShiftStatus::Active)
+                ->where(
+                    'status',
+                    MonitorShiftStatus::Active
+                )
                 ->exists();
-
 
             if ($exists) {
                 throw ValidationException::withMessages([
@@ -35,19 +40,12 @@ class MonitorShiftService
                 ]);
             }
 
-
             return MonitorShift::create([
-
                 'monitor_id' => $monitor->id,
-
                 'studio_id' => $studioId,
-
                 'started_at' => now(),
-
                 'ended_at' => null,
-
                 'status' => MonitorShiftStatus::Active,
-
             ]);
         });
     }
@@ -56,7 +54,8 @@ class MonitorShiftService
     /**
      * Finaliza únicamente el turno del monitor.
      *
-     * No modifica shifts de modelos.
+     * IMPORTANTE:
+     * No modifica los turnos de las modelos.
      */
     public function finish(
         MonitorShift $monitorShift
@@ -70,74 +69,75 @@ class MonitorShiftService
                 ->lockForUpdate()
                 ->findOrFail($monitorShift->id);
 
-
             if (
-                $monitorShift->status === MonitorShiftStatus::Finished
+                $monitorShift->status ===
+                MonitorShiftStatus::Finished
             ) {
-                return $monitorShift;
+                return $monitorShift->load([
+                    'monitor',
+                    'studio',
+                ]);
             }
 
-
             $monitorShift->update([
-
                 'ended_at' => now(),
-
                 'status' => MonitorShiftStatus::Finished,
-
             ]);
-
 
             return $monitorShift->fresh([
                 'monitor',
                 'studio',
             ]);
-
         });
     }
 
 
     /**
-     * Turno activo del monitor.
+     * Obtiene el turno activo del monitor.
      */
     public function activeByMonitor(
         User $monitor
     ): ?MonitorShift {
 
         return MonitorShift::query()
-
-            ->where('monitor_id', $monitor->id)
-
-            ->where('status', MonitorShiftStatus::Active)
-
+            ->where(
+                'monitor_id',
+                $monitor->id
+            )
+            ->where(
+                'status',
+                MonitorShiftStatus::Active
+            )
             ->with([
                 'studio',
             ])
-
             ->latest('started_at')
-
             ->first();
     }
 
 
     /**
-     * Monitores activos del estudio.
+     * Obtiene los turnos activos de monitor
+     * pertenecientes a un estudio.
      */
     public function activeByStudio(
         int $studioId
     ) {
 
         return MonitorShift::query()
-
-            ->where('studio_id', $studioId)
-
-            ->where('status', MonitorShiftStatus::Active)
-
+            ->where(
+                'studio_id',
+                $studioId
+            )
+            ->where(
+                'status',
+                MonitorShiftStatus::Active
+            )
             ->with([
                 'monitor',
+                'studio',
             ])
-
             ->orderBy('started_at')
-
             ->get();
     }
 }

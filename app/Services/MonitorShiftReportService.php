@@ -12,14 +12,13 @@ class MonitorShiftReportService
 
 
     /**
-     * Genera reporte operativo del turno del monitor.
+     * Genera el reporte operativo del turno del monitor.
      *
-     * Incluye:
-     * - periodo supervisado
-     * - producción total
-     * - modelos
-     * - plataformas
-     * - movimientos
+     * La asignación de la modelo al turno se determina por:
+     *
+     *     performance.work_shift
+     *
+     * La hora del earning NO determina el turno de la modelo.
      */
     public function generate(
         MonitorShift $monitorShift
@@ -45,8 +44,37 @@ class MonitorShiftReportService
 
         $movements = $activity['timeline'] ?? [];
 
+        $platforms = $activity['platforms'] ?? [];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Contar modelos reales
+        |--------------------------------------------------------------------------
+        |
+        | models ahora está dividido en:
+        |
+        | morning
+        | afternoon
+        | night
+        |
+        | Por eso no podemos hacer simplemente count($models).
+        |
+        */
+
+        $modelsCount =
+            collect($models)
+                ->flatten(1)
+                ->count();
+
 
         return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Monitor
+            |--------------------------------------------------------------------------
+            */
 
             'monitor' => [
 
@@ -54,10 +82,18 @@ class MonitorShiftReportService
                     $monitorShift->monitor_id,
 
                 'name' =>
-                    $monitorShift->monitor?->name,
+                    $monitorShift
+                        ->monitor
+                        ?->name,
 
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Studio
+            |--------------------------------------------------------------------------
+            */
 
             'studio' => [
 
@@ -65,10 +101,18 @@ class MonitorShiftReportService
                     $monitorShift->studio_id,
 
                 'name' =>
-                    $monitorShift->studio?->name,
+                    $monitorShift
+                        ->studio
+                        ?->name,
 
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Turno del monitor
+            |--------------------------------------------------------------------------
+            */
 
             'period' => [
 
@@ -80,6 +124,12 @@ class MonitorShiftReportService
 
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Resumen
+            |--------------------------------------------------------------------------
+            */
 
             'summary' => [
 
@@ -98,11 +148,11 @@ class MonitorShiftReportService
 
 
                 'platforms' =>
-                    $activity['platforms'] ?? [],
+                    $platforms,
 
 
                 'models_count' =>
-                    count($models),
+                    $modelsCount,
 
 
                 'movements_count' =>
@@ -111,9 +161,36 @@ class MonitorShiftReportService
             ],
 
 
-            'models' =>
-                $models,
+            /*
+            |--------------------------------------------------------------------------
+            | Modelos por turno asignado
+            |--------------------------------------------------------------------------
+            |
+            | morning
+            | afternoon
+            | night
+            |
+            */
 
+            'models' => [
+
+                'morning' =>
+                    $models['morning'] ?? [],
+
+                'afternoon' =>
+                    $models['afternoon'] ?? [],
+
+                'night' =>
+                    $models['night'] ?? [],
+
+            ],
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Movimientos
+            |--------------------------------------------------------------------------
+            */
 
             'movements' =>
                 $movements,

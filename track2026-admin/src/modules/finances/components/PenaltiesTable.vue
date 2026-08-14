@@ -1,5 +1,4 @@
 <template>
-
   <div
     class="
       bg-gradient-to-br
@@ -11,7 +10,7 @@
       overflow-hidden
     "
   >
-
+    <!-- HEADER -->
 
     <div
       class="
@@ -24,41 +23,25 @@
         border-gray-800
       "
     >
-
       <div>
-
         <p
           class="
-            text-gray-500
             text-xs
             uppercase
             tracking-[0.2em]
+            text-gray-500
           "
         >
           Finanzas
         </p>
 
-        <h2
-          class="
-            text-2xl
-            font-bold
-            text-white
-            mt-2
-          "
-        >
+        <h2 class="mt-2 text-2xl font-bold text-white">
           Historial de Multas
         </h2>
 
-        <p
-          class="
-            text-gray-400
-            text-sm
-            mt-2
-          "
-        >
+        <p class="mt-2 text-sm text-gray-400">
           Penalizaciones registradas para el modelo
         </p>
-
       </div>
 
       <div
@@ -67,31 +50,20 @@
           lg:flex
           items-center
           gap-2
-          px-4
-          py-2
           rounded-2xl
-          bg-red-500/10
           border
           border-red-500/20
+          bg-red-500/10
+          px-4
+          py-2
         "
       >
+        <span class="h-2 w-2 rounded-full bg-red-400" />
 
-        <span
-          class="w-2 h-2 rounded-full bg-red-400"
-        />
-
-        <span
-          class="
-            text-red-400
-            text-sm
-            font-medium
-          "
-        >
+        <span class="text-sm font-medium text-red-400">
           Penalizaciones
         </span>
-
       </div>
-
     </div>
 
     <!-- TABLE -->
@@ -100,140 +72,88 @@
       :columns="columns"
       :items="normalizedPenalties"
     >
-
-      <!-- FECHA -->
-
       <template #date="{ item }">
-
         <div class="flex flex-col">
-
-          <span
-            class="
-              text-white
-              font-medium
-            "
-          >
+          <span class="font-medium text-white">
             {{ formatDate(item.date) }}
           </span>
 
-          <span
-            class="
-              text-xs
-              text-gray-500
-              mt-1
-            "
-          >
+          <span class="mt-1 text-xs text-gray-500">
             Penalización registrada
           </span>
-
         </div>
-
       </template>
-
 
       <template #reason="{ item }">
-
-        <span
-          class="
-            text-gray-300
-            font-medium
-          "
-        >
+        <span class="font-medium text-gray-300">
           {{ item.reason || 'Sin descripción' }}
         </span>
-
       </template>
 
-
       <template #amount="{ item }">
-
         <div class="flex justify-end">
-
           <span
             class="
               inline-flex
               items-center
               gap-2
-              px-4
-              py-2
               rounded-2xl
-              bg-red-500/10
               border
               border-red-500/20
-              text-red-400
+              bg-red-500/10
+              px-4
+              py-2
               font-semibold
+              text-red-400
             "
           >
+            <span class="h-2 w-2 rounded-full bg-red-400" />
 
-            <span
-              class="w-2 h-2 rounded-full bg-red-400"
-            />
-
-            ${{ formatAmount(item.amount) }}
-
+            -${{ formatAmount(item.amount) }}
           </span>
-
         </div>
-
       </template>
-
     </DataTable>
 
+    <!-- EMPTY -->
 
     <div
       v-if="!normalizedPenalties.length"
       class="
-        p-12
-        text-center
         border-t
         border-gray-800
+        p-12
+        text-center
       "
     >
-
       <div
         class="
-          w-20
-          h-20
           mx-auto
-          rounded-3xl
-          bg-gray-800
           flex
+          h-20
+          w-20
           items-center
           justify-center
+          rounded-3xl
+          bg-gray-800
           text-3xl
         "
       >
         ⚠️
       </div>
 
-      <h3
-        class="
-          text-white
-          text-xl
-          font-semibold
-          mt-6
-        "
-      >
+      <h3 class="mt-6 text-xl font-semibold text-white">
         Sin multas registradas
       </h3>
 
-      <p
-        class="
-          text-gray-400
-          mt-2
-        "
-      >
+      <p class="mt-2 text-gray-400">
         No existen penalizaciones registradas para este modelo.
       </p>
-
     </div>
-
   </div>
-
 </template>
 
 <script setup>
-
 import { computed } from 'vue'
 import DataTable from '@/components/ui/DataTable.vue'
 
@@ -264,34 +184,26 @@ const normalizedPenalties = computed(() =>
     id: penalty.id ?? `penalty-${index}`,
     date: penalty.date,
     reason: penalty.reason,
-    amount: penalty.amount ?? 0
+    amount: Number(penalty.amount ?? 0)
   }))
 )
 
 const formatAmount = (value) => {
-
-  const amount = Number(value || 0)
-
-  return amount.toLocaleString('en-US', {
+  return Number(value || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
 }
 
 const formatDate = (value) => {
-
   if (!value) {
     return '-'
   }
 
-  return new Date(value).toLocaleDateString(
-    'es-CO',
-    {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }
-  )
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(new Date(value))
 }
-
 </script>

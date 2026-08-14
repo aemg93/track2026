@@ -1,5 +1,4 @@
 <template>
-
   <div
     class="
       bg-gradient-to-br
@@ -11,6 +10,7 @@
       overflow-hidden
     "
   >
+    <!-- HEADER -->
 
     <div
       class="
@@ -23,41 +23,25 @@
         border-gray-800
       "
     >
-
       <div>
-
         <p
           class="
-            text-gray-500
             text-xs
             uppercase
             tracking-[0.2em]
+            text-gray-500
           "
         >
           Finanzas
         </p>
 
-        <h2
-          class="
-            text-2xl
-            font-bold
-            text-white
-            mt-2
-          "
-        >
+        <h2 class="mt-2 text-2xl font-bold text-white">
           Historial de Descuentos
         </h2>
 
-        <p
-          class="
-            text-gray-400
-            text-sm
-            mt-2
-          "
-        >
+        <p class="mt-2 text-sm text-gray-400">
           Gastos y descuentos aplicados al modelo
         </p>
-
       </div>
 
       <div
@@ -66,166 +50,110 @@
           lg:flex
           items-center
           gap-2
-          px-4
-          py-2
           rounded-2xl
-          bg-amber-500/10
           border
           border-amber-500/20
+          bg-amber-500/10
+          px-4
+          py-2
         "
       >
+        <span class="h-2 w-2 rounded-full bg-amber-400" />
 
-        <span
-          class="w-2 h-2 rounded-full bg-amber-400"
-        />
-
-        <span
-          class="
-            text-amber-400
-            text-sm
-            font-medium
-          "
-        >
+        <span class="text-sm font-medium text-amber-400">
           Descuentos
         </span>
-
       </div>
-
     </div>
+
+    <!-- TABLE -->
 
     <DataTable
       :columns="columns"
       :items="normalizedDeductions"
     >
-
       <template #date="{ item }">
-
         <div class="flex flex-col">
-
-          <span
-            class="
-              text-white
-              font-medium
-            "
-          >
+          <span class="font-medium text-white">
             {{ formatDate(item.date) }}
           </span>
 
-          <span
-            class="
-              text-xs
-              text-gray-500
-              mt-1
-            "
-          >
+          <span class="mt-1 text-xs text-gray-500">
             Descuento registrado
           </span>
-
         </div>
-
       </template>
 
       <template #reason="{ item }">
-
-        <span
-          class="
-            text-gray-300
-            font-medium
-          "
-        >
+        <span class="font-medium text-gray-300">
           {{ item.reason || 'Sin descripción' }}
         </span>
-
       </template>
 
       <template #amount="{ item }">
-
         <div class="flex justify-end">
-
           <span
             class="
               inline-flex
               items-center
               gap-2
-              px-4
-              py-2
               rounded-2xl
-              bg-amber-500/10
               border
               border-amber-500/20
-              text-amber-400
+              bg-amber-500/10
+              px-4
+              py-2
               font-semibold
+              text-amber-400
             "
           >
+            <span class="h-2 w-2 rounded-full bg-amber-400" />
 
-            <span
-              class="w-2 h-2 rounded-full bg-amber-400"
-            />
-
-            ${{ formatAmount(item.amount) }}
-
+            -${{ formatAmount(item.amount) }}
           </span>
-
         </div>
-
       </template>
-
     </DataTable>
+
+    <!-- EMPTY -->
 
     <div
       v-if="!normalizedDeductions.length"
       class="
-        p-12
-        text-center
         border-t
         border-gray-800
+        p-12
+        text-center
       "
     >
-
       <div
         class="
-          w-20
-          h-20
           mx-auto
-          rounded-3xl
-          bg-gray-800
           flex
+          h-20
+          w-20
           items-center
           justify-center
+          rounded-3xl
+          bg-gray-800
           text-3xl
         "
       >
         💳
       </div>
 
-      <h3
-        class="
-          text-white
-          text-xl
-          font-semibold
-          mt-6
-        "
-      >
+      <h3 class="mt-6 text-xl font-semibold text-white">
         Sin descuentos registrados
       </h3>
 
-      <p
-        class="
-          text-gray-400
-          mt-2
-        "
-      >
+      <p class="mt-2 text-gray-400">
         No existen descuentos asociados a este modelo.
       </p>
-
     </div>
-
   </div>
-
 </template>
 
 <script setup>
-
 import { computed } from 'vue'
 import DataTable from '@/components/ui/DataTable.vue'
 
@@ -256,34 +184,26 @@ const normalizedDeductions = computed(() =>
     id: deduction.id ?? `deduction-${index}`,
     date: deduction.date,
     reason: deduction.reason,
-    amount: deduction.amount ?? 0
+    amount: Number(deduction.amount ?? 0)
   }))
 )
 
 const formatAmount = (value) => {
-
-  const amount = Number(value || 0)
-
-  return amount.toLocaleString('en-US', {
+  return Number(value || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
 }
 
 const formatDate = (value) => {
-
   if (!value) {
     return '-'
   }
 
-  return new Date(value).toLocaleDateString(
-    'es-CO',
-    {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }
-  )
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(new Date(value))
 }
-
 </script>

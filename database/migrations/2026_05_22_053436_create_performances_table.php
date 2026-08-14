@@ -12,6 +12,12 @@ return new class extends Migration
 
             $table->id();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Relaciones
+            |--------------------------------------------------------------------------
+            */
+
             $table->foreignId('studio_id')
                 ->constrained('studios')
                 ->cascadeOnDelete();
@@ -20,6 +26,12 @@ return new class extends Migration
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Información personal
+            |--------------------------------------------------------------------------
+            */
 
             $table->string('first_name');
             $table->string('last_name');
@@ -40,8 +52,29 @@ return new class extends Migration
 
             $table->string('profile_photo')->nullable();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Estado operativo
+            |--------------------------------------------------------------------------
+            */
+
             $table->boolean('active')
                 ->default(true);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Turno habitual asignado a la modelo
+            |--------------------------------------------------------------------------
+            */
+
+            $table->string('work_shift', 20)
+                ->index();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Estadísticas
+            |--------------------------------------------------------------------------
+            */
 
             $table->integer('hours_streamed')
                 ->default(0);

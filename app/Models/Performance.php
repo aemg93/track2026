@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\WorkShift;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -31,10 +32,46 @@ class Performance extends Model
         'birth_date',
         'profile_photo',
 
+        /*
+        |--------------------------------------------------------------------------
+        | Estado operativo
+        |--------------------------------------------------------------------------
+        */
+
         'active',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Turno habitual
+        |--------------------------------------------------------------------------
+        */
+
+        'work_shift',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Estadísticas
+        |--------------------------------------------------------------------------
+        */
+
         'hours_streamed',
         'ranking_score',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'birth_date' => 'date',
+
+            'active' => 'boolean',
+
+            'work_shift' => WorkShift::class,
+
+            'hours_streamed' => 'integer',
+
+            'ranking_score' => 'decimal:2',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -82,6 +119,17 @@ class Performance extends Model
         return $this->hasOne(PerformanceSplit::class);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Turnos ejecutados
+    |--------------------------------------------------------------------------
+    |
+    | work_shift = turno habitual/configurado.
+    |
+    | shifts = ejecuciones reales de turnos.
+    |
+    */
+
     public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
@@ -117,5 +165,10 @@ class Performance extends Model
         return trim(
             "{$this->first_name} {$this->last_name}"
         ) ?: ($this->nickname ?? 'Sin nombre');
+    }
+
+    public function getWorkShiftLabelAttribute(): ?string
+    {
+        return $this->work_shift?->label();
     }
 }
