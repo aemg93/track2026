@@ -3,8 +3,7 @@
     class="
       overflow-hidden
       rounded-3xl
-      border
-      border-gray-800
+      border border-gray-800
       bg-gradient-to-br
       from-gray-900
       to-gray-950
@@ -12,14 +11,7 @@
       shadow-black/20
     "
   >
-    <div
-      class="
-        border-b
-        border-gray-800
-        px-8
-        py-6
-      "
-    >
+    <div class="border-b border-gray-800 px-8 py-6">
       <p
         class="
           text-xs
@@ -31,25 +23,18 @@
         Operación
       </p>
 
-      <h2
-        class="
-          mt-2
-          text-2xl
-          font-bold
-          text-white
-        "
-      >
+      <h2 class="mt-2 text-2xl font-bold text-white">
         Turno operativo del estudio
       </h2>
 
       <p class="mt-2 text-sm text-gray-400">
-        Ganancias registradas por modelo durante la operación
+        Ganancias y tokens registrados por modelo durante la operación
       </p>
     </div>
 
     <div class="divide-y divide-gray-800">
       <div
-        v-for="shift in shifts"
+        v-for="shift in groupedShifts"
         :key="shift.key"
       >
         <div
@@ -87,12 +72,7 @@
             </h3>
           </div>
 
-          <span
-            class="
-              text-xs
-              text-gray-500
-            "
-          >
+          <span class="text-xs text-gray-500">
             {{ shift.models.length }}
             {{ shift.models.length === 1 ? 'modelo' : 'modelos' }}
           </span>
@@ -188,9 +168,9 @@
               </span>
             </div>
 
-            <div class="w-24 text-right">
+            <div class="w-28 text-right">
               <span
-                v-if="model.online"
+                v-if="model.active"
                 class="
                   inline-flex
                   items-center
@@ -219,14 +199,61 @@
               </span>
 
               <span
-                v-else
+                v-else-if="model.paused"
                 class="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-yellow-500/20
+                  bg-yellow-500/10
+                  px-3
+                  py-1.5
                   text-xs
-                  font-medium
-                  text-gray-500
+                  font-semibold
+                  text-yellow-400
+                "
+              >
+                Pausada
+              </span>
+
+              <span
+                v-else-if="model.attended"
+                class="
+                  inline-flex
+                  items-center
+                  rounded-xl
+                  border
+                  border-gray-700
+                  bg-gray-800/70
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-semibold
+                  text-gray-300
                 "
               >
                 Finalizada
+              </span>
+
+              <span
+                v-else
+                class="
+                  inline-flex
+                  items-center
+                  rounded-xl
+                  border
+                  border-red-500/20
+                  bg-red-500/10
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-semibold
+                  text-red-400
+                "
+              >
+                No vino
               </span>
             </div>
           </div>
@@ -234,181 +261,32 @@
 
         <div
           v-else
-          class="
-            px-8
-            py-6
-            text-sm
-            text-gray-500
-          "
+          class="px-8 py-6 text-sm text-gray-500"
         >
           No hay modelos asignadas a este turno.
         </div>
       </div>
     </div>
-
-    <div
-      v-if="!performances.length"
-      class="
-        border-t
-        border-gray-800
-        p-10
-        text-center
-      "
-    >
-      <p class="text-sm text-gray-500">
-        No hay modelos registradas.
-      </p>
-    </div>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { useOperationalShiftHistory } from '@/modules/operations/composables/useOperationalShiftHistory'
 
 const props = defineProps({
   performances: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
+
+  shifts: {
+    type: Array,
+    default: () => [],
+  },
 })
 
-const shifts = computed(() => {
-  const groups = {
-    morning: {
-      key: 'morning',
-      label: 'Mañana'
-    },
-
-    afternoon: {
-      key: 'afternoon',
-      label: 'Tarde'
-    },
-
-    night: {
-      key: 'night',
-      label: 'Noche'
-    }
-  }
-
-  const result = {
-    morning: [],
-    afternoon: [],
-    night: []
-  }
-
-  for (const performance of props.performances) {
-    const shift = normalizeShift(
-      performance.work_shift
-    )
-
-    if (!result[shift]) {
-      continue
-    }
-
-    result[shift].push(
-      normalizeModel(performance)
-    )
-  }
-
-  return Object.values(groups).map(
-    group => ({
-      ...group,
-      models: result[group.key]
-    })
-  )
-})
-
-const normalizeModel = (performance) => {
-  const firstName =
-    performance.first_name ?? ''
-
-  const lastName =
-    performance.last_name ?? ''
-
-  const name =
-    `${firstName} ${lastName}`.trim()
-
-  const earnings =
-    Array.isArray(performance.earnings)
-      ? performance.earnings
-      : []
-
-  const tokens =
-    earnings.reduce(
-      (total, earning) => {
-        return (
-          total +
-          Number(
-            earning.real_tokens ?? 0
-          )
-        )
-      },
-      0
-    )
-
-  return {
-    id: performance.id,
-
-    name:
-      name ||
-      performance.nickname ||
-      'Sin nombre',
-
-    nickname:
-      performance.nickname ?? null,
-
-    initial:
-      (
-        firstName ||
-        performance.nickname ||
-        '?'
-      )
-        .charAt(0)
-        .toUpperCase(),
-
-    tokens,
-
-    online:
-      performance.active === true
-  }
-}
-
-const normalizeShift = (value) => {
-  const shift =
-    String(value ?? '')
-      .trim()
-      .toLowerCase()
-
-  if (
-    shift === 'morning' ||
-    shift === 'mañana'
-  ) {
-    return 'morning'
-  }
-
-  if (
-    shift === 'afternoon' ||
-    shift === 'tarde'
-  ) {
-    return 'afternoon'
-  }
-
-  if (
-    shift === 'night' ||
-    shift === 'noche'
-  ) {
-    return 'night'
-  }
-
-  return shift
-}
-
-const formatTokens = (value) => {
-  return Number(value || 0).toLocaleString(
-    'en-US',
-    {
-      maximumFractionDigits: 2
-    }
-  )
-}
+const {
+  groupedShifts,
+  formatTokens,
+} = useOperationalShiftHistory(props)
 </script>

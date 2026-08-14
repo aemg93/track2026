@@ -9,22 +9,9 @@ class ShiftFinancialSummaryService
 {
     private const UNKNOWN_PLATFORM = 'Sin plataforma';
 
-
-    /**
-     * Genera el resumen financiero consolidado de un turno.
-     *
-     * Fuente de verdad:
-     * - earnings
-     * - conversiones almacenadas en earnings
-     * - plataforma asociada al earning
-     *
-     * Sólo incluye movimientos registrados
-     * dentro del rango temporal del turno.
-     */
     public function summary(Shift $shift): array
     {
         $earnings = $this->earnings($shift);
-
 
         return [
             'total_usd' => round(
@@ -33,22 +20,17 @@ class ShiftFinancialSummaryService
             ),
 
             'total_tokens' => round(
-                $earnings
-                    ->where('original_currency', 'tokens')
-                    ->sum('original_amount'),
-                2
+                $earnings->sum(
+                    fn ($earning) => (float) ($earning->real_tokens ?? 0)
+                ),
+                0
             ),
 
-            'platforms' => $this->groupByPlatform(
-                $earnings
-            ),
+            'platforms' => $this->groupByPlatform($earnings),
         ];
     }
 
-
     /**
-     * Obtiene earnings pertenecientes al turno.
-     *
      * @return Collection<int,\App\Models\Earning>
      */
     protected function earnings(Shift $shift): Collection
@@ -56,7 +38,6 @@ class ShiftFinancialSummaryService
         if (! $shift->performance) {
             return collect();
         }
-
 
         return $shift
             ->performance
@@ -74,36 +55,26 @@ class ShiftFinancialSummaryService
             ->get();
     }
 
-
     /**
-     * Agrupa earnings por plataforma.
-     *
      * @param Collection<int,\App\Models\Earning> $earnings
      */
     protected function groupByPlatform(
         Collection $earnings
     ): array {
-
         return $earnings
-
             ->groupBy(
                 fn ($earning) =>
                     $earning->platform?->name
                     ?? self::UNKNOWN_PLATFORM
             )
-
             ->map(
                 function (
                     Collection $items,
                     string $platformName
                 ) {
-
-
                     $first = $items->first();
 
-
                     return [
-
                         'platform_id' =>
                             $first?->platform?->id,
 
@@ -113,12 +84,10 @@ class ShiftFinancialSummaryService
                         'type' =>
                             $first?->platform?->type,
 
-
                         'currencies' =>
                             $items
-                                ->pluck(
-                                    'original_currency'
-                                )
+                                ->pluck('original_currency')
+                                ->filter()
                                 ->unique()
                                 ->map(
                                     fn ($currency) =>
@@ -127,34 +96,36 @@ class ShiftFinancialSummaryService
                                 ->values()
                                 ->toArray(),
 
-
                         'original_amount' =>
                             round(
-                                $items->sum(
-                                    'original_amount'
-                                ),
+                                $items->sum('original_amount'),
                                 2
                             ),
 
+                        'real_tokens' =>
+                            round(
+                                $items->sum(
+                                    fn ($earning) =>
+                                        (float) (
+                                            $earning->real_tokens ?? 0
+                                        )
+                                ),
+                                0
+                            ),
 
                         'usd' =>
                             round(
-                                $items->sum(
-                                    'gross_usd'
-                                ),
+                                $items->sum('gross_usd'),
                                 2
                             ),
                     ];
                 }
             )
-
             ->sortByDesc(
                 fn ($platform) =>
-                    $platform['usd']
+                    $platform['real_tokens']
             )
-
             ->values()
-
             ->toArray();
     }
 }

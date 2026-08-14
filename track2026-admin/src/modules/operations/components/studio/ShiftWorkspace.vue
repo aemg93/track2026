@@ -7,7 +7,6 @@
     v-else
     class="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]"
   >
-    <!-- Panel operativo -->
     <aside class="space-y-5">
 
       <ShiftHeader

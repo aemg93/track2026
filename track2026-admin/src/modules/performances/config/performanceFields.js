@@ -1,5 +1,4 @@
 export default [
-
     {
         id: 'personal',
 
@@ -8,36 +7,36 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'first_name',
                 label: 'Nombre',
                 type: 'text',
-                required: true
+                required: true,
+                autocomplete: 'given-name',
             },
 
             {
                 model: 'last_name',
                 label: 'Apellido',
                 type: 'text',
-                required: true
+                required: true,
+                autocomplete: 'family-name',
             },
 
             {
                 model: 'nickname',
                 label: 'Apodo',
-                type: 'text'
+                type: 'text',
+                autocomplete: 'nickname',
             },
 
             {
                 model: 'birth_date',
                 label: 'Fecha de nacimiento',
                 type: 'date',
-                required: true
-            }
-
-        ]
-
+                required: true,
+            },
+        ],
     },
 
     {
@@ -48,22 +47,21 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'email',
                 label: 'Correo electrónico',
                 type: 'email',
-                required: true
+                required: true,
+                autocomplete: 'email',
             },
 
             {
                 model: 'phone',
                 label: 'Teléfono',
-                type: 'tel'
-            }
-
-        ]
-
+                type: 'tel',
+                autocomplete: 'tel',
+            },
+        ],
     },
 
     {
@@ -74,17 +72,18 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'country',
                 label: 'País',
-                type: 'text'
+                type: 'text',
+                autocomplete: 'country',
             },
 
             {
                 model: 'city',
                 label: 'Ciudad',
-                type: 'text'
+                type: 'text',
+                autocomplete: 'address-level2',
             },
 
             {
@@ -92,11 +91,10 @@ export default [
                 label: 'Dirección',
                 type: 'textarea',
                 cols: 2,
-                rows: 3
-            }
-
-        ]
-
+                rows: 3,
+                autocomplete: 'street-address',
+            },
+        ],
     },
 
     {
@@ -107,41 +105,39 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'document_type',
+
                 label: 'Tipo de documento',
+
                 type: 'select',
 
                 options: [
-
                     {
                         value: 'cc',
-                        label: 'Cédula de Ciudadanía'
+                        label: 'Cédula de Ciudadanía',
                     },
 
                     {
                         value: 'ce',
-                        label: 'Cédula de Extranjería'
+                        label: 'Cédula de Extranjería',
                     },
 
                     {
                         value: 'passport',
-                        label: 'Pasaporte'
-                    }
-
-                ]
-
+                        label: 'Pasaporte',
+                    },
+                ],
             },
 
             {
                 model: 'document_number',
+
                 label: 'Número de documento',
-                type: 'text'
-            }
 
-        ]
-
+                type: 'text',
+            },
+        ],
     },
 
     {
@@ -152,15 +148,14 @@ export default [
         columns: 1,
 
         fields: [
-
             {
                 model: 'platforms',
+
                 label: 'Plataformas',
-                component: 'PerformancePlatforms'
-            }
 
-        ]
-
+                component: 'PerformancePlatforms',
+            },
+        ],
     },
 
     {
@@ -171,14 +166,14 @@ export default [
         columns: 1,
 
         fields: [
-
             {
                 model: 'split',
-                component: 'PerformanceSplit'
-            }
 
-        ]
+                label: 'Distribución',
 
+                component: 'PerformanceSplit',
+            },
+        ],
     },
 
     {
@@ -189,28 +184,63 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'studio_id',
+
                 label: 'Studio',
-                type: 'number'
+
+                type: 'number',
+
+                min: 1,
             },
 
             {
                 model: 'user_id',
+
                 label: 'Usuario',
-                type: 'number'
+
+                type: 'number',
+
+                min: 1,
+            },
+
+            {
+                model: 'work_shift',
+
+                label: 'Turno',
+
+                type: 'select',
+
+                required: true,
+
+                options: [
+                    {
+                        value: 'morning',
+                        label: 'Mañana',
+                    },
+
+                    {
+                        value: 'afternoon',
+                        label: 'Tarde',
+                    },
+
+                    {
+                        value: 'night',
+                        label: 'Noche',
+                    },
+                ],
             },
 
             {
                 model: 'active',
+
                 label: 'Modelo activa',
+
                 type: 'checkbox',
-                cols: 2
-            }
 
-        ]
-
+                cols: 2,
+            },
+        ],
     },
 
     {
@@ -221,21 +251,30 @@ export default [
         columns: 2,
 
         fields: [
-
             {
                 model: 'hours_streamed',
+
                 label: 'Horas transmitidas',
-                type: 'number'
+
+                type: 'number',
+
+                min: 0,
+
+                step: 0.01,
             },
 
             {
                 model: 'ranking_score',
+
                 label: 'Ranking',
-                type: 'number'
-            }
 
-        ]
+                type: 'number',
 
+                min: 0,
+
+                step: 0.01,
+            },
+        ],
     },
 
     {
@@ -246,15 +285,15 @@ export default [
         columns: 1,
 
         fields: [
-
             {
                 model: 'profile_photo',
+
                 label: 'Foto de perfil',
-                type: 'url'
-            }
 
-        ]
+                type: 'url',
 
-    }
-
+                placeholder: 'https://...',
+            },
+        ],
+    },
 ]

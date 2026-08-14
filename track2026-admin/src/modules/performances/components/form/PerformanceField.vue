@@ -1,7 +1,9 @@
 <template>
     <div :class="columnClass">
 
-        <!-- Componentes personalizados -->
+        <!-- =========================================================
+             COMPONENTES PERSONALIZADOS
+             ========================================================= -->
         <component
             v-if="currentComponent"
             :is="currentComponent"
@@ -11,28 +13,30 @@
             :errors="errors"
         />
 
-        <!-- Campo estándar -->
+        <!-- =========================================================
+             CAMPOS ESTÁNDAR
+             ========================================================= -->
         <template v-else>
 
-            <template v-if="field.type !== 'checkbox'">
+            <!-- Label -->
+            <label
+                v-if="field.type !== 'checkbox'"
+                :for="field.model"
+                class="label"
+            >
+                {{ field.label }}
 
-                <label
-                    :for="field.model"
-                    class="label"
+                <span
+                    v-if="field.required"
+                    class="required"
                 >
-                    {{ field.label }}
+                    *
+                </span>
+            </label>
 
-                    <span
-                        v-if="field.required"
-                        class="required"
-                    >
-                        *
-                    </span>
-                </label>
-
-            </template>
-
-            <!-- Input -->
+            <!-- =====================================================
+                 INPUT
+                 ===================================================== -->
             <input
                 v-if="isInput"
                 :id="field.model"
@@ -42,12 +46,18 @@
                 :required="field.required"
                 :placeholder="field.placeholder ?? ''"
                 :autocomplete="field.autocomplete ?? 'off'"
+                :min="field.min"
+                :max="field.max"
+                :step="field.step"
                 :aria-invalid="hasError"
+                :aria-describedby="hasError ? `${field.model}-error` : undefined"
                 class="input"
                 :class="{ error: hasError }"
             >
 
-            <!-- Select -->
+            <!-- =====================================================
+                 SELECT
+                 ===================================================== -->
             <select
                 v-else-if="field.type === 'select'"
                 :id="field.model"
@@ -55,53 +65,76 @@
                 :name="field.model"
                 :required="field.required"
                 :aria-invalid="hasError"
-                class="input"
+                :aria-describedby="hasError ? `${field.model}-error` : undefined"
+                class="input select-input"
                 :class="{ error: hasError }"
             >
-                <option value="">
-                    Seleccione...
+                <option
+                    value=""
+                    disabled
+                >
+                    {{ field.placeholder ?? 'Seleccione...' }}
                 </option>
 
                 <option
-                    v-for="option in field.options"
-                    :key="option.value"
+                    v-for="option in normalizedOptions"
+                    :key="String(option.value)"
                     :value="option.value"
                 >
                     {{ option.label }}
                 </option>
             </select>
 
-            <!-- Textarea -->
+            <!-- =====================================================
+                 TEXTAREA
+                 ===================================================== -->
             <textarea
                 v-else-if="field.type === 'textarea'"
                 :id="field.model"
                 v-model="form[field.model]"
                 :name="field.model"
                 :rows="field.rows ?? 4"
+                :maxlength="field.maxlength"
+                :placeholder="field.placeholder ?? ''"
                 :required="field.required"
                 :aria-invalid="hasError"
+                :aria-describedby="hasError ? `${field.model}-error` : undefined"
                 class="input resize-none"
                 :class="{ error: hasError }"
             />
 
-            <!-- Checkbox -->
+            <!-- =====================================================
+                 CHECKBOX
+                 ===================================================== -->
             <label
                 v-else-if="field.type === 'checkbox'"
                 class="checkbox"
+                :class="{ 'checkbox-error': hasError }"
             >
-
                 <input
                     :id="field.model"
                     v-model="form[field.model]"
                     :name="field.model"
                     type="checkbox"
+                    :aria-invalid="hasError"
+                    :aria-describedby="hasError ? `${field.model}-error` : undefined"
                 >
 
-                {{ field.label }}
+                <span>
+                    {{ field.label }}
 
+                    <span
+                        v-if="field.required"
+                        class="required"
+                    >
+                        *
+                    </span>
+                </span>
             </label>
 
-            <!-- Campo no soportado -->
+            <!-- =====================================================
+                 CAMPO NO SOPORTADO
+                 ===================================================== -->
             <div
                 v-else
                 class="fallback"
@@ -109,11 +142,14 @@
                 <strong>Campo no soportado:</strong>
 
                 {{ field.component ?? field.type }}
-
             </div>
 
+            <!-- =====================================================
+                 ERROR DE VALIDACIÓN
+                 ===================================================== -->
             <p
                 v-if="fieldError"
+                :id="`${field.model}-error`"
                 class="error-message"
             >
                 {{ fieldError }}
@@ -135,68 +171,186 @@ const props = defineProps({
 
     field: {
         type: Object,
-        required: true
+        required: true,
     },
 
     form: {
         type: Object,
-        required: true
+        required: true,
     },
 
     platforms: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
 
     errors: {
         type: Object,
-        default: () => ({})
-    }
+        default: () => ({}),
+    },
 
 })
+
+/*
+|--------------------------------------------------------------------------
+| Componentes personalizados
+|--------------------------------------------------------------------------
+*/
 
 const componentMap = Object.freeze({
-
     PerformancePlatforms,
-    PerformanceSplit
-
+    PerformanceSplit,
 })
 
-const inputTypes = Object.freeze(new Set([
+const currentComponent = computed(() => {
+    if (!props.field.component) {
+        return null
+    }
 
-    'text',
-    'email',
-    'password',
-    'number',
-    'date',
-    'url',
-    'tel',
-    'time',
-    'datetime-local'
+    return componentMap[props.field.component] ?? null
+})
 
-]))
+/*
+|--------------------------------------------------------------------------
+| Tipos de input soportados
+|--------------------------------------------------------------------------
+*/
 
-const currentComponent = computed(() =>
-    componentMap[props.field.component] ?? null
+const inputTypes = Object.freeze(
+    new Set([
+        'text',
+        'email',
+        'password',
+        'number',
+        'date',
+        'url',
+        'tel',
+        'time',
+        'datetime-local',
+        'month',
+        'week',
+        'search',
+    ]),
 )
 
 const isInput = computed(() =>
-    inputTypes.has(props.field.type)
+    inputTypes.has(props.field.type),
 )
 
-const fieldError = computed(() =>
-    props.errors[props.field.model]?.[0] ?? ''
-)
+/*
+|--------------------------------------------------------------------------
+| Opciones del select
+|--------------------------------------------------------------------------
+|
+| Permite trabajar con:
+|
+| [
+|     {
+|         value: 'night',
+|         label: 'Noche',
+|     }
+| ]
+|
+| y también evita errores si options no existe.
+|
+*/
+
+const normalizedOptions = computed(() => {
+    if (!Array.isArray(props.field.options)) {
+        return []
+    }
+
+    return props.field.options
+        .filter(option =>
+            option !== null &&
+            option !== undefined,
+        )
+        .map(option => {
+
+            if (
+                typeof option === 'object' &&
+                Object.prototype.hasOwnProperty.call(
+                    option,
+                    'value',
+                )
+            ) {
+                return {
+                    value: option.value,
+                    label:
+                        option.label ??
+                        String(option.value),
+                }
+            }
+
+            return {
+                value: option,
+                label: String(option),
+            }
+        })
+})
+
+/*
+|--------------------------------------------------------------------------
+| Errores
+|--------------------------------------------------------------------------
+|
+| Laravel normalmente devuelve:
+|
+| {
+|     work_shift: [
+|         "Debes seleccionar un turno."
+|     ]
+| }
+|
+| Pero también podemos recibir:
+|
+| {
+|     work_shift: "Debes seleccionar un turno."
+| }
+|
+*/
+
+const fieldError = computed(() => {
+
+    const value =
+        props.errors?.[props.field.model]
+
+    if (Array.isArray(value)) {
+        return value[0] ?? ''
+    }
+
+    if (
+        typeof value === 'string' &&
+        value.length > 0
+    ) {
+        return value
+    }
+
+    return ''
+})
 
 const hasError = computed(() =>
-    fieldError.value.length > 0
+    Boolean(fieldError.value),
 )
 
-const columnClass = computed(() =>
-    props.field.cols === 2
-        ? 'col-span-2'
-        : 'col-span-1'
-)
+/*
+|--------------------------------------------------------------------------
+| Columnas
+|--------------------------------------------------------------------------
+*/
+
+const columnClass = computed(() => {
+
+    if (props.field.cols === 2) {
+        return 'col-span-1 md:col-span-2'
+    }
+
+    if (props.field.cols === 3) {
+        return 'col-span-1 md:col-span-3'
+    }
+
+    return 'col-span-1'
+})
 
 </script>
 
@@ -211,29 +365,36 @@ const columnClass = computed(() =>
 }
 
 .required {
+    margin-left: .15rem;
     color: #ef4444;
-}
-
-.checkbox {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    color: #fff;
 }
 
 .input {
     width: 100%;
-    padding: 12px;
+    min-height: 44px;
+    padding: 11px 12px;
     border: 1px solid #1f2937;
     border-radius: 12px;
     background: #0b0f19;
     color: #fff;
-    transition: .2s ease;
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background-color .2s ease;
+}
+
+.input::placeholder {
+    color: #6b7280;
+}
+
+.input:hover {
+    border-color: #374151;
 }
 
 .input:focus {
     outline: none;
     border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgb(59 130 246 / .15);
 }
 
 .input.error {
@@ -241,10 +402,51 @@ const columnClass = computed(() =>
     box-shadow: 0 0 0 2px rgb(239 68 68 / .15);
 }
 
+.select-input {
+    cursor: pointer;
+}
+
+.select-input option {
+    background: #0b0f19;
+    color: #fff;
+}
+
+textarea.input {
+    min-height: auto;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-height: 44px;
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.checkbox-error {
+    color: #fca5a5;
+}
+
+.checkbox-error input {
+    outline: 1px solid #ef4444;
+    outline-offset: 2px;
+}
+
 .error-message {
     margin-top: .5rem;
     font-size: .875rem;
-    color: #ef4444;
+    line-height: 1.4;
+    color: #f87171;
 }
 
 .fallback {
@@ -253,11 +455,6 @@ const columnClass = computed(() =>
     border-radius: 12px;
     background: #450a0a;
     color: #fca5a5;
-}
-
-input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
 }
 
 </style>
