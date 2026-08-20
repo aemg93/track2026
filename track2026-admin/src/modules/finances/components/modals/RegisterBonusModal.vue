@@ -1,53 +1,31 @@
 <template>
-
     <Teleport to="body">
-
         <div
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
         >
-
             <div
                 class="w-full max-w-xl overflow-hidden rounded-3xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 shadow-2xl"
             >
-
-                <!-- HEADER -->
-
-                <div
-                    class="border-b border-gray-800 px-8 py-6"
-                >
-
-                    <p
-                        class="text-xs uppercase tracking-[0.2em] text-gray-500"
-                    >
+                <div class="border-b border-gray-800 px-8 py-6">
+                    <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
                         Finanzas
                     </p>
 
-                    <h2
-                        class="mt-2 text-3xl font-bold text-white"
-                    >
+                    <h2 class="mt-2 text-3xl font-bold text-white">
                         Registrar Bono
                     </h2>
 
-                    <p
-                        class="mt-2 text-gray-400"
-                    >
+                    <p class="mt-2 text-gray-400">
                         Agrega una bonificación para esta modelo.
                     </p>
-
                 </div>
-
-                <!-- BODY -->
 
                 <form
                     class="space-y-6 p-8"
                     @submit.prevent="save"
                 >
-
                     <div>
-
-                        <label
-                            class="text-sm text-gray-300"
-                        >
+                        <label class="text-sm text-gray-300">
                             Fecha
                         </label>
 
@@ -58,13 +36,14 @@
                             class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white"
                         >
 
+                        <p class="mt-1 text-xs text-gray-500">
+                            Selecciona la fecha en la que corresponde registrar el bono.
+                            La hora se registra automáticamente.
+                        </p>
                     </div>
 
                     <div>
-
-                        <label
-                            class="text-sm text-gray-300"
-                        >
+                        <label class="text-sm text-gray-300">
                             Valor del bono (USD)
                         </label>
 
@@ -74,16 +53,12 @@
                             min="0"
                             step="0.01"
                             required
-                            class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white"
+                            class="no-spinner mt-2 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white"
                         >
-
                     </div>
 
                     <div>
-
-                        <label
-                            class="text-sm text-gray-300"
-                        >
+                        <label class="text-sm text-gray-300">
                             Motivo
                         </label>
 
@@ -93,14 +68,10 @@
                             required
                             placeholder="Ejemplo: Excelente desempeño durante la semana."
                             class="mt-2 w-full resize-none rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white"
-                        />
-
+                        ></textarea>
                     </div>
 
-                    <div
-                        class="flex justify-end gap-4 pt-4"
-                    >
-
+                    <div class="flex justify-end gap-4 pt-4">
                         <button
                             type="button"
                             @click="close"
@@ -116,124 +87,98 @@
                         >
                             {{ loading ? 'Guardando...' : 'Guardar Bono' }}
                         </button>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
-
     </Teleport>
-
 </template>
 
 <script setup>
-
 import { ref } from 'vue'
-
 import api from '@/services/api'
 
 const props = defineProps({
-
     performanceId: {
         type: Number,
         required: true,
     },
-
 })
 
 const emit = defineEmits([
-
     'close',
     'saved',
-
 ])
 
 const loading = ref(false)
 
-const today = () => {
+function currentDateLocal() {
+    const now = new Date()
 
-    return new Date()
-        .toISOString()
-        .substring(0, 10)
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
 
+    return `${year}-${month}-${day}`
 }
 
 const form = ref({
-
-    date: today(),
+    date: currentDateLocal(),
     amount: '',
     reason: '',
-
 })
 
 function close() {
-
     emit('close')
-
 }
 
 function reset() {
-
     form.value = {
-
-        date: today(),
+        date: currentDateLocal(),
         amount: '',
         reason: '',
-
     }
-
 }
 
 async function save() {
-
     loading.value = true
 
     try {
-
-        await api.post(
-            '/bonuses',
-            {
-                performance_id: props.performanceId,
-                date: form.value.date,
-                amount: Number(form.value.amount),
-                reason: form.value.reason,
-            }
-        )
+        await api.post('/bonuses', {
+            performance_id: Number(props.performanceId),
+            date: form.value.date,
+            amount: Number(form.value.amount),
+            reason: form.value.reason,
+        })
 
         emit('saved')
-
         reset()
-
         close()
-
     } catch (error) {
-
         console.error(
             'ERROR REGISTERING BONUS',
             error.response?.data ?? error
         )
-
     } finally {
-
         loading.value = false
-
     }
-
 }
-
 </script>
 
 <style scoped>
-
 input:focus,
 textarea:focus {
-
     outline: none;
     border-color: #22c55e;
-
 }
 
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+}
+
+.no-spinner {
+    appearance: textfield;
+}
 </style>

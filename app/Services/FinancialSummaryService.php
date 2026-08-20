@@ -1,26 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Models\Earning;
 use App\Models\Performance;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class FinancialSummaryService
 {
     public function summary(
         Performance $performance
     ): array {
-        $gross = $this->gross($performance);
-        $bonuses = $this->bonuses($performance);
-        $penalties = $this->penalties($performance);
-        $deductions = $this->deductions($performance);
+        $earnings = $this->earnings($performance);
 
         return $this->buildSummary(
-            $performance,
-            $gross,
-            $bonuses,
-            $penalties,
-            $deductions
+            $earnings,
+            $this->bonuses($performance),
+            $this->penalties($performance),
+            $this->deductions($performance)
         );
     }
 
@@ -29,103 +29,120 @@ class FinancialSummaryService
         Carbon $start,
         Carbon $end
     ): array {
-        $gross = round(
-            (float) $performance
-                ->earnings()
-                ->whereBetween(
-                    'earned_at',
-                    [
-                        $start->copy()->startOfDay(),
-                        $end->copy()->endOfDay(),
-                    ]
-                )
-                ->sum('gross_usd'),
-            2
-        );
-
-        $bonuses = round(
-            (float) $performance
-                ->bonuses()
-                ->whereBetween(
-                    'date',
-                    [
-                        $start->toDateString(),
-                        $end->toDateString(),
-                    ]
-                )
-                ->sum('amount'),
-            2
-        );
-
-        $penalties = round(
-            (float) $performance
-                ->penalties()
-                ->whereBetween(
-                    'date',
-                    [
-                        $start->toDateString(),
-                        $end->toDateString(),
-                    ]
-                )
-                ->sum('amount'),
-            2
-        );
-
-        $deductions = round(
-            (float) $performance
-                ->deductions()
-                ->whereBetween(
-                    'date',
-                    [
-                        $start->toDateString(),
-                        $end->toDateString(),
-                    ]
-                )
-                ->sum('amount'),
-            2
+        $earnings = $this->earningsBetween(
+            $performance,
+            $start,
+            $end
         );
 
         return $this->buildSummary(
-            $performance,
-            $gross,
-            $bonuses,
-            $penalties,
-            $deductions
+            $earnings,
+            $this->bonusesBetween(
+                $performance,
+                $start,
+                $end
+            ),
+            $this->penaltiesBetween(
+                $performance,
+                $start,
+                $end
+            ),
+            $this->deductionsBetween(
+                $performance,
+                $start,
+                $end
+            )
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Build Summary
-    |--------------------------------------------------------------------------
-    */
-
     private function buildSummary(
-        Performance $performance,
-        float $gross,
+        Collection $earnings,
         float $bonuses,
         float $penalties,
         float $deductions
     ): array {
-        $net = $this->net(
-            $gross,
-            $bonuses,
-            $penalties,
-            $deductions
+        $gross = round(
+            (float) $earnings->sum(
+                static fn (Earning $earning): float =>
+                    (float) ($earning->gross_usd ?? 0)
+            ),
+            2
         );
 
-        $percentages = $this->percentages($performance);
+        $bonuses = round($bonuses, 2);
+        $penalties = round($penalties, 2);
+        $deductions = round($deductions, 2);
 
-        $shares = $this->shares(
-            $net,
-            $percentages
+        $net = round(
+            $gross
+            + $bonuses
+            - $penalties
+            - $deductions,
+            2
+        );
+
+        $percentages = $this->percentages($earnings);
+
+        $earningModelShare = round(
+            (float) $earnings->sum(
+                static fn (Earning $earning): float =>
+                    (float) ($earning->model_share_usd ?? 0)
+            ),
+            2
+        );
+
+        $earningStudioShare = round(
+            (float) $earnings->sum(
+                static fn (Earning $earning): float =>
+                    (float) ($earning->studio_share_usd ?? 0)
+            ),
+            2
+        );
+
+        $earningNet = round(
+            (float) $earnings->sum(
+                static fn (Earning $earning): float =>
+                    (float) ($earning->net_usd ?? 0)
+            ),
+            2
+        );
+
+        $adjustmentNet = round(
+            $net - $earningNet,
+            2
+        );
+
+        $modelAdjustment = round(
+            $adjustmentNet
+            * ($percentages['model_percentage'] / 100),
+            2
+        );
+
+        $studioAdjustment = round(
+            $adjustmentNet
+            * ($percentages['studio_percentage'] / 100),
+            2
+        );
+
+        $modelShare = round(
+            $earningModelShare + $modelAdjustment,
+            2
+        );
+
+        $studioShare = round(
+            $earningStudioShare + $studioAdjustment,
+            2
         );
 
         return [
             'gross_usd' => $gross,
+
             'bonus_usd' => $bonuses,
+
             'penalty_usd' => $penalties,
+
             'deduction_usd' => $deductions,
+
             'net_usd' => $net,
 
             'model_percentage' =>
@@ -135,44 +152,42 @@ class FinancialSummaryService
                 $percentages['studio_percentage'],
 
             'model_share_usd' =>
-                $shares['model_share_usd'],
+                $modelShare,
 
             'studio_share_usd' =>
-                $shares['studio_share_usd'],
+                $studioShare,
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Gross
-    |--------------------------------------------------------------------------
-    */
-
-    private function gross(
+    private function earnings(
         Performance $performance
-    ): float {
+    ): Collection {
         if ($performance->relationLoaded('earnings')) {
-            return round(
-                (float) $performance
-                    ->earnings
-                    ->sum('gross_usd'),
-                2
-            );
+            return $performance->earnings;
         }
 
-        return round(
-            (float) $performance
-                ->earnings()
-                ->sum('gross_usd'),
-            2
-        );
+        return $performance
+            ->earnings()
+            ->get();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Bonuses
-    |--------------------------------------------------------------------------
-    */
+    private function earningsBetween(
+        Performance $performance,
+        Carbon $start,
+        Carbon $end
+    ): Collection {
+        return $performance
+            ->earnings()
+            ->whereBetween(
+                'earned_at',
+                [
+                    $start,
+                    $end,
+                ]
+            )
+            ->orderBy('earned_at')
+            ->get();
+    }
 
     private function bonuses(
         Performance $performance
@@ -194,11 +209,25 @@ class FinancialSummaryService
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Penalties
-    |--------------------------------------------------------------------------
-    */
+    private function bonusesBetween(
+        Performance $performance,
+        Carbon $start,
+        Carbon $end
+    ): float {
+        return round(
+            (float) $performance
+                ->bonuses()
+                ->whereBetween(
+                    'date',
+                    [
+                        $start->toDateString(),
+                        $end->toDateString(),
+                    ]
+                )
+                ->sum('amount'),
+            2
+        );
+    }
 
     private function penalties(
         Performance $performance
@@ -220,11 +249,25 @@ class FinancialSummaryService
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Deductions
-    |--------------------------------------------------------------------------
-    */
+    private function penaltiesBetween(
+        Performance $performance,
+        Carbon $start,
+        Carbon $end
+    ): float {
+        return round(
+            (float) $performance
+                ->penalties()
+                ->whereBetween(
+                    'date',
+                    [
+                        $start->toDateString(),
+                        $end->toDateString(),
+                    ]
+                )
+                ->sum('amount'),
+            2
+        );
+    }
 
     private function deductions(
         Performance $performance
@@ -246,73 +289,91 @@ class FinancialSummaryService
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Net
-    |--------------------------------------------------------------------------
-    */
-
-    private function net(
-        float $gross,
-        float $bonuses,
-        float $penalties,
-        float $deductions
+    private function deductionsBetween(
+        Performance $performance,
+        Carbon $start,
+        Carbon $end
     ): float {
         return round(
-            $gross
-            + $bonuses
-            - $penalties
-            - $deductions,
+            (float) $performance
+                ->deductions()
+                ->whereBetween(
+                    'date',
+                    [
+                        $start->toDateString(),
+                        $end->toDateString(),
+                    ]
+                )
+                ->sum('amount'),
             2
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Percentages
-    |--------------------------------------------------------------------------
-    */
-
     private function percentages(
-        Performance $performance
+        Collection $earnings
     ): array {
-        $split = $performance->relationLoaded('split')
-            ? $performance->split
-            : $performance->split()->first();
+        if ($earnings->isEmpty()) {
+            return [
+                'model_percentage' => 0.0,
+                'studio_percentage' => 0.0,
+            ];
+        }
+
+        $gross = (float) $earnings->sum(
+            static fn (Earning $earning): float =>
+                (float) ($earning->gross_usd ?? 0)
+        );
+
+        if ($gross <= 0) {
+            $earning = $earnings->first();
+
+            return [
+                'model_percentage' => $this->percentageFromShares(
+                    (float) ($earning->gross_usd ?? 0),
+                    (float) ($earning->model_share_usd ?? 0)
+                ),
+
+                'studio_percentage' => $this->percentageFromShares(
+                    (float) ($earning->gross_usd ?? 0),
+                    (float) ($earning->studio_share_usd ?? 0)
+                ),
+            ];
+        }
+
+        $modelShare = (float) $earnings->sum(
+            static fn (Earning $earning): float =>
+                (float) ($earning->model_share_usd ?? 0)
+        );
+
+        $studioShare = (float) $earnings->sum(
+            static fn (Earning $earning): float =>
+                (float) ($earning->studio_share_usd ?? 0)
+        );
 
         return [
-            'model_percentage' => (float) (
-                $split?->model_percentage ?? 60
+            'model_percentage' => round(
+                ($modelShare / $gross) * 100,
+                2
             ),
 
-            'studio_percentage' => (float) (
-                $split?->studio_percentage ?? 40
+            'studio_percentage' => round(
+                ($studioShare / $gross) * 100,
+                2
             ),
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Shares
-    |--------------------------------------------------------------------------
-    */
+    private function percentageFromShares(
+        float $gross,
+        float $share
+    ): float {
+        if ($gross <= 0) {
+            return 0.0;
+        }
 
-    private function shares(
-        float $net,
-        array $percentages
-    ): array {
-        return [
-            'model_share_usd' => round(
-                $net *
-                ($percentages['model_percentage'] / 100),
-                2
-            ),
-
-            'studio_share_usd' => round(
-                $net *
-                ($percentages['studio_percentage'] / 100),
-                2
-            ),
-        ];
+        return round(
+            ($share / $gross) * 100,
+            2
+        );
     }
 }

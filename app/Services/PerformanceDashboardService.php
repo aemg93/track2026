@@ -12,19 +12,30 @@ class PerformanceDashboardService
 {
     private const PERFORMANCE_RELATIONS = [
         'user:id,name,email',
+
         'platforms:id,name,type,conversion_rate,multiplier',
+
         'earnings',
+
+        'bonuses',
+
+        'penalties',
+
+        'deductions',
+
         'split',
     ];
 
     public function __construct(
         private StatisticsService $statistics,
         private FinancialSummaryService $financialSummary,
-    ) {}
+    ) {
+    }
 
     public function data(User $user): array
     {
         return match (true) {
+
             $user->hasRole('Super Admin') =>
                 $this->buildDashboard(
                     Performance::query()

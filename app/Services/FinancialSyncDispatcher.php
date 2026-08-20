@@ -10,7 +10,6 @@ class FinancialSyncDispatcher
     public function dispatchPerformance(
         Performance $performance
     ): void {
-
         $this->dispatchPerformanceId(
             $performance->id
         );
@@ -19,7 +18,6 @@ class FinancialSyncDispatcher
     public function dispatchPerformanceId(
         int $performanceId
     ): void {
-
         SyncEarningsJob::dispatch(
             $performanceId
         );

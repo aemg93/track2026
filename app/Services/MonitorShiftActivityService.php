@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Earning;
@@ -11,9 +13,6 @@ class MonitorShiftActivityService
     public function activity(
         MonitorShift $monitorShift
     ): array {
-        $from = $monitorShift->started_at;
-        $to = $monitorShift->ended_at ?? now();
-
         $earnings = Earning::query()
             ->with([
                 'performance',
@@ -23,162 +22,140 @@ class MonitorShiftActivityService
                 'monitor_shift_id',
                 $monitorShift->id
             )
-            ->whereBetween(
-                'earned_at',
-                [$from, $to]
-            )
             ->whereHas(
                 'performance',
-                fn ($query) =>
-                    $query->where(
-                        'studio_id',
-                        $monitorShift->studio_id
-                    )
+                fn ($query) => $query->where(
+                    'studio_id',
+                    $monitorShift->studio_id
+                )
             )
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->get();
 
         return [
-            'summary' => [
-                'total_usd' =>
-                    (float) $earnings->sum('gross_usd'),
-
-                'total_tokens' =>
-                    (float) $earnings
-                        ->where(
-                            'original_currency',
-                            'tokens'
-                        )
-                        ->sum('original_amount'),
+            'monitor_shift' => [
+                'id' => $monitorShift->id,
+                'studio_id' => $monitorShift->studio_id,
+                'monitor_id' => $monitorShift->monitor_id,
+                'started_at' => $monitorShift->started_at,
+                'ended_at' => $monitorShift->ended_at,
+                'status' => $monitorShift->status?->value
+                    ?? $monitorShift->status,
             ],
-
-            'models' =>
-                $this->groupByWorkShift(
-                    $earnings
-                ),
-
-            'platforms' =>
-                $this->groupByPlatforms(
-                    $earnings
-                ),
-
-            'timeline' =>
-                $this->buildTimeline(
-                    $earnings
-                ),
+            'summary' => $this->buildTotals($earnings),
+            'models' => $this->groupModels($earnings),
+            'platforms' => $this->groupByPlatforms($earnings),
+            'timeline' => $this->buildTimeline($earnings),
         ];
     }
 
-    /**
-     * Agrupa las ganancias por el turno asignado
-     * a cada modelo y genera una fila financiera
-     * por modelo.
-     *
-     * Performance.work_shift determina el bloque
-     * donde aparece la modelo.
-     *
-     * earned_at NO determina el turno de la modelo.
-     */
-    private function groupByWorkShift(
+    public function summary(int $studioId): array
+    {
+        $earnings = Earning::query()
+            ->with([
+                'performance',
+                'platform',
+            ])
+            ->whereHas(
+                'performance',
+                fn ($query) => $query->where(
+                    'studio_id',
+                    $studioId
+                )
+            )
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        return [
+            'summary' => $this->buildTotals($earnings),
+            'models' => $this->groupModels($earnings),
+            'platforms' => $this->groupByPlatforms($earnings),
+            'timeline' => $this->buildTimeline($earnings),
+        ];
+    }
+
+    private function buildTotals(
         Collection $earnings
     ): array {
-        $groups = [
-            'morning' => [],
-            'afternoon' => [],
-            'night' => [],
+        return [
+            'total_usd' => round(
+                (float) $earnings->sum('gross_usd'),
+                2
+            ),
+            'total_tokens' => $this->totalTokens($earnings),
         ];
-
-        $earnings
-            ->groupBy(
-                fn ($earning) =>
-                    $earning
-                        ->performance
-                        ?->work_shift
-                        ?->value
-            )
-            ->each(
-                function (
-                    Collection $items,
-                    ?string $workShift
-                ) use (&$groups) {
-
-                    if (
-                        ! $workShift ||
-                        ! array_key_exists(
-                            $workShift,
-                            $groups
-                        )
-                    ) {
-                        return;
-                    }
-
-                    $items
-                        ->groupBy('performance_id')
-                        ->each(
-                            function (
-                                Collection $modelEarnings
-                            ) use (
-                                &$groups,
-                                $workShift
-                            ) {
-
-                                $performance =
-                                    $modelEarnings
-                                        ->first()
-                                        ->performance;
-
-                                if (! $performance) {
-                                    return;
-                                }
-
-                                $platforms =
-                                    $this->groupModelPlatforms(
-                                        $modelEarnings
-                                    );
-
-                                $groups[$workShift][] = [
-                                    'performance_id' =>
-                                        $performance->id,
-
-                                    'model' =>
-                                        $performance->name,
-
-                                    'nickname' =>
-                                        $performance->nickname,
-
-                                    'work_shift' =>
-                                        $workShift,
-
-                                    'platforms' =>
-                                        $platforms,
-
-                                    'total_tokens' =>
-                                        (float) $modelEarnings
-                                            ->where(
-                                                'original_currency',
-                                                'tokens'
-                                            )
-                                            ->sum(
-                                                'original_amount'
-                                            ),
-
-                                    'total_usd' =>
-                                        (float) $modelEarnings
-                                            ->sum(
-                                                'gross_usd'
-                                            ),
-                                ];
-                            }
-                        );
-                }
-            );
-
-        return $groups;
     }
 
-    /**
-     * Agrupa la producción de una modelo
-     * por plataforma.
-     */
+    private function groupModels(
+        Collection $earnings
+    ): array {
+        return $earnings
+            ->groupBy('performance_id')
+            ->map(
+                function (
+                    Collection $items
+                ): ?array {
+                    $performance =
+                        $items
+                            ->first()
+                            ?->performance;
+
+                    if ($performance === null) {
+                        return null;
+                    }
+
+                    return [
+                        'performance_id' =>
+                            $performance->id,
+
+                        'model' =>
+                            $performance->name,
+
+                        'nickname' =>
+                            $performance->nickname,
+
+                        'work_shift' =>
+                            $performance
+                                ->work_shift
+                                ?->value,
+
+                        'platforms' =>
+                            $this->groupModelPlatforms(
+                                $items
+                            ),
+
+                        'tokens' =>
+                            $this->totalTokens($items),
+
+                        'total_tokens' =>
+                            $this->totalTokens($items),
+
+                        'usd' =>
+                            round(
+                                (float) $items->sum(
+                                    'gross_usd'
+                                ),
+                                2
+                            ),
+
+                        'total_usd' =>
+                            round(
+                                (float) $items->sum(
+                                    'gross_usd'
+                                ),
+                                2
+                            ),
+                    ];
+                }
+            )
+            ->filter()
+            ->sortByDesc('tokens')
+            ->values()
+            ->toArray();
+    }
+
     private function groupModelPlatforms(
         Collection $earnings
     ): array {
@@ -187,11 +164,11 @@ class MonitorShiftActivityService
             ->map(
                 function (
                     Collection $items
-                ) {
+                ): array {
                     $platform =
                         $items
                             ->first()
-                            ->platform;
+                            ?->platform;
 
                     return [
                         'platform_id' =>
@@ -204,30 +181,23 @@ class MonitorShiftActivityService
                             $platform?->slug,
 
                         'tokens' =>
-                            (float) $items
-                                ->where(
-                                    'original_currency',
-                                    'tokens'
-                                )
-                                ->sum(
-                                    'original_amount'
-                                ),
+                            $this->totalTokens($items),
 
                         'usd' =>
-                            (float) $items
-                                ->sum(
+                            round(
+                                (float) $items->sum(
                                     'gross_usd'
                                 ),
+                                2
+                            ),
                     ];
                 }
             )
+            ->sortByDesc('tokens')
             ->values()
             ->toArray();
     }
 
-    /**
-     * Agrupa las ganancias totales por plataforma.
-     */
     private function groupByPlatforms(
         Collection $earnings
     ): array {
@@ -236,11 +206,11 @@ class MonitorShiftActivityService
             ->map(
                 function (
                     Collection $items
-                ) {
+                ): array {
                     $platform =
                         $items
                             ->first()
-                            ->platform;
+                            ?->platform;
 
                     return [
                         'platform_id' =>
@@ -252,46 +222,51 @@ class MonitorShiftActivityService
                         'slug' =>
                             $platform?->slug,
 
-                        'usd' =>
-                            (float) $items
-                                ->sum('gross_usd'),
-
                         'tokens' =>
-                            (float) $items
-                                ->where(
-                                    'original_currency',
-                                    'tokens'
-                                )
-                                ->sum(
-                                    'original_amount'
+                            $this->totalTokens($items),
+
+                        'usd' =>
+                            round(
+                                (float) $items->sum(
+                                    'gross_usd'
                                 ),
+                                2
+                            ),
                     ];
                 }
             )
-            ->sortBy('platform_id')
+            ->sortByDesc('tokens')
             ->values()
             ->toArray();
     }
 
-    /**
-     * Genera la línea de tiempo de las ganancias.
-     */
     private function buildTimeline(
         Collection $earnings
     ): array {
         return $earnings
             ->map(
-                fn ($earning) => [
+                fn (Earning $earning): array => [
                     'id' =>
                         $earning->id,
 
                     'type' =>
                         'earning',
 
+                    'performance_id' =>
+                        $earning->performance_id,
+
                     'model' =>
                         $earning
                             ->performance
                             ?->name,
+
+                    'nickname' =>
+                        $earning
+                            ->performance
+                            ?->nickname,
+
+                    'platform_id' =>
+                        $earning->platform_id,
 
                     'platform' =>
                         $earning
@@ -299,14 +274,25 @@ class MonitorShiftActivityService
                             ?->name,
 
                     'amount' =>
-                        (float) $earning->gross_usd,
+                        round(
+                            (float) (
+                                $earning->gross_usd ?? 0
+                            ),
+                            2
+                        ),
 
                     'tokens' =>
-                        $earning->original_currency === 'tokens'
-                            ? (float) $earning->original_amount
-                            : 0,
+                        round(
+                            (float) (
+                                $earning->real_tokens ?? 0
+                            ),
+                            0
+                        ),
 
-                    'date' =>
+                    'created_at' =>
+                        $earning->created_at,
+
+                    'earned_at' =>
                         $earning->earned_at,
 
                     'work_shift' =>
@@ -314,9 +300,30 @@ class MonitorShiftActivityService
                             ->performance
                             ?->work_shift
                             ?->value,
+
+                    'monitor_shift_id' =>
+                        $earning->monitor_shift_id,
                 ]
+            )
+            ->sortByDesc(
+                fn (array $item) =>
+                    $item['created_at']
             )
             ->values()
             ->toArray();
+    }
+
+    private function totalTokens(
+        Collection $earnings
+    ): float {
+        return round(
+            (float) $earnings->sum(
+                fn (Earning $earning): float =>
+                    (float) (
+                        $earning->real_tokens ?? 0
+                    )
+            ),
+            0
+        );
     }
 }

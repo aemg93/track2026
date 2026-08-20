@@ -12,14 +12,21 @@ return new class extends Migration
 
             $table->id();
 
-            $table->foreignId('performance_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('performance_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-            $table->string('category'); 
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('category');
             $table->string('reason');
 
             $table->decimal('amount', 12, 2);
-            $table->date('date');
+
+            // Fecha y hora exacta del descuento.
+            $table->dateTime('date');
 
             $table->boolean('is_installment')->default(false);
             $table->integer('installments')->nullable();

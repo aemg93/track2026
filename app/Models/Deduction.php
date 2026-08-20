@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Deduction extends Model
 {
@@ -18,20 +21,28 @@ class Deduction extends Model
         'installment_value',
     ];
 
-    protected $casts = [
-        'amount' => 'float',
-        'installment_value' => 'float',
-        'is_installment' => 'boolean',
-        'date' => 'date',
-    ];
-
-    public function performance()
+    protected function casts(): array
     {
-        return $this->belongsTo(Performance::class);
+        return [
+            'amount' => 'float',
+            'date' => 'datetime',
+            'is_installment' => 'boolean',
+            'installments' => 'integer',
+            'installment_value' => 'float',
+        ];
     }
 
-    public function user()
+    public function performance(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            Performance::class
+        );
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class
+        );
     }
 }

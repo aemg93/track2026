@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Performance;
@@ -8,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 
 class StatisticsService
 {
-    private const CACHE_VERSION = 'v6';
+    private const CACHE_VERSION = 'v7';
 
     public function __construct(
         private FinancialSummaryService $financialSummary
@@ -18,37 +20,36 @@ class StatisticsService
     public function performanceStats(
         Performance $performance
     ): array {
+        $now = Carbon::now();
 
         return [
-
             'today' => $this->cached(
                 $performance,
                 'today',
-                Carbon::today(),
-                Carbon::today()
+                $now->copy()->startOfDay(),
+                $now->copy()->endOfDay()
             ),
 
             'weekly' => $this->cached(
                 $performance,
                 'weekly',
-                Carbon::now()->startOfWeek(),
-                Carbon::now()->endOfWeek()
+                $now->copy()->startOfWeek(),
+                $now->copy()->endOfWeek()
             ),
 
             'biweekly' => $this->cached(
                 $performance,
                 'biweekly',
-                Carbon::now()->subDays(14),
-                Carbon::now()
+                $now->copy()->subDays(13)->startOfDay(),
+                $now->copy()->endOfDay()
             ),
 
             'monthly' => $this->cached(
                 $performance,
                 'monthly',
-                Carbon::now()->startOfMonth(),
-                Carbon::now()->endOfMonth()
+                $now->copy()->startOfMonth(),
+                $now->copy()->endOfMonth()
             ),
-
         ];
     }
 
@@ -58,23 +59,17 @@ class StatisticsService
         Carbon $start,
         Carbon $end
     ): array {
-
         return Cache::remember(
-
             $this->cacheKey(
                 $performance->id,
                 $range
             ),
-
             now()->addMinutes(10),
-
-            fn () => $this->financialSummary
-                ->summaryBetween(
-                    $performance,
-                    $start,
-                    $end
-                )
-
+            fn (): array => $this->financialSummary->summaryBetween(
+                $performance,
+                $start,
+                $end
+            )
         );
     }
 
@@ -82,7 +77,6 @@ class StatisticsService
         int $performanceId,
         string $range
     ): string {
-
         return sprintf(
             'stats:%s:performance:%d:%s',
             self::CACHE_VERSION,

@@ -29,42 +29,33 @@ class EarningService
                 'monitorShift.monitor:id,name,email',
             ]);
 
-
         if ($user->hasRole('Super Admin')) {
             return $this->paginate($query);
         }
-
 
         if (
             $user->hasRole('Admin') ||
             $user->hasRole('Monitor')
         ) {
-
             $query->whereHas(
                 'performance',
                 function ($q) use ($user) {
-
                     $q->where(
                         'studio_id',
                         $user->studio_id
                     );
-
                 }
             );
         }
 
-
         if ($user->hasRole('Performance')) {
-
             $query->whereHas(
                 'performance',
                 function ($q) use ($user) {
-
                     $q->where(
                         'user_id',
                         $user->id
                     );
-
                 }
             );
         }
@@ -72,29 +63,102 @@ class EarningService
         return $this->paginate($query);
     }
 
-    public function create(array $data): Earning
-    {
+    public function create(
+        array $data,
+        ?User $user = null
+    ): Earning {
+        /** @var User|null $user */
+        $user ??= Auth::user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        /*
+         * Una Performance nunca puede registrar
+         * directamente sus propios earnings.
+         */
+        if ($user->hasRole('Performance')) {
+            abort(
+                403,
+                'Not allowed to create earnings'
+            );
+        }
+
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
 
+        /*
+         * Admin y Monitor solamente pueden operar
+         * dentro de su studio.
+         */
+        if (
+            (
+                $user->hasRole('Admin') ||
+                $user->hasRole('Monitor')
+            )
+            &&
+            ! $user->canAccessStudio(
+                $performance->studio_id
+            )
+        ) {
+            abort(
+                403,
+                'Outside your studio scope'
+            );
+        }
 
         $platform = Platform::findOrFail(
             $data['platform_id']
         );
 
-        $monitorShift = MonitorShift::query()
-            ->where(
-                'studio_id',
-                $performance->studio_id
-            )
-            ->where(
-                'status',
-                MonitorShiftStatus::Active
-            )
-            ->latest('started_at')
-            ->first();
+        /*
+         * Si no llega turno explícito, buscamos
+         * el turno activo del mismo studio.
+         */
+        $monitorShiftId =
+            $data['monitor_shift_id'] ?? null;
 
+        if ($monitorShiftId !== null) {
+            $monitorShift = MonitorShift::findOrFail(
+                $monitorShiftId
+            );
+
+            /*
+             * El turno debe pertenecer al mismo studio
+             * de la Performance.
+             */
+            if (
+                (int) $monitorShift->studio_id !==
+                (int) $performance->studio_id
+            ) {
+                abort(
+                    403,
+                    'Monitor shift outside performance studio'
+                );
+            }
+        } else {
+            $monitorShift = MonitorShift::query()
+                ->where(
+                    'studio_id',
+                    $performance->studio_id
+                )
+                ->where(
+                    'status',
+                    MonitorShiftStatus::Active
+                )
+                ->latest('started_at')
+                ->first();
+
+            $monitorShiftId =
+                $monitorShift?->id;
+        }
+
+        /*
+         * RevenueService es la única fuente de verdad
+         * para convertir el ingreso de la plataforma.
+         */
         $revenue = $this->revenueService->calculate(
             $performance,
             $platform,
@@ -102,7 +166,6 @@ class EarningService
         );
 
         $earning = Earning::create([
-
             'performance_id' =>
                 $performance->id,
 
@@ -110,14 +173,13 @@ class EarningService
                 $platform->id,
 
             'monitor_shift_id' =>
-                $monitorShift?->id,
+                $monitorShiftId,
 
             'user_id' =>
-                $data['user_id'] ?? Auth::id(),
+                $user->id,
 
             'earned_at' =>
-                now(),
-
+                $data['earned_at'] ?? now(),
 
             'original_amount' =>
                 $revenue['original_amount'],
@@ -137,6 +199,10 @@ class EarningService
             'gross_usd' =>
                 $revenue['gross_usd'],
 
+            /*
+             * Los ajustes pertenecen al nivel Performance.
+             * No se duplican dentro de cada earning.
+             */
             'bonus_usd' =>
                 0,
 
@@ -146,9 +212,11 @@ class EarningService
             'deduction_usd' =>
                 0,
 
-
             'net_usd' =>
-                $revenue['net_usd'],
+                round(
+                    (float) $revenue['gross_usd'],
+                    2
+                ),
 
             'model_percentage' =>
                 $revenue['model_percentage'],
@@ -157,17 +225,30 @@ class EarningService
                 $revenue['studio_percentage'],
 
             'model_share_usd' =>
-                $revenue['model_share_usd'],
+                round(
+                    (float) $revenue['gross_usd'] *
+                    (
+                        (float) $revenue['model_percentage']
+                        / 100
+                    ),
+                    2
+                ),
 
             'studio_share_usd' =>
-                $revenue['studio_share_usd'],
+                round(
+                    (float) $revenue['gross_usd'] *
+                    (
+                        (float) $revenue['studio_percentage']
+                        / 100
+                    ),
+                    2
+                ),
 
             'status' =>
                 $data['status'] ?? 'draft',
 
             'paid_at' =>
                 $data['paid_at'] ?? null,
-
         ]);
 
         return $this->syncEarning(
@@ -175,83 +256,59 @@ class EarningService
         );
     }
 
+    /**
+     * Sincroniza únicamente los valores propios
+     * del earning.
+     *
+     * Bonos, penalizaciones y deducciones pertenecen
+     * al resumen financiero de la Performance.
+     */
     public function syncEarning(
         Earning $earning
     ): Earning {
-
         $earning->loadMissing([
             'performance',
             'platform',
             'user',
         ]);
 
-        $earning->bonus_usd =
-            $this->sumAdjustments(
-                $earning->performance->bonuses(),
-                $earning
-            );
+        $earning->bonus_usd = 0;
 
-        $earning->penalty_usd =
-            $this->sumAdjustments(
-                $earning->performance->penalties(),
-                $earning
-            );
+        $earning->penalty_usd = 0;
 
-        $earning->deduction_usd =
-            $this->sumAdjustments(
-                $earning->performance->deductions(),
-                $earning
-            );
+        $earning->deduction_usd = 0;
 
-        $earning->net_usd =
-            round(
-                $earning->gross_usd
-                + $earning->bonus_usd
-                - $earning->penalty_usd
-                - $earning->deduction_usd,
-                2
-            );
+        $earning->net_usd = round(
+            (float) $earning->gross_usd,
+            2
+        );
 
-        $earning->model_share_usd =
-            round(
-                $earning->net_usd *
-                ($earning->model_percentage / 100),
-                2
-            );
+        $earning->model_share_usd = round(
+            $earning->net_usd *
+            (
+                (float) $earning->model_percentage
+                / 100
+            ),
+            2
+        );
 
-        $earning->studio_share_usd =
-            round(
-                $earning->net_usd *
-                ($earning->studio_percentage / 100),
-                2
-            );
+        $earning->studio_share_usd = round(
+            $earning->net_usd *
+            (
+                (float) $earning->studio_percentage
+                / 100
+            ),
+            2
+        );
 
         $earning->save();
 
-
         return $earning;
-    }
-
-    private function sumAdjustments(
-        $relation,
-        Earning $earning
-    ): float {
-
-        return round(
-            (float) $relation
-                ->whereDate(
-                    'date',
-                    $earning->earned_at
-                )
-                ->sum('amount'),
-            2
-        );
     }
 
     private function paginate(
         Builder $query
     ): LengthAwarePaginator {
-
         return $query
             ->orderByDesc('earned_at')
             ->paginate(25);

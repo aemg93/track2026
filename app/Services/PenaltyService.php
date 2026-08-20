@@ -12,31 +12,26 @@ class PenaltyService
     public function __construct(
         private RankingService $rankingService,
         private AuditService $auditService,
-        private FinancialSynchronizationService $financialSynchronizationService
+        private FinancialSyncDispatcher $financialSyncDispatcher
     ) {
     }
-
 
     public function create(array $data): Penalty
     {
         /** @var User|null $user */
         $user = Auth::user();
 
-
         if (! $user) {
             abort(401);
         }
-
 
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
 
-
         if (! $user->can('create', Penalty::class)) {
             abort(403);
         }
-
 
         if (
             $user->isPerformance() ||
@@ -44,7 +39,6 @@ class PenaltyService
         ) {
             abort(403);
         }
-
 
         if (
             $user->isAdmin() &&
@@ -58,13 +52,10 @@ class PenaltyService
             );
         }
 
-
         $penalty = Penalty::create([
-
             'performance_id' =>
                 $performance->id,
 
-            // Usuario que registra la penalización
             'user_id' =>
                 $user->id,
 
@@ -76,28 +67,36 @@ class PenaltyService
 
             'date' =>
                 $data['date'],
-
         ]);
 
+        /*
+         * La penalización modifica el resultado financiero
+         * de la Performance.
+         *
+         * Se dispara la sincronización asíncrona para
+         * actualizar los earnings y limpiar estadísticas.
+         */
+        $this->financialSyncDispatcher
+            ->dispatchPerformance(
+                $performance
+            );
 
+        /*
+         * La penalización también afecta el ranking.
+         */
         $this->rankingService
             ->recalculate(
                 $performance->id
             );
 
-
-        $this->financialSynchronizationService
-            ->synchronizePerformance(
-                $performance
-            );
-
-
+        /*
+         * Registrar la operación en auditoría.
+         */
         $this->auditService
             ->log(
                 $penalty,
                 'created'
             );
-
 
         return $penalty;
     }

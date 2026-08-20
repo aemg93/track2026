@@ -353,7 +353,7 @@ textarea:focus{
 
     outline:none;
 
-    border-color:#f59e0b;
+    border-color:#fc0505;
 
 }
 

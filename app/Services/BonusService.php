@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Bonus;
@@ -12,10 +14,9 @@ class BonusService
     public function __construct(
         private RankingService $rankingService,
         private AuditService $auditService,
-        private FinancialSynchronizationService $financialSynchronizationService
+        private FinancialSyncDispatcher $financialSyncDispatcher
     ) {
     }
-
 
     public function create(array $data): Bonus
     {
@@ -26,16 +27,13 @@ class BonusService
             abort(401);
         }
 
-
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
 
-
         if (! $user->can('create', Bonus::class)) {
             abort(403);
         }
-
 
         if (
             $user->isPerformance() ||
@@ -43,7 +41,6 @@ class BonusService
         ) {
             abort(403);
         }
-
 
         if (
             $user->isAdmin() &&
@@ -57,46 +54,24 @@ class BonusService
             );
         }
 
-
         $bonus = Bonus::create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'reason' => $data['reason'],
+            'amount' => $data['amount'],
 
-            'performance_id' =>
-                $performance->id,
-
-            // Usuario que REGISTRA el bono
-            'user_id' =>
-                $user->id,
-
-            'reason' =>
-                $data['reason'],
-
-            'amount' =>
-                $data['amount'],
-
-            'date' =>
-                $data['date'],
-
+            // Hora real del servidor.
+            'date' => now(),
         ]);
 
+        $this->financialSyncDispatcher
+            ->dispatchPerformance($performance);
 
         $this->rankingService
-            ->recalculate(
-                $performance->id
-            );
-
-
-        $this->financialSynchronizationService
-            ->synchronizePerformance(
-                $performance
-            );
-
+            ->recalculate($performance->id);
 
         $this->auditService
-            ->log(
-                $bonus,
-                'created'
-            );
-
+            ->log($bonus, 'created');
 
         return $bonus;
     }

@@ -28,12 +28,11 @@ class DatabaseSeeder extends Seeder
 
             PerformanceUserSeeder::class,
 
+            PayrollEarningsSeeder::class,
+
             // PenaltiesSeeder::class,
-
             // BonusesSeeder::class,
-
             // EarningsSeeder::class,
-
         ]);
     }
 }

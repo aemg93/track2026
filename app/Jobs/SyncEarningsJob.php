@@ -13,19 +13,23 @@ class SyncEarningsJob implements ShouldQueue
 
     public function __construct(
         public int $performanceId
-    ) {}
+    ) {
+    }
 
     public function handle(
         FinancialSynchronizationService $financialSynchronizationService
     ): void {
+        $performance = Performance::find(
+            $this->performanceId
+        );
 
-        $performance = Performance::find($this->performanceId);
-
-        if (!$performance) {
+        if (! $performance) {
             return;
         }
 
         $financialSynchronizationService
-            ->synchronizePerformance($performance);
+            ->synchronizePerformance(
+                $performance
+            );
     }
 }

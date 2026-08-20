@@ -4,169 +4,232 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Deduction;
-use App\Services\FinancialSynchronizationService;
+use App\Models\Performance;
+use App\Services\FinancialSyncDispatcher;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DeductionController extends Controller
 {
     public function __construct(
-        private FinancialSynchronizationService $financialSynchronizationService
-    ) {}
+        private FinancialSyncDispatcher $financialSyncDispatcher
+    ) {
+    }
 
-    public function index(Request $request)
-    {
+    public function index(
+        Request $request
+    ): JsonResponse {
         $user = $request->user();
 
-        $query = Deduction::with('performance');
+        $query = Deduction::query()
+            ->with([
+                'performance:id,studio_id,user_id,first_name,last_name,nickname',
+            ]);
 
-
-        if ($user->hasRole('Performance')) {
-
-            $query->where(
-                'user_id',
-                $user->id
-            );
-
-        }
-
-
-        if ($user->hasRole('Admin')) {
-
+        if ($user->hasRole('Super Admin')) {
+            // Acceso global.
+        } elseif (
+            $user->hasRole('Admin') ||
+            $user->hasRole('Monitor')
+        ) {
             $query->whereHas(
                 'performance',
-                function ($q) use ($user) {
-
+                function ($q) use ($user): void {
                     $q->where(
                         'studio_id',
                         $user->studio_id
                     );
-
                 }
             );
-
+        } elseif ($user->hasRole('Performance')) {
+            $query->whereHas(
+                'performance',
+                function ($q) use ($user): void {
+                    $q->where(
+                        'user_id',
+                        $user->id
+                    );
+                }
+            );
+        } else {
+            $query->whereRaw('1 = 0');
         }
 
-
         return response()->json([
+            'success' => true,
 
             'data' => $query
-                ->latest()
+                ->latest('date')
                 ->get()
-                ->map(function ($deduction) {
+                ->map(
+                    function (Deduction $deduction): array {
+                        return [
+                            'id' =>
+                                $deduction->id,
 
-                    return [
+                            'type' =>
+                                'deduction',
 
-                        'id' => $deduction->id,
+                            'performance' => [
+                                'id' =>
+                                    $deduction
+                                        ->performance
+                                        ?->id,
 
-                        'type' => 'deduction',
+                                'name' =>
+                                    $deduction
+                                        ->performance
+                                        ?->nickname,
+                            ],
 
-                        'performance' => [
+                            'category' =>
+                                $deduction->category,
 
-                            'id' => $deduction->performance?->id,
+                            'reason' =>
+                                $deduction->reason,
 
-                            'name' =>
-                                $deduction->performance?->nickname
+                            'amount' =>
+                                (float) $deduction->amount,
 
-                        ],
+                            'date' =>
+                                $deduction->date,
 
-                        'category' =>
-                            $deduction->category,
+                            'is_installment' =>
+                                (bool) $deduction->is_installment,
 
-                        'reason' =>
-                            $deduction->reason,
+                            'installments' =>
+                                $deduction->installments,
 
-                        'amount' =>
-                            (float) $deduction->amount,
-
-                        'date' =>
-                            $deduction->date,
-
-                    ];
-
-                })
-
+                            'installment_value' =>
+                                $deduction->installment_value !== null
+                                    ? (float) $deduction->installment_value
+                                    : null,
+                        ];
+                    }
+                ),
         ]);
-
     }
 
-    public function store(Request $request)
-    {
+    public function store(
+        Request $request
+    ): JsonResponse {
+        $user = $request->user();
 
         $data = $request->validate([
-
             'performance_id' => [
                 'required',
-                'exists:performances,id'
+                'exists:performances,id',
             ],
 
             'category' => [
                 'required',
                 'string',
-                'max:100'
+                'max:100',
             ],
 
             'reason' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
 
             'amount' => [
                 'required',
                 'numeric',
-                'min:0'
+                'min:0',
             ],
 
             'date' => [
                 'required',
-                'date'
+                'date',
             ],
-
         ]);
 
+        /*
+         * Performance y Monitor no pueden registrar
+         * deducciones.
+         */
+        if (
+            $user->hasRole('Performance') ||
+            $user->hasRole('Monitor')
+        ) {
+            abort(
+                403,
+                'Not allowed to create deductions'
+            );
+        }
 
-        $user = $request->user();
+        $performance = Performance::findOrFail(
+            $data['performance_id']
+        );
 
+        /*
+         * El Admin solamente puede operar dentro
+         * de su studio.
+         */
+        if (
+            $user->hasRole('Admin') &&
+            ! $user->canAccessStudio(
+                $performance->studio_id
+            )
+        ) {
+            abort(
+                403,
+                'Outside your studio scope'
+            );
+        }
 
+        /*
+         * El usuario que registra la deducción.
+         */
         $data['user_id'] = $user->id;
 
-
-        if ($data['amount'] > 100000) {
-
+        /*
+         * Por ahora conservamos la lógica existente
+         * de cuotas.
+         */
+        if ((float) $data['amount'] > 100000) {
             $installments = 3;
 
             $data['is_installment'] = true;
 
-            $data['installments'] = $installments;
+            $data['installments'] =
+                $installments;
 
             $data['installment_value'] =
                 round(
-                    $data['amount'] / $installments,
+                    (float) $data['amount'] /
+                    $installments,
                     2
                 );
-
         } else {
-
             $data['is_installment'] = false;
-
+            $data['installments'] = null;
+            $data['installment_value'] = null;
         }
 
+        $deduction = Deduction::create(
+            $data
+        );
 
-        $deduction = Deduction::create($data);
-
-        $this->financialSynchronizationService
-            ->synchronizePerformance(
-                $deduction->performance
+        /*
+         * La deducción modifica el resumen financiero
+         * de la Performance.
+         *
+         * La sincronización se ejecuta mediante Job.
+         */
+        $this->financialSyncDispatcher
+            ->dispatchPerformance(
+                $performance
             );
 
-
         return response()->json([
+            'success' => true,
 
             'message' =>
                 'Deduction created successfully',
 
             'data' => [
-
                 'id' =>
                     $deduction->id,
 
@@ -185,9 +248,17 @@ class DeductionController extends Controller
                 'date' =>
                     $deduction->date,
 
-            ]
+                'is_installment' =>
+                    (bool) $deduction->is_installment,
 
+                'installments' =>
+                    $deduction->installments,
+
+                'installment_value' =>
+                    $deduction->installment_value !== null
+                        ? (float) $deduction->installment_value
+                        : null,
+            ],
         ], 201);
-
     }
 }

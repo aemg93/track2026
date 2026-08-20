@@ -1,19 +1,39 @@
 import {
   computed,
+  unref,
 } from 'vue'
 
 export function useShiftEarningBreakdown(
   shift,
 ) {
+  const currentShift = computed(
+    () =>
+      unref(shift) ?? null
+  )
+
+  const activity = computed(
+    () =>
+      currentShift.value?.activity ?? {}
+  )
 
   const financialSummary = computed(
-    () =>
-      shift.value?.activity?.financial_summary ?? {}
+    () => {
+      const financial =
+        activity.value.financial_summary
+
+      if (
+        financial &&
+        typeof financial === 'object'
+      ) {
+        return financial
+      }
+
+      return {}
+    }
   )
 
   const platformEarnings = computed(
     () => {
-
       const platforms =
         financialSummary.value.platforms ?? []
 
@@ -24,62 +44,49 @@ export function useShiftEarningBreakdown(
       const grouped = {}
 
       platforms.forEach(
-        platform => {
-
+        (platform) => {
           const name =
             platform.platform_name ??
+            platform.platform ??
             'Sin plataforma'
 
           if (!grouped[name]) {
-
             grouped[name] = {
-
               name,
-
               usd: 0,
-
             }
-
           }
 
           grouped[name].usd += Number(
-            platform.usd ?? 0
+            platform.gross_usd ?? 0
           )
-
         }
       )
 
       return Object.values(grouped)
         .filter(
-          platform =>
+          (platform) =>
             platform.usd > 0
         )
         .sort(
           (a, b) =>
             b.usd - a.usd
         )
-
     }
   )
 
   const totalUsd = computed(
     () =>
-      platformEarnings.value.reduce(
-        (
-          total,
-          platform,
-        ) =>
-          total + platform.usd,
-        0
+      Number(
+        financialSummary.value.gross_usd ?? 0
       )
   )
 
   return {
-
+    currentShift,
+    activity,
+    financialSummary,
     platformEarnings,
-
     totalUsd,
-
   }
-
 }

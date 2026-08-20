@@ -11,20 +11,15 @@ class ShiftReportService
         private ShiftFinancialSummaryService $financialSummaryService,
     ) {}
 
-
-
     public function generate(
         Shift $shift
     ): array {
-
         $shift->load([
             'performance.platforms',
             'studio',
         ]);
 
-
         return [
-
             'shift' => [
                 'id' =>
                     $shift->id,
@@ -51,75 +46,47 @@ class ShiftReportService
                     $shift->studioTime(),
             ],
 
-
             'performance' =>
-                $this->performance(
-                    $shift
-                ),
-
+                $this->performance($shift),
 
             'studio' =>
-                $shift->studio
-                    ? [
-                        'id' =>
-                            $shift->studio->id,
-
-                        'name' =>
-                            $shift->studio->name,
-                    ]
-                    : null,
-
+                $this->studio($shift),
 
             'financial' =>
                 $this->financialSummaryService
                     ->summary($shift),
 
-
             'activity' =>
                 $this->activityService
                     ->activity($shift),
-
         ];
     }
-
-
 
     private function performance(
         Shift $shift
     ): ?array {
+        $performance = $shift->performance;
 
-        if (! $shift->performance) {
+        if (! $performance) {
             return null;
         }
 
-
-        $performance =
-            $shift->performance;
-
-
         return [
-
             'id' =>
                 $performance->id,
 
-
             'name' =>
                 trim(
-                    $performance->first_name .
-                    ' ' .
-                    $performance->last_name
+                    "{$performance->first_name} {$performance->last_name}"
                 ),
-
 
             'nickname' =>
                 $performance->nickname,
-
 
             'platforms' =>
                 $performance->platforms
                     ->map(
                         fn ($platform) => [
-
                             'id' =>
                                 $platform->id,
 
@@ -128,12 +95,26 @@ class ShiftReportService
 
                             'type' =>
                                 $platform->type,
-
                         ]
                     )
                     ->values()
                     ->toArray(),
+        ];
+    }
 
+    private function studio(
+        Shift $shift
+    ): ?array {
+        if (! $shift->studio) {
+            return null;
+        }
+
+        return [
+            'id' =>
+                $shift->studio->id,
+
+            'name' =>
+                $shift->studio->name,
         ];
     }
 }

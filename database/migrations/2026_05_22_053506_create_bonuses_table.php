@@ -12,7 +12,6 @@ return new class extends Migration
 
             $table->id();
 
-
             $table->foreignId('performance_id')
                 ->constrained('performances')
                 ->cascadeOnDelete();
@@ -22,15 +21,12 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
-
             $table->string('reason')->nullable();
 
             $table->decimal('amount', 12, 2)->default(0);
 
-       
-            $table->date('date')->nullable();
-
-        
+            // Fecha y hora exacta en que se registra/produce el bono.
+            $table->dateTime('date')->nullable();
 
             $table->timestamps();
 

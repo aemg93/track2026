@@ -25,7 +25,8 @@ return new class extends Migration
 
             $table->decimal('amount', 12, 2);
 
-            $table->date('date');
+            // Fecha y hora exacta de la penalización.
+            $table->dateTime('date');
 
             $table->timestamps();
         });

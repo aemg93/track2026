@@ -1,26 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Penalty extends Model
 {
-    protected $fillable=[
+    protected $fillable = [
         'performance_id',
         'user_id',
         'reason',
         'amount',
-        'date'
+        'date',
     ];
 
-    public function performance()
+    protected function casts(): array
     {
-        return $this->belongsTo(Performance::class);
+        return [
+            'amount' => 'float',
+            'date' => 'datetime',
+        ];
     }
 
-    public function user()
+    public function performance(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            Performance::class
+        );
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class
+        );
     }
 }

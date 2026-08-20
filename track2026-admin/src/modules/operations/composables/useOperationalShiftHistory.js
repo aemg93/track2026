@@ -1,4 +1,6 @@
-import { computed } from 'vue'
+import {
+  computed,
+} from 'vue'
 
 export function useOperationalShiftHistory(props) {
   const performances = computed(() => {
@@ -106,13 +108,18 @@ export function useOperationalShiftHistory(props) {
         performance.last_name ?? ''
       }`.trim()
 
+    const activity =
+      shift?.activity ?? {}
+
     const financialSummary =
-      shift?.activity?.financial_summary ??
-      shift?.financial_summary ??
-      null
+      activity.financial_summary ?? {}
 
     const tokens = Number(
-      financialSummary?.total_tokens ?? 0,
+      financialSummary.total_tokens ?? 0,
+    )
+
+    const usd = Number(
+      financialSummary.gross_usd ?? 0,
     )
 
     const status =
@@ -143,6 +150,8 @@ export function useOperationalShiftHistory(props) {
         .toUpperCase(),
 
       tokens,
+
+      usd,
 
       active:
         status === 'active',
