@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Earning;
+use App\Enums\EarningStatus;
 use App\Models\Performance;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -163,11 +164,21 @@ class FinancialSummaryService
         Performance $performance
     ): Collection {
         if ($performance->relationLoaded('earnings')) {
-            return $performance->earnings;
+            return $performance->earnings->filter(
+                fn (Earning $earning): bool => in_array(
+                    $earning->status,
+                    [EarningStatus::Approved, EarningStatus::Paid],
+                    true
+                )
+            )->values();
         }
 
         return $performance
             ->earnings()
+            ->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ])
             ->get();
     }
 
@@ -178,6 +189,10 @@ class FinancialSummaryService
     ): Collection {
         return $performance
             ->earnings()
+            ->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ])
             ->whereBetween(
                 'earned_at',
                 [

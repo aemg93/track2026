@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\EarningStatus;
 use App\Models\Performance;
 
 class RankingService
 {
+    public function __construct(
+        private PerformanceWorkTimeService $workTime
+    ) {
+    }
 
     public function recalculate(
         int $performanceId
@@ -16,20 +21,24 @@ class RankingService
         );
 
 
-        $hours = (float) $performance
-            ->platforms()
-            ->sum(
-                'performance_platform.hours_streamed'
-            );
+        $hours = $this->workTime->totalHours($performance);
 
 
         $gross = (float) $performance
             ->earnings()
+            ->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ])
             ->sum('gross_usd');
 
 
         $net = (float) $performance
             ->earnings()
+            ->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ])
             ->sum('net_usd');
 
 

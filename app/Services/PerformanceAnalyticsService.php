@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EarningStatus;
 use App\Models\Performance;
 use Illuminate\Support\Collection;
 
@@ -20,7 +21,18 @@ class PerformanceAnalyticsService
 
         $platforms = $query->get();
 
-        $totals = $this->calculateTotals($platforms);
+        $earnings = $performance->earnings()
+            ->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ])
+            ->when(
+                $from && $to,
+                fn ($q) => $q->whereBetween('earned_at', [$from, $to])
+            )
+            ->get();
+
+        $totals = $this->calculateTotals($platforms, $earnings);
 
         return [
             'performance_id' => $performance->id,
@@ -31,17 +43,19 @@ class PerformanceAnalyticsService
 
             'ranking_score' => $this->calculateRankingScore($totals),
 
-            'platforms' => $this->buildPlatformBreakdown($platforms),
+            'platforms' => $this->buildPlatformBreakdown($platforms, $earnings),
         ];
     }
 
-    private function buildPlatformBreakdown(Collection $platforms): array
+    private function buildPlatformBreakdown(Collection $platforms, Collection $earnings): array
     {
-        return $platforms->map(function ($platform) {
+        return $platforms->map(function ($platform) use ($earnings) {
 
             $tokens = (float) ($platform->pivot->tokens ?? 0);
             $hours  = (float) ($platform->pivot->hours_streamed ?? 0);
-            $usd    = (float) ($platform->pivot->earnings_usd ?? 0);
+            $usd = (float) $earnings
+                ->where('platform_id', $platform->id)
+                ->sum('gross_usd');
 
             $tokensPerHour = $hours > 0 ? $tokens / $hours : 0;
             $usdPerHour    = $hours > 0 ? $usd / $hours : 0;
@@ -66,12 +80,12 @@ class PerformanceAnalyticsService
         })->sortByDesc('score')->values()->toArray();
     }
 
-    private function calculateTotals(Collection $platforms): array
+    private function calculateTotals(Collection $platforms, Collection $earnings): array
     {
         return [
             'tokens' => (float) $platforms->sum(fn ($p) => $p->pivot->tokens ?? 0),
             'hours'  => (float) $platforms->sum(fn ($p) => $p->pivot->hours_streamed ?? 0),
-            'usd'    => (float) $platforms->sum(fn ($p) => $p->pivot->earnings_usd ?? 0),
+            'usd'    => (float) $earnings->sum('gross_usd'),
         ];
     }
 

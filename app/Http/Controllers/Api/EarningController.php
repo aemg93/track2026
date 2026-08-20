@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EarningStatus;
 use App\Http\Controllers\Controller;
 use App\Services\EarningService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Enum;
 
 class EarningController extends Controller
 {
@@ -58,8 +60,7 @@ class EarningController extends Controller
 
             'status' => [
                 'nullable',
-                'string',
-                'max:50',
+                new Enum(EarningStatus::class),
             ],
 
             'paid_at' => [

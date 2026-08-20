@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EarningStatus;
 use App\Enums\MonitorShiftStatus;
 use App\Models\Earning;
 use App\Models\MonitorShift;
@@ -266,6 +267,13 @@ class EarningService
     public function syncEarning(
         Earning $earning
     ): Earning {
+        if (in_array($earning->status, [
+            EarningStatus::Paid,
+            EarningStatus::Cancelled,
+        ], true)) {
+            return $earning;
+        }
+
         $earning->loadMissing([
             'performance',
             'platform',
