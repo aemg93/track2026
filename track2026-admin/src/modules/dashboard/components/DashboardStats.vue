@@ -72,7 +72,7 @@ const cards = computed(() => [
     {
         title: 'Multas',
         value: formatCurrency(props.finance?.totals?.penalties),
-        description: 'Penalizaciones aplicadas',
+        description: 'Multas aplicadas',
         colorClass:
             'from-red-500/15 to-red-900/10 border-red-500/20',
         textColorClass: 'text-red-400',

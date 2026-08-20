@@ -102,7 +102,7 @@ const actions = [
 
   {
     type: 'penalty',
-    label: 'Registrar penalización',
+    label: 'Registrar multa',
     class: `
       border-amber-500/40
       bg-amber-500/15

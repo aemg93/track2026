@@ -15,6 +15,7 @@ use App\Models\Shift;
 use App\Models\Studio;
 use App\Models\User;
 use App\Services\ShiftFinancialSummaryService;
+use App\Services\ShiftActivityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -251,6 +252,54 @@ class ShiftFinancialSummaryServiceTest extends TestCase
     }
 
     /**
+     * El resumen del turno debe coincidir con la actividad visible.
+     * La actividad incluye earnings draft creados durante el turno.
+     */
+    public function test_draft_earnings_visible_in_shift_activity_are_included(): void
+    {
+        $shift = $this->createShift(
+            '2026-02-14 22:00:00',
+            '2026-02-15 06:00:00'
+        );
+
+        $earning = $this->createEarning(
+            $this->cam4,
+            '2026-02-15 01:00:00',
+            4000,
+            4000,
+            200
+        );
+
+        $earning->update([
+            'status' => 'draft',
+        ]);
+
+        $secondEarning = $this->createEarning(
+            $this->chaturbate,
+            '2026-02-15 02:00:00',
+            200,
+            200,
+            10
+        );
+
+        $secondEarning->update([
+            'status' => 'draft',
+        ]);
+
+        $summary = app(
+            ShiftFinancialSummaryService::class
+        )->summary($shift);
+
+        $this->assertSame(210.0, $summary['gross_usd']);
+        $this->assertSame(4200.0, $summary['total_tokens']);
+        $this->assertSame(
+            4000.0,
+            collect($summary['platforms'])
+                ->firstWhere('platform_name', 'Cam4')['real_tokens']
+        );
+    }
+
+    /**
      * Un earning producido después del Shift debe ser excluido.
      */
     public function test_earnings_outside_shift_are_excluded(): void
@@ -416,6 +465,56 @@ class ShiftFinancialSummaryServiceTest extends TestCase
             30.0,
             $summary['deduction_usd']
         );
+    }
+
+    /**
+     * Los movimientos registrados con el formulario de fecha deben
+     * aparecer en la actividad aunque el turno haya comenzado después de
+     * las 00:00:00 del día seleccionado.
+     */
+    public function test_date_only_penalty_and_deduction_are_visible_in_shift_activity(): void
+    {
+        $shift = $this->createShift(
+            '2026-02-15 10:00:00',
+            '2026-02-15 18:00:00'
+        );
+
+        Penalty::query()->create([
+            'performance_id' => $this->performance->id,
+            'user_id' => $this->user->id,
+            'reason' => 'Llegada tarde',
+            'amount' => 23,
+            'date' => '2026-02-15',
+        ]);
+
+        Deduction::query()->create([
+            'performance_id' => $this->performance->id,
+            'user_id' => $this->user->id,
+            'category' => 'Alimentación',
+            'reason' => 'Papas margaritas',
+            'amount' => 2.50,
+            'date' => '2026-02-15',
+            'is_installment' => false,
+            'installments' => null,
+            'installment_value' => null,
+        ]);
+
+        $timeline = app(ShiftActivityService::class)
+            ->timeline($shift);
+
+        $this->assertSame(
+            ['penalty', 'deduction'],
+            collect($timeline)
+                ->pluck('type')
+                ->sort()
+                ->values()
+                ->all()
+        );
+
+        $this->assertSame(23.0, (float) collect($timeline)
+            ->firstWhere('type', 'penalty')['amount']);
+        $this->assertSame(2.50, (float) collect($timeline)
+            ->firstWhere('type', 'deduction')['amount']);
     }
 
     /**

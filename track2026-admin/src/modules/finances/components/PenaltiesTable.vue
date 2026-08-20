@@ -40,7 +40,7 @@
         </h2>
 
         <p class="mt-2 text-sm text-gray-400">
-          Penalizaciones registradas para el modelo
+          Multas registradas para el modelo
         </p>
       </div>
 
@@ -61,7 +61,7 @@
         <span class="h-2 w-2 rounded-full bg-red-400" />
 
         <span class="text-sm font-medium text-red-400">
-          Penalizaciones
+          Multas
         </span>
       </div>
     </div>
@@ -79,7 +79,7 @@
           </span>
 
           <span class="mt-1 text-xs text-gray-500">
-            Penalización registrada
+            Multa registrada
           </span>
         </div>
       </template>
@@ -147,7 +147,7 @@
       </h3>
 
       <p class="mt-2 text-gray-400">
-        No existen penalizaciones registradas para este modelo.
+        No existen multas registradas para este modelo.
       </p>
     </div>
   </div>
@@ -203,7 +203,9 @@ const formatDate = (value) => {
   return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   }).format(new Date(value))
 }
 </script>

@@ -10,12 +10,12 @@
       :bonuses="bonuses"
     />
 
-    <!-- PENALIZACIONES -->
+    <!-- MULTAS -->
     <PenaltiesTable
       :penalties="penalties"
     />
 
-    <!-- DEDUCCIONES -->
+    <!-- DESCUENTOS -->
     <DeductionsTable
       :deductions="deductions"
     />

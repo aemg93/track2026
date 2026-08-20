@@ -130,7 +130,7 @@ const kpis = computed(() => [
     },
 
     {
-        title: 'Penalizaciones',
+        title: 'Multas',
 
         value: currency(
             props.finance?.totals?.penalties

@@ -136,7 +136,7 @@ class ShiftActivityService
                     fn ($penalty): array => [
                         'id' => $penalty->id,
                         'type' => 'penalty',
-                        'title' => 'Penalización',
+                        'title' => 'Multa',
                         'description' => $penalty->reason,
                         'performed_by' => $penalty->user?->name,
                         'amount' => (float) (
@@ -242,12 +242,25 @@ class ShiftActivityService
             ->with([
                 'user:id,name',
             ])
-            ->whereBetween(
+            /*
+             * El formulario operativo envía la fecha como YYYY-MM-DD.
+             * Aunque la columna sea datetime, ese valor se persiste a las
+             * 00:00:00. Compararlo contra el instante de inicio del turno
+             * excluye la penalización si el turno comenzó más tarde ese
+             * mismo día. La semántica vigente de estos movimientos es por
+             * fecha local (igual que FinancialSummaryService), por lo que
+             * el filtro debe comparar la parte de fecha en America/Bogota,
+             * sin convertirla arbitrariamente a UTC.
+             */
+            ->whereDate(
                 'date',
-                [
-                    $from,
-                    $to,
-                ]
+                '>=',
+                $from->toDateString()
+            )
+            ->whereDate(
+                'date',
+                '<=',
+                $to->toDateString()
             )
             ->orderBy('date')
             ->get();
@@ -268,12 +281,15 @@ class ShiftActivityService
             ->with([
                 'user:id,name',
             ])
-            ->whereBetween(
+            ->whereDate(
                 'date',
-                [
-                    $from,
-                    $to,
-                ]
+                '>=',
+                $from->toDateString()
+            )
+            ->whereDate(
+                'date',
+                '<=',
+                $to->toDateString()
             )
             ->orderBy('date')
             ->get();

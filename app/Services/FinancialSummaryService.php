@@ -28,12 +28,14 @@ class FinancialSummaryService
     public function summaryBetween(
         Performance $performance,
         Carbon $start,
-        Carbon $end
+        Carbon $end,
+        bool $includeAllEarnings = false
     ): array {
         $earnings = $this->earningsBetween(
             $performance,
             $start,
-            $end
+            $end,
+            $includeAllEarnings
         );
 
         return $this->buildSummary(
@@ -185,21 +187,27 @@ class FinancialSummaryService
     private function earningsBetween(
         Performance $performance,
         Carbon $start,
-        Carbon $end
+        Carbon $end,
+        bool $includeAllEarnings = false
     ): Collection {
-        return $performance
+        $query = $performance
             ->earnings()
-            ->whereIn('status', [
-                EarningStatus::Approved->value,
-                EarningStatus::Paid->value,
-            ])
             ->whereBetween(
                 'earned_at',
                 [
                     $start,
                     $end,
                 ]
-            )
+            );
+
+        if (! $includeAllEarnings) {
+            $query->whereIn('status', [
+                EarningStatus::Approved->value,
+                EarningStatus::Paid->value,
+            ]);
+        }
+
+        return $query
             ->orderBy('earned_at')
             ->get();
     }

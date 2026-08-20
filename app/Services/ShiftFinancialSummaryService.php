@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EarningStatus;
 use App\Models\Earning;
 use App\Models\Shift;
 use Carbon\Carbon;
@@ -59,7 +58,8 @@ class ShiftFinancialSummaryService
         $financial = $this->financialSummary->summaryBetween(
             $performance,
             $start,
-            $end
+            $end,
+            true
         );
 
         $earnings = $this->earnings(
@@ -144,10 +144,6 @@ class ShiftFinancialSummaryService
                     $end,
                 ]
             )
-            ->whereIn('status', [
-                EarningStatus::Approved->value,
-                EarningStatus::Paid->value,
-            ])
             ->orderBy('earned_at')
             ->get();
     }

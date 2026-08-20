@@ -33,7 +33,7 @@
                     <p
                         class="text-gray-400 mt-2"
                     >
-                        Registra una penalización para esta modelo.
+                        Registra una multa para esta modelo.
                     </p>
 
                 </div>
@@ -53,13 +53,14 @@
                         <label
                             class="text-gray-300 text-sm"
                         >
-                            Fecha
+                            Fecha y hora
                         </label>
 
 
                         <input
                             v-model="form.date"
-                            type="date"
+                            type="datetime-local"
+                            step="1"
                             required
                             class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white"
                         >
@@ -103,7 +104,7 @@
                             v-model="form.reason"
                             rows="4"
                             required
-                            placeholder="Describe el motivo de la penalización..."
+                            placeholder="Describe el motivo de la multa..."
                             class="mt-2 w-full rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-white resize-none"
                         />
 
@@ -198,19 +199,20 @@ const loading = ref(false)
 
 
 
-const today = () => {
+const currentDateTime = () => {
+    const date = new Date()
+    const pad = value => String(value).padStart(2, '0')
 
-    return new Date()
-        .toISOString()
-        .substring(0, 10)
-
+    // datetime-local espera la hora local, no una fecha convertida a UTC.
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+        `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
 
 
 const form = ref({
 
-    date: today(),
+    date: currentDateTime(),
 
     amount: '',
 
@@ -232,7 +234,7 @@ function reset(){
 
     form.value = {
 
-        date: today(),
+        date: currentDateTime(),
 
         amount: '',
 

@@ -29,7 +29,7 @@
 
       <div>
         <p class="text-sm text-gray-400">
-          Penalizaciones
+          Multas
         </p>
 
         <h2 class="mt-1 text-2xl font-bold text-yellow-400">

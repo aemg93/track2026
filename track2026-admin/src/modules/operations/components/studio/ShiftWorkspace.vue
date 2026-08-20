@@ -39,7 +39,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-400">
-          Ganancias, bonos, penalizaciones y descuentos registrados durante esta sesión.
+          Ganancias, bonos, multas y descuentos registrados durante esta sesión.
         </p>
 
 

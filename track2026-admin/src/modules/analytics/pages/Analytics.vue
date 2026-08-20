@@ -22,12 +22,12 @@
       </div>
 
       <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-        <p class="text-gray-400 text-sm">Penalties</p>
+        <p class="text-gray-400 text-sm">Multas</p>
         <p class="text-2xl font-bold">${{ format(totalPenalties) }}</p>
       </div>
 
       <div class="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
-        <p class="text-gray-400 text-sm">Deductions</p>
+        <p class="text-gray-400 text-sm">Descuentos</p>
         <p class="text-2xl font-bold">${{ format(totalDeductions) }}</p>
       </div>
     </div>
