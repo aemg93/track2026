@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\Performance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PerformanceService
 {
     public function __construct(
-        private SplitService $splitService
+        private SplitService $splitService,
+        private AuditService $auditService
     ) {
     }
 
@@ -30,6 +32,12 @@ class PerformanceService
     public function list(Request $request)
     {
         $query = Performance::query();
+        $user = $request->user();
+        if ($user && ! $user->isSuperAdmin() && $user->isPerformance()) {
+            $query->where('user_id', $user->id);
+        } elseif ($user && ! $user->isSuperAdmin()) {
+            $query->where('studio_id', $user->studio_id);
+        }
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
@@ -107,6 +115,14 @@ class PerformanceService
 
     public function create(array $data): Performance
     {
+        $user = Auth::user();
+        abort_unless($user?->can('create', Performance::class), 403);
+        if (! $user->isSuperAdmin() && (int) $data['studio_id'] !== (int) $user->studio_id) {
+            abort(403, 'Outside your studio scope');
+        }
+        if (! $user->isSuperAdmin()) {
+            unset($data['split']);
+        }
         return DB::transaction(function () use ($data) {
             $data = $this->normalize($data);
 
@@ -133,9 +149,11 @@ class PerformanceService
                 true
             );
 
-            return $performance
+            $performance = $performance
                 ->fresh()
                 ->load($this->relations());
+            $this->auditService->log($performance, 'created');
+            return $performance;
         });
     }
 
@@ -145,6 +163,10 @@ class PerformanceService
     ): Performance {
         return DB::transaction(function () use ($id, $data) {
             $performance = Performance::findOrFail($id);
+            abort_unless(Auth::user()?->can('update', $performance), 403);
+            if (! Auth::user()->isSuperAdmin() && array_key_exists('split', $data)) {
+                abort(403, 'Only Super Admin may modify split.');
+            }
 
             $data = $this->normalize($data);
 
@@ -168,15 +190,20 @@ class PerformanceService
                 $split
             );
 
-            return $performance
+            $performance = $performance
                 ->fresh()
                 ->load($this->relations());
+            $this->auditService->log($performance, 'updated');
+            return $performance;
         });
     }
 
     public function delete(int $id): void
     {
-        Performance::findOrFail($id)->delete();
+        $performance = Performance::findOrFail($id);
+        abort_unless(Auth::user()?->can('delete', $performance), 403);
+        $performance->delete();
+        $this->auditService->log($performance, 'deleted');
     }
 
     public function leaderboard(int $limit = 20)
@@ -186,7 +213,7 @@ class PerformanceService
             min($limit, 100)
         );
 
-        return Performance::query()
+        $query = Performance::query()
             ->select([
                 'id',
                 'first_name',
@@ -198,8 +225,16 @@ class PerformanceService
                 'ranking_score',
                 'active',
             ])
-            ->where('active', true)
-            ->orderByDesc('hours_streamed')
+            ->where('active', true);
+
+        $user = Auth::user();
+        if ($user && ! $user->isSuperAdmin()) {
+            $column = $user->isPerformance() ? 'user_id' : 'studio_id';
+            $value = $user->isPerformance() ? $user->id : $user->studio_id;
+            $query->where($column, $value);
+        }
+
+        return $query->orderByDesc('hours_streamed')
             ->limit($limit)
             ->get();
     }

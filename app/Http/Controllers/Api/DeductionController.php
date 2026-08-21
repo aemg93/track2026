@@ -20,6 +20,7 @@ class DeductionController extends Controller
         Request $request
     ): JsonResponse {
         $user = $request->user();
+        abort_unless($user->can('viewAny', Deduction::class), 403);
 
         $query = Deduction::query()
             ->with([
@@ -149,15 +150,7 @@ class DeductionController extends Controller
          * Performance y Monitor no pueden registrar
          * deducciones.
          */
-        if (
-            $user->hasRole('Performance') ||
-            $user->hasRole('Monitor')
-        ) {
-            abort(
-                403,
-                'Not allowed to create deductions'
-            );
-        }
+        abort_unless($user->can('create', Deduction::class), 403);
 
         $performance = Performance::findOrFail(
             $data['performance_id']

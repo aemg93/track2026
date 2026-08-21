@@ -1,129 +1,719 @@
-# COMMIT BASE — REESTRUCTURACIÓN
+# TRACK2026 — REESTRUCTURACIÓN DE AUTORIZACIÓN
 
-Trabaja sobre el estado ACTUAL del repositorio.
+Trabaja sobre el repositorio TRACK2026 como agente de desarrollo completo.
 
-La rama actual es:
+## 0. PERMISOS OBLIGATORIOS
+
+Esta sesión NO debe operar en modo solo lectura.
+
+Necesito capacidad efectiva de:
+
+* LEER archivos del proyecto.
+* BUSCAR en todo el repositorio.
+* CREAR archivos.
+* MODIFICAR archivos.
+* ELIMINAR archivos cuando sea estrictamente necesario.
+* EJECUTAR comandos.
+* EJECUTAR pruebas.
+* INSPECCIONAR y MODIFICAR Git.
+* HACER `git add`.
+* HACER `git commit`.
+* HACER `git push`.
+
+La escritura debe funcionar tanto sobre el working tree como sobre:
+
+```text
+.git
+```
+
+Antes de empezar la tarea funcional, comprueba:
+
+```bash
+pwd
+git status
+git branch --show-current
+touch .git/codex-write-test
+rm .git/codex-write-test
+```
+
+Si `touch .git/codex-write-test` falla con `Read-only file system` o un error equivalente, NO continúes fingiendo que tienes permisos completos.
+
+Reporta exactamente:
+
+```text
+WRITE PROJECT: ENABLED/BLOCKED
+WRITE GIT: ENABLED/BLOCKED
+```
+
+No empieces la auditoría hasta que la escritura de Git esté realmente disponible.
+
+---
+
+# 1. PUNTO DE PARTIDA
+
+La rama de trabajo es:
 
 ```text
 feature/v1-financial
 ```
 
-El objetivo AHORA es exclusivamente crear un punto de partida Git llamado:
+Ya existe un baseline de esta etapa cuyo mensaje es:
 
 ```text
 reestructuración
 ```
 
-## REGLA
+Primero verifica:
 
-NO modifiques código.
+```bash
+git status
+git log -5 --oneline
+```
 
-NO corrijas nada.
+NO reviertas los cambios existentes.
 
-NO hagas auditorías.
+NO hagas reset.
 
-NO refactorices.
+NO borres trabajo existente.
 
-NO reviertas cambios.
+---
 
-NO agregues cambios nuevos.
+# 2. OBJETIVO
 
-Debes tomar exactamente el estado actual del working tree y registrarlo en Git.
+Vamos a realizar una reestructuración completa del sistema de:
 
-## 1. VERIFICAR ESTADO
+* Roles.
+* Permissions.
+* Policies.
+* Gates.
+* Middleware.
+* Autorización de rutas.
+* Autorización de Controllers.
+* Autorización de Services cuando corresponda.
+* Restricciones del frontend.
+* Auditoría de quién ejecutó cada operación.
+
+La implementación debe corresponder a la matriz de permisos definida abajo.
+
+---
+
+# 3. MATRIZ OFICIAL DE ROLES
+
+## SÚPER ADMINISTRADOR
+
+Tiene todos los permisos del sistema.
+
+Puede:
+
+* crear estudios;
+* crear Súper Administradores;
+* crear Administradores;
+* crear Monitores;
+* crear Modelos;
+* administrar todos los estudios;
+* ver información de cualquier estudio;
+* administrar usuarios;
+* administrar roles;
+* administrar permisos;
+* modificar configuración global;
+* modificar el split modelo/estudio;
+* gestionar ganancias;
+* gestionar bonos;
+* gestionar descuentos;
+* gestionar multas;
+* gestionar modelos;
+* gestionar turnos;
+* consultar todas las métricas;
+* consultar todos los reportes.
+
+El Súper Administrador tiene alcance GLOBAL.
+
+---
+
+## ADMINISTRADOR
+
+Su alcance está limitado al estudio al que pertenece.
+
+Puede:
+
+* ver toda la información de su estudio;
+* ver el panel operativo;
+* ver las ganancias del estudio;
+* ver las ganancias de las modelos;
+* ver modelos;
+* ver perfiles de modelos;
+* crear Monitores;
+* crear Modelos;
+* editar Modelos;
+* registrar ganancias;
+* editar ganancias;
+* registrar bonos;
+* editar bonos;
+* registrar descuentos;
+* editar descuentos;
+* registrar multas;
+* editar multas;
+* consultar métricas semanales;
+* consultar métricas quincenales;
+* consultar métricas mensuales;
+* consultar métricas por total del estudio;
+* consultar métricas por plataforma;
+* consultar métricas por modelo.
+
+NO puede:
+
+* crear otro Administrador;
+* crear un Súper Administrador;
+* administrar otro estudio;
+* ver información de otro estudio;
+* modificar el split modelo/estudio;
+* eliminar Modelos.
+
+---
+
+## MONITOR
+
+Su alcance está limitado al estudio al que pertenece.
+
+Puede:
+
+* ver el estudio;
+* ver las ganancias del estudio;
+* ver ganancias de las modelos;
+* ver modelos;
+* ver perfiles de modelos;
+* crear modelos;
+* editar modelos;
+* registrar ganancias;
+* editar ganancias;
+* registrar descuentos;
+* editar descuentos;
+* consultar métricas semanales;
+* consultar métricas quincenales;
+* consultar métricas mensuales;
+* consultar métricas por total del estudio;
+* consultar métricas por plataforma;
+* consultar métricas por modelo;
+* utilizar el panel operativo.
+
+NO puede:
+
+* registrar bonos;
+* editar bonos;
+* registrar multas;
+* editar multas;
+* eliminar modelos;
+* crear Administradores;
+* crear Súper Administradores;
+* crear estudios;
+* modificar el split modelo/estudio;
+* administrar roles;
+* administrar permisos;
+* acceder a otros estudios.
+
+---
+
+## MODELO
+
+Su alcance es exclusivamente su propia información.
+
+Puede consultar únicamente lo que corresponda a:
+
+* su perfil;
+* sus turnos;
+* sus ganancias;
+* sus bonos;
+* sus descuentos;
+* sus multas;
+* sus métricas;
+* su producción.
+
+NO puede administrar otros usuarios, modelos, estudios, permisos, roles ni configuración.
+
+---
+
+# 4. REGLA DEL SPLIT
+
+Existe un porcentaje de distribución modelo/estudio.
+
+Valor por defecto:
+
+```text
+60% → Modelo
+40% → Estudio
+```
+
+Este porcentaje se denomina:
+
+```text
+split
+```
+
+REGLA ABSOLUTA:
+
+Solo el **Súper Administrador** puede modificar el split.
+
+El Administrador NO puede modificarlo.
+
+El Monitor NO puede modificarlo.
+
+El Modelo NO puede modificarlo.
+
+No permitas que una modificación del frontend pueda eludir esta regla.
+
+La protección debe existir en backend.
+
+---
+
+# 5. REGLA DE ELIMINACIÓN DE MODELOS
+
+El Administrador y el Monitor:
+
+* pueden crear modelos cuando corresponda;
+* pueden editar modelos;
+* NO pueden eliminar modelos.
+
+No implementes un `delete` para esos roles solamente porque exista un endpoint o método CRUD genérico.
+
+La autorización debe bloquear específicamente la eliminación.
+
+---
+
+# 6. REGLA DE ALCANCE POR ESTUDIO
+
+El Súper Administrador tiene alcance global.
+
+El Administrador y el Monitor tienen alcance únicamente sobre su estudio.
+
+Una comprobación de permiso NO es suficiente si además debe verificarse el estudio.
+
+Ejemplo conceptual:
+
+```text
+permission = models.edit
++
+user.study_id == model.study_id
+```
+
+Debe revisarse el código real para determinar dónde está implementada actualmente esta restricción.
+
+No asumas una arquitectura.
+
+---
+
+# 7. TRAZABILIDAD
+
+Toda operación administrativa o financiera importante debe dejar registrado quién la realizó.
+
+Especialmente:
+
+* creación de modelo;
+* edición de modelo;
+* registro de ganancias;
+* edición de ganancias;
+* registro de descuentos;
+* edición de descuentos;
+* registro de bonos;
+* edición de bonos;
+* registro de multas;
+* edición de multas;
+* modificación del split.
+
+Debemos poder identificar el usuario responsable de cada movimiento.
+
+Busca primero la infraestructura de auditoría existente antes de crear otra.
+
+---
+
+# 8. AUDITORÍA OBLIGATORIA
+
+Antes de modificar código, lee e inspecciona realmente el repositorio.
+
+Busca:
+
+```bash
+find app/Policies -type f 2>/dev/null
+find app/Models -type f | sort
+find app/Http/Controllers -type f | sort
+find app/Http/Middleware -type f | sort
+find database/seeders -type f | sort
+find database/migrations -type f | sort
+find routes -type f | sort
+```
+
+Y:
+
+```bash
+rg -n "Policy|Policies|Gate|authorize|can\(|middleware\(|permission|role|ability" app routes database tests
+```
+
+Si existe Spatie Permission o cualquier otro sistema de roles/permisos, identifica exactamente cómo está implementado.
+
+---
+
+# 9. AUDITAR POLICIES
+
+Determina:
+
+* qué Policies existen;
+* qué modelo controla cada Policy;
+* qué métodos tiene cada Policy;
+* qué Policies están registradas;
+* qué Policies están siendo utilizadas;
+* qué métodos faltan;
+* qué métodos permiten demasiado;
+* qué métodos bloquean incorrectamente;
+* si existen Policies huérfanas;
+* si existen modelos sin Policy cuando deberían tenerla.
+
+Presta especial atención a:
+
+* User;
+* Study;
+* Model;
+* Earning;
+* Bonus;
+* Deduction;
+* Penalty;
+* Shift;
+* Reports;
+* Financial resources.
+
+---
+
+# 10. AUDITAR ROLES Y PERMISSIONS
+
+Busca la definición real de:
+
+```text
+roles
+permissions
+role-permission
+user-role
+```
+
+Revisa:
+
+* migrations;
+* seeders;
+* modelos;
+* relaciones;
+* configuración;
+* middleware;
+* tests.
+
+Construye la correspondencia real:
+
+```text
+ROLE
+↓
+PERMISSIONS
+↓
+POLICY / GATE
+↓
+MIDDLEWARE
+↓
+ROUTE
+↓
+CONTROLLER
+```
+
+Identifica cualquier divergencia respecto de la matriz oficial.
+
+---
+
+# 11. AUDITAR GATES Y MIDDLEWARE
+
+Revisa:
+
+* Gates;
+* middleware de roles;
+* middleware de permisos;
+* middleware de autenticación;
+* autorización dentro de Controllers;
+* llamadas a `authorize()`;
+* llamadas a `can()`;
+* comprobaciones manuales.
+
+No dupliques lógica innecesariamente.
+
+Busca una solución coherente con la arquitectura existente.
+
+---
+
+# 12. AUDITAR RUTAS
 
 Ejecuta:
+
+```bash
+php artisan route:list
+```
+
+Identifica las rutas relacionadas con:
+
+* estudios;
+* usuarios;
+* modelos;
+* turnos;
+* ganancias;
+* bonos;
+* descuentos;
+* multas;
+* finanzas;
+* reportes;
+* métricas;
+* configuración.
+
+Para cada ruta relevante determina:
+
+```text
+METHOD
+PATH
+MIDDLEWARE
+CONTROLLER
+POLICY/PERMISSION
+SCOPE
+```
+
+---
+
+# 13. AUDITAR FRONTEND
+
+Revisa:
+
+```text
+track2026-admin/src/
+```
+
+Busca:
+
+```bash
+rg -n "permission|permissions|role|can\(|ability|authorize|guard|middleware|403|401" track2026-admin/src
+```
+
+El frontend puede ocultar acciones según permisos, pero:
+
+**la seguridad real siempre debe existir en backend.**
+
+No aceptes una solución que solamente esconda botones.
+
+---
+
+# 14. NO INVENTAR
+
+No inventes:
+
+* nombres de Policies;
+* permisos;
+* roles;
+* tablas;
+* columnas;
+* rutas;
+* métodos;
+* relaciones;
+* servicios.
+
+Primero búscalos.
+
+Si falta algo, explica por qué debe crearse.
+
+---
+
+# 15. IMPLEMENTACIÓN
+
+Después de completar la auditoría:
+
+1. identifica la causa raíz de cada inconsistencia;
+2. modifica solamente lo necesario;
+3. crea Policies faltantes;
+4. registra Policies faltantes;
+5. corrige permisos;
+6. corrige asignaciones de roles;
+7. corrige Gates;
+8. corrige middleware;
+9. corrige rutas;
+10. corrige Controllers/Services;
+11. corrige frontend cuando corresponda;
+12. agrega tests de autorización.
+
+No hagas refactorizaciones no relacionadas.
+
+---
+
+# 16. TESTS OBLIGATORIOS
+
+Prueba al menos:
+
+### Súper Administrador
+
+Debe poder realizar todas las operaciones autorizadas.
+
+### Administrador
+
+Debe poder operar dentro de su estudio.
+
+Debe ser rechazado al:
+
+* crear Administradores;
+* crear Súper Administradores;
+* modificar split;
+* acceder a otro estudio;
+* eliminar modelos.
+
+### Monitor
+
+Debe poder:
+
+* ver su estudio;
+* ver modelos;
+* editar modelos;
+* registrar ganancias;
+* editar ganancias;
+* registrar descuentos;
+* editar descuentos;
+* consultar métricas.
+
+Debe ser rechazado al:
+
+* registrar bonos;
+* registrar multas;
+* eliminar modelos;
+* modificar split;
+* administrar permisos;
+* acceder a otro estudio.
+
+### Modelo
+
+Debe ser rechazado al intentar acceder o modificar recursos de otros usuarios/estudios.
+
+---
+
+# 17. VALIDACIÓN
+
+Después de modificar:
+
+```bash
+php artisan test
+```
+
+Ejecuta pruebas específicas de autorización si existen.
+
+Si existe suite frontend, ejecútala también.
+
+Si algo falla:
+
+1. lee el error;
+2. identifica la causa;
+3. corrige;
+4. vuelve a ejecutar.
+
+No declares éxito mientras existan pruebas fallidas relevantes.
+
+---
+
+# 18. GIT
+
+Al terminar:
 
 ```bash
 git status
 git diff --stat
+git diff
 ```
 
-Confirma que los cambios que aparecen son los cambios actuales de trabajo.
+Verifica exactamente los cambios.
 
-## 2. STAGE
+No hagas reset.
 
-Agrega los cambios actuales:
+No descartes cambios previos sin autorización.
+
+Después:
 
 ```bash
 git add -A
-```
-
-Después verifica:
-
-```bash
-git status
-git diff --cached --stat
-```
-
-## 3. COMMIT
-
-Crea exactamente este commit:
-
-```bash
-git commit -m "reestructuración"
-```
-
-No cambies el mensaje.
-
-## 4. VERIFICAR COMMIT
-
-Después ejecuta:
-
-```bash
-git log -1 --oneline
-git status
-```
-
-## 5. PUSH
-
-Haz push de la rama actual:
-
-```bash
+git commit -m "reestructuración: roles permissions and authorization"
 git push origin feature/v1-financial
 ```
 
-## 6. VERIFICACIÓN FINAL
-
-Ejecuta:
+Y finalmente:
 
 ```bash
 git status
 git log -1 --oneline
 ```
 
-## RESULTADO ESPERADO
+---
 
-Debes terminar con:
+# 19. REPORTE FINAL
+
+Entrega:
+
+## AUDITORÍA
+
+* Policies encontradas.
+* Roles encontrados.
+* Permissions encontrados.
+* Gates encontrados.
+* Middleware encontrado.
+* Rutas afectadas.
+
+## INCONSISTENCIAS
+
+Cada problema con su causa raíz.
+
+## IMPLEMENTACIÓN
+
+Archivos modificados y por qué.
+
+## MATRIZ FINAL
+
+Confirma que la implementación coincide con la matriz oficial.
+
+## TESTS
+
+Comandos y resultados.
+
+## GIT
 
 ```text
-COMMIT: SUCCESS
-MESSAGE: reestructuración
-PUSH: SUCCESS
-BRANCH: feature/v1-financial
-WORKING TREE: CLEAN
-```
-
-## REPORTE FINAL
-
-Respóndeme únicamente con:
-
-```text
-RAMA:
-<rama>
-
+BRANCH:
 COMMIT:
-<hash>
-
-MENSAJE:
-reestructuración
-
 PUSH:
-SUCCESS / FAILED
-
-ESTADO:
-<resultado final de git status>
+STATUS:
 ```
 
-Si `git add`, `git commit` o `git push` vuelve a fallar por `Read-only file system`, no intentes modificar el código: reporta exactamente el error.
+---
+
+# 20. REGLA FINAL
+
+No quiero solamente un informe.
+
+Quiero que trabajes como agente de desarrollo:
+
+```text
+LEER
+↓
+ANALIZAR
+↓
+AUDITAR
+↓
+MODIFICAR
+↓
+PROBAR
+↓
+VERIFICAR
+↓
+COMMIT
+↓
+PUSH
+```
+
+Y antes de comenzar debes demostrar que tienes:
+
+```text
+WRITE PROJECT: ENABLED
+WRITE GIT: ENABLED
+```
+
+Si `WRITE GIT` está bloqueado, detente y reporta el bloqueo. No simules que puedes hacer commit o push.
 

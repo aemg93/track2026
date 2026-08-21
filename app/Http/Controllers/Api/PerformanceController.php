@@ -10,6 +10,7 @@ use App\Services\PerformanceService;
 use App\Services\PerformanceWorkTimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\Performance;
 
 class PerformanceController extends Controller
 {
@@ -23,6 +24,7 @@ class PerformanceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->can('viewAny', Performance::class), 403);
         return response()->json([
             'success' => true,
             'data' => $this->service->list($request),
@@ -44,6 +46,7 @@ class PerformanceController extends Controller
     public function show(int $id): JsonResponse
     {
         $performance = $this->service->find($id);
+        abort_unless(request()->user()->can('view', $performance), 403);
 
         return response()->json([
             'success' => true,
@@ -108,6 +111,7 @@ class PerformanceController extends Controller
     ): JsonResponse {
 
         $performance = $this->service->find($id);
+        abort_unless($request->user()->can('view', $performance), 403);
 
         return response()->json([
             'success' => true,
@@ -122,6 +126,7 @@ class PerformanceController extends Controller
     public function leaderboard(
         Request $request
     ): JsonResponse {
+        abort_unless($request->user()->can('viewAny', Performance::class), 403);
 
         return response()->json([
             'success' => true,
@@ -134,6 +139,7 @@ class PerformanceController extends Controller
     public function platforms(int $id): JsonResponse
     {
         $performance = $this->service->find($id);
+        abort_unless(request()->user()->can('view', $performance), 403);
 
         return response()->json([
             'success' => true,

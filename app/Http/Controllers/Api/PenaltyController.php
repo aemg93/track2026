@@ -12,6 +12,7 @@ class PenaltyController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->can('viewAny', Penalty::class), 403);
 
         $query = Penalty::with([
             'performance',
@@ -130,17 +131,7 @@ class PenaltyController extends Controller
         $user = $request->user();
 
 
-        if (
-            $user->hasRole('Performance') ||
-            $user->hasRole('Monitor')
-        ) {
-
-            abort(
-                403,
-                'Not allowed to create penalties'
-            );
-
-        }
+        abort_unless($user->can('create', Penalty::class), 403);
 
 
         $penalty = $service->create(

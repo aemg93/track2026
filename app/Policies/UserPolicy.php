@@ -35,7 +35,8 @@ class UserPolicy
         }
 
         if ($actor->hasRole('Admin') && $actor->can('user.update')) {
-            return $target->hasAnyRole(self::ADMIN_MANAGEABLE_ROLES);
+            return $target->hasAnyRole(self::ADMIN_MANAGEABLE_ROLES)
+                && $actor->canAccessStudio((int) $target->studio_id);
         }
 
         return false;
@@ -48,7 +49,8 @@ class UserPolicy
         }
 
         if ($actor->hasRole('Admin') && $actor->can('user.delete')) {
-            return $target->hasAnyRole(self::ADMIN_MANAGEABLE_ROLES);
+            return $target->hasAnyRole(self::ADMIN_MANAGEABLE_ROLES)
+                && $actor->canAccessStudio((int) $target->studio_id);
         }
 
         return false;

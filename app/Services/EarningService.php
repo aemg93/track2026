@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Auth;
 class EarningService
 {
     public function __construct(
-        private RevenueService $revenueService
+        private RevenueService $revenueService,
+        private AuditService $auditService
     ) {
     }
 
@@ -89,6 +90,7 @@ class EarningService
         $performance = Performance::findOrFail(
             $data['performance_id']
         );
+        abort_unless($user->can('create', [Earning::class, $performance]), 403);
 
         /*
          * Admin y Monitor solamente pueden operar
@@ -252,9 +254,9 @@ class EarningService
                 $data['paid_at'] ?? null,
         ]);
 
-        return $this->syncEarning(
-            $earning
-        );
+        $earning = $this->syncEarning($earning);
+        $this->auditService->log($earning, 'created');
+        return $earning;
     }
 
     /**

@@ -7,6 +7,11 @@ use App\Models\Performance;
 
 class PerformancePolicy
 {
+    public function create(User $user): bool
+    {
+        return $user->hasAnyRole(['Super Admin', 'Admin', 'Monitor']);
+    }
+
     public function view(User $user, Performance $performance): bool
     {
         if ($user->isSuperAdmin()) {
@@ -27,6 +32,18 @@ class PerformancePolicy
     public function viewAny(User $user): bool
     {
         return $user->canAccessPerformances();
+    }
+
+    public function update(User $user, Performance $performance): bool
+    {
+        return $user->isSuperAdmin()
+            || (($user->isAdmin() || $user->isMonitor())
+                && $user->canAccessStudio($performance->studio_id));
+    }
+
+    public function delete(User $user, Performance $performance): bool
+    {
+        return $user->isSuperAdmin();
     }
 
     private function canViewOwn(User $user, Performance $performance): bool

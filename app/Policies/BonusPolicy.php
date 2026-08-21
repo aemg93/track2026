@@ -32,7 +32,7 @@ class BonusPolicy
 
     public function update(User $user, Bonus $bonus): bool
     {
-        return false;
+        return $this->view($user, $bonus) && $user->hasAnyRole(['Super Admin', 'Admin']);
     }
 
     public function delete(User $user, Bonus $bonus): bool

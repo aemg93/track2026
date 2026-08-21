@@ -11,7 +11,22 @@ class PerformanceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        $performance = $this->route('performance');
+        if (! $performance instanceof Performance && $performance) {
+            $performance = Performance::find($performance);
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->isMethod('post')) {
+            return $user->can('create', Performance::class);
+        }
+
+        return $performance instanceof Performance
+            && $user->can('update', $performance);
     }
 
     public function rules(): array
@@ -163,19 +178,19 @@ class PerformanceRequest extends FormRequest
             */
 
             'split' => [
-                'required',
+                'nullable',
                 'array',
             ],
 
             'split.model_percentage' => [
-                'required',
+                'required_with:split',
                 'numeric',
                 'min:50',
                 'max:100',
             ],
 
             'split.studio_percentage' => [
-                'required',
+                'required_with:split',
                 'numeric',
                 'min:0',
                 'max:50',

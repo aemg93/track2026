@@ -14,6 +14,7 @@ class BonusController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->can('viewAny', Bonus::class), 403);
 
         $query = Bonus::with([
             'performance',
@@ -85,16 +86,7 @@ class BonusController extends Controller
         ]);
 
         $user = $request->user();
-
-        if (
-            $user->hasRole('Performance') ||
-            $user->hasRole('Monitor')
-        ) {
-            abort(
-                403,
-                'Not allowed to create bonuses'
-            );
-        }
+        abort_unless($user->can('create', Bonus::class), 403);
 
         $bonus = $service->create($data);
 

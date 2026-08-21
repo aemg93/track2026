@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\EarningService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
+use App\Models\Earning;
 
 class EarningController extends Controller
 {
@@ -14,6 +15,7 @@ class EarningController extends Controller
         Request $request,
         EarningService $service
     ) {
+        abort_unless($request->user()->can('viewAny', Earning::class), 403);
         return response()->json([
             'success' => true,
             'data' => $service->list(

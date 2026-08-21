@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'studio_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,6 +28,11 @@ class User extends Authenticatable
     public function performance()
     {
         return $this->hasOne(Performance::class);
+    }
+
+    public function studio()
+    {
+        return $this->belongsTo(Studio::class);
     }
 
     public function earnings()

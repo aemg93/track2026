@@ -32,7 +32,7 @@ class PenaltyPolicy
 
     public function update(User $user, Penalty $penalty): bool
     {
-        return false;
+        return $this->view($user, $penalty) && $user->hasAnyRole(['Super Admin', 'Admin']);
     }
 
     public function delete(User $user, Penalty $penalty): bool

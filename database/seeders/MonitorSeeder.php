@@ -23,6 +23,7 @@ class MonitorSeeder extends Seeder
             [
                 'name' => 'Monitor Test',
                 'password' => bcrypt('password'),
+                'studio_id' => \App\Models\Studio::query()->value('id'),
             ]
         );
 
